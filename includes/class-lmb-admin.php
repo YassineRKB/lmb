@@ -903,17 +903,18 @@ class LMB_Enhanced_Admin {
 
         // Add or deduct points using the LMB_Points class
         if (class_exists('LMB_Points')) {
-            $current_points = LMB_Points::get($user->ID);
-            $new_points = $current_points + $points_amount;
+            // FIX: Changed this line to use the correct 'add' method
+            $result = LMB_Points::add($user->ID, $points_amount, $points_reason);
             
-            // Log the transaction
-            LMB_Points::add_points($user->ID, $points_amount, $points_reason);
-            
+            if ($result === false) {
+                 wp_die(__('Failed to update user points. Please check the error logs.', 'lmb-core'));
+            }
+
             $redirect_url = add_query_arg([
                 'page' => 'lmb-core-points',
                 'user_id' => $user->ID,
                 'points_updated' => 'true',
-                'new_balance' => $new_points
+                'new_balance' => $result
             ], admin_url('admin.php'));
             wp_redirect($redirect_url);
             exit;
