@@ -14,7 +14,7 @@ class LMB_Error_Handler {
         $upload_dir = wp_upload_dir();
         self::$log_file = $upload_dir['basedir'] . '/lmb-errors.log';
         
-        add_action('wp_loaded', [__CLASS__, 'setup_error_handling']);
+        #add_action('wp_loaded', [__CLASS__, 'setup_error_handling']);
         add_action('admin_menu', [__CLASS__, 'add_logs_page']);
     }
     
