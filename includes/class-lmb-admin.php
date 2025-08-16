@@ -6,28 +6,34 @@ if (!defined('ABSPATH')) {
 class LMB_Enhanced_Admin {
     
     public static function init() {
+        // Hey, future me! Remember to add hooks here. Don't be a hero and forget.
         add_action('admin_menu', [__CLASS__, 'add_admin_menus']);
         add_action('admin_init', [__CLASS__, 'register_settings']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_scripts']);
         
-        // Enhanced legal ads list functionality
+        // This is for making the legal ads list all fancy and sortable.
         add_filter('manage_lmb_legal_ad_posts_columns', [__CLASS__, 'customize_ad_columns']);
         add_action('manage_lmb_legal_ad_posts_custom_column', [__CLASS__, 'populate_ad_columns'], 10, 2);
         add_filter('manage_edit-lmb_legal_ad_sortable_columns', [__CLASS__, 'make_ad_columns_sortable']);
         add_action('pre_get_posts', [__CLASS__, 'sort_ad_columns']);
         
-        // Add bulk actions
+        // Add bulk actions, because who has time to do things one by one?
         add_filter('bulk_actions-edit-lmb_legal_ad', [__CLASS__, 'add_bulk_actions']);
         add_filter('handle_bulk_actions-edit-lmb_legal_ad', [__CLASS__, 'handle_bulk_actions'], 10, 3);
         
-        // Add admin notices
+        // Admin notices, because sometimes we all need a little heads-up.
         add_action('admin_notices', [__CLASS__, 'show_admin_notices']);
         
-        // Add meta boxes
+        // Add meta boxes - just in case you ever want to do that.
         add_action('add_meta_boxes', [__CLASS__, 'add_meta_boxes']);
-        add_action('save_post', [__CLASS__, 'save_meta_box_data']);
         
-        // AJAX handlers
+        // THIS IS THE LINE THAT CAUSED ALL THE DRAMA. 😱
+        // The `save_meta_box_data` function doesn't exist, so we're commenting it out.
+        // It's like trying to find a left sock when all you have are rights.
+        // Once a hero, now a zero. RIP `save_meta_box_data`.
+        // add_action('save_post', [__CLASS__, 'save_meta_box_data']);
+        
+        // AJAX handlers for when we want to be modern and cool.
         add_action('wp_ajax_lmb_quick_status_change', [__CLASS__, 'ajax_quick_status_change']);
         add_action('wp_ajax_lmb_get_ad_stats', [__CLASS__, 'ajax_get_ad_stats']);
         add_action('wp_ajax_lmb_export_ads', [__CLASS__, 'ajax_export_ads']);
@@ -136,7 +142,6 @@ class LMB_Enhanced_Admin {
         <div class="wrap lmb-admin-dashboard">
             <h1><?php esc_html_e('LMB Core Dashboard', 'lmb-core'); ?></h1>
 
-            <!-- Key Metrics Cards -->
             <div class="lmb-metrics-grid">
                 <div class="lmb-metric-card">
                     <div class="lmb-metric-icon">📄</div>
@@ -177,7 +182,6 @@ class LMB_Enhanced_Admin {
             </div>
 
             <div class="lmb-dashboard-row">
-                <!-- Recent Activity -->
                 <div class="lmb-dashboard-col-8">
                     <div class="lmb-dashboard-widget">
                         <h2><?php esc_html_e('Recent Ad Submissions', 'lmb-core'); ?></h2>
@@ -185,7 +189,6 @@ class LMB_Enhanced_Admin {
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
                 <div class="lmb-dashboard-col-4">
                     <div class="lmb-dashboard-widget">
                         <h2><?php esc_html_e('Quick Actions', 'lmb-core'); ?></h2>
@@ -211,7 +214,6 @@ class LMB_Enhanced_Admin {
                         </div>
                     </div>
 
-                    <!-- System Health -->
                     <div class="lmb-dashboard-widget">
                         <h2><?php esc_html_e('System Health', 'lmb-core'); ?></h2>
                         <?php self::render_system_health(); ?>
@@ -219,7 +221,6 @@ class LMB_Enhanced_Admin {
                 </div>
             </div>
 
-            <!-- Charts and Analytics -->
             <div class="lmb-dashboard-row">
                 <div class="lmb-dashboard-col-6">
                     <div class="lmb-dashboard-widget">
@@ -365,7 +366,7 @@ class LMB_Enhanced_Admin {
                             <td><?php echo esc_html($ad_type); ?></td>
                             <td>
                                 <?php if ($client): ?>
-                                    <a href="<?php echo get_edit_user_link($client_id); ?>">
+                                    <a href="<?php echo admin_url('edit.php?post_type=lmb_legal_ad&page=lmb-core-points&user_id=' . $client_id); ?>">
                                         <?php echo esc_html($client->display_name); ?>
                                     </a>
                                 <?php else: ?>
@@ -818,14 +819,6 @@ class LMB_Enhanced_Admin {
     }
 
     /**
-     * Render points management page
-     */
-    //public static function render_points_management() {
-        // Include the existing points management page content
-        //LMB_Enhanced_Admin::render_points();
-    //}
-
-    /**
      * Render reports page
      */
     public static function render_reports() {
@@ -839,7 +832,6 @@ class LMB_Enhanced_Admin {
             <h1><?php esc_html_e('LMB Core Reports', 'lmb-core'); ?></h1>
             
             <div class="lmb-reports-container">
-                <!-- Add comprehensive reporting interface here -->
                 <div class="postbox">
                     <div class="postbox-header">
                         <h2><?php esc_html_e('Submission Statistics', 'lmb-core'); ?></h2>
@@ -878,7 +870,6 @@ class LMB_Enhanced_Admin {
             <div class="lmb-system-status">
                 <?php self::render_system_health(); ?>
                 
-                <!-- Add more system status information here -->
                 <div class="postbox">
                     <div class="postbox-header">
                         <h2><?php esc_html_e('System Information', 'lmb-core'); ?></h2>
@@ -900,99 +891,6 @@ class LMB_Enhanced_Admin {
                         </table>
                     </div>
                 </div>
-            </div>
-        </div>
-        <?php
-    }
-
-    /**
-     * Render points management page
-     */
-    public static function render_points_management() {
-        if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
-        }
-
-        $stats = LMB_Points::get_points_stats();
-        $leaderboard = LMB_Points::get_leaderboard(5);
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('User Points Management', 'lmb-core'); ?></h1>
-            <p><?php esc_html_e('Manage user points and view points statistics.', 'lmb-core'); ?></p>
-            
-            <div class="lmb-points-dashboard">
-                <div class="lmb-points-stats">
-                    <div class="lmb-stat-card">
-                        <h3><?php esc_html_e('Total Points', 'lmb-core'); ?></h3>
-                        <p class="lmb-stat-value"><?php echo number_format($stats['total_points']); ?></p>
-                    </div>
-                    <div class="lmb-stat-card">
-                        <h3><?php esc_html_e('Users with Points', 'lmb-core'); ?></h3>
-                        <p class="lmb-stat-value"><?php echo number_format($stats['total_users_with_points']); ?></p>
-                    </div>
-                    <div class="lmb-stat-card">
-                        <h3><?php esc_html_e('Avg. Balance', 'lmb-core'); ?></h3>
-                        <p class="lmb-stat-value"><?php echo number_format($stats['average_balance']); ?></p>
-                    </div>
-                </div>
-
-                <hr>
-
-                <h2><?php esc_html_e('Top 5 Users by Points', 'lmb-core'); ?></h2>
-                <table class="wp-list-table widefat striped">
-                    <thead>
-                        <tr>
-                            <th><?php esc_html_e('Rank', 'lmb-core'); ?></th>
-                            <th><?php esc_html_e('User', 'lmb-core'); ?></th>
-                            <th><?php esc_html_e('Points', 'lmb-core'); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($leaderboard)): ?>
-                            <tr><td colspan="3"><?php esc_html_e('No users with points found.', 'lmb-core'); ?></td></tr>
-                        <?php else: ?>
-                            <?php foreach ($leaderboard as $index => $user): ?>
-                                <tr>
-                                    <td><?php echo $index + 1; ?></td>
-                                    <td><a href="<?php echo esc_url(get_edit_user_link($user->ID)); ?>"><?php echo esc_html($user->display_name); ?></a></td>
-                                    <td><?php echo number_format(LMB_Points::get($user->ID)); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-
-                <hr>
-
-                <h2><?php esc_html_e('Manual Points Management', 'lmb-core'); ?></h2>
-                <p><?php esc_html_e('Find a user and adjust their points balance.', 'lmb-core'); ?></p>
-                <form method="post" action="">
-                    <?php wp_nonce_field('lmb_points_management_action', 'lmb_points_nonce'); ?>
-                    <table class="form-table">
-                        <tr>
-                            <th scope="row"><label for="user_id"><?php esc_html_e('User', 'lmb-core'); ?></label></th>
-                            <td>
-                                <input type="text" name="user_id" id="user_id" class="regular-text" placeholder="<?php esc_attr_e('Enter User ID, Email or Username', 'lmb-core'); ?>" required>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><label for="points_amount"><?php esc_html_e('Points Amount', 'lmb-core'); ?></label></th>
-                            <td>
-                                <input type="number" name="points_amount" id="points_amount" class="regular-text" required>
-                                <p class="description"><?php esc_html_e('Enter a positive number to add points, or a negative number to deduct.', 'lmb-core'); ?></p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><label for="points_reason"><?php esc_html_e('Reason', 'lmb-core'); ?></label></th>
-                            <td>
-                                <input type="text" name="points_reason" id="points_reason" class="regular-text" placeholder="<?php esc_attr_e('Reason for the change (e.g., Manual Adjustment)', 'lmb-core'); ?>">
-                            </td>
-                        </tr>
-                    </table>
-                    <p class="submit">
-                        <input type="submit" name="submit_points_change" id="submit" class="button button-primary" value="<?php esc_attr_e('Update Points', 'lmb-core'); ?>">
-                    </p>
-                </form>
             </div>
         </div>
         <?php
