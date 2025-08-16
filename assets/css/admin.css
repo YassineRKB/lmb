@@ -1,0 +1,380 @@
+/* LMB Core Admin Styles */
+
+/* Dashboard Metrics */
+.lmb-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.lmb-metric-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.lmb-metric-card.pending {
+    border-left: 4px solid #d63638;
+}
+
+.lmb-metric-card.success {
+    border-left: 4px solid #00a32a;
+}
+
+.lmb-metric-card.info {
+    border-left: 4px solid #0073aa;
+}
+
+.lmb-metric-icon {
+    font-size: 24px;
+    margin-right: 15px;
+    width: 40px;
+    text-align: center;
+}
+
+.lmb-metric-content h3 {
+    margin: 0 0 5px 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.lmb-metric-content p {
+    margin: 0;
+    color: #646970;
+    font-size: 14px;
+}
+
+.lmb-action-link {
+    display: inline-block;
+    margin-top: 8px;
+    color: #2271b1;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.lmb-action-link:hover {
+    color: #135e96;
+}
+
+/* Dashboard Layout */
+.lmb-dashboard-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.lmb-dashboard-col-8 {
+    flex: 0 0 66.666667%;
+}
+
+.lmb-dashboard-col-6 {
+    flex: 0 0 50%;
+}
+
+.lmb-dashboard-col-4 {
+    flex: 0 0 33.333333%;
+}
+
+.lmb-dashboard-widget {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.lmb-dashboard-widget h2 {
+    margin: 0;
+    padding: 15px 20px;
+    border-bottom: 1px solid #c3c4c7;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.lmb-dashboard-widget .inside {
+    padding: 20px;
+}
+
+/* Quick Actions */
+.lmb-quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lmb-quick-actions .button {
+    justify-content: space-between;
+    display: flex;
+    align-items: center;
+}
+
+.lmb-badge {
+    background: #d63638;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* System Health */
+.lmb-health-check {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.lmb-health-check:last-child {
+    border-bottom: none;
+}
+
+.lmb-health-icon {
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.lmb-health-label {
+    font-weight: 600;
+    margin-right: 10px;
+    min-width: 120px;
+}
+
+.lmb-health-message {
+    color: #646970;
+    font-size: 13px;
+}
+
+.lmb-status-good {
+    color: #00a32a;
+}
+
+.lmb-status-error {
+    color: #d63638;
+}
+
+/* Status Badges */
+.lmb-status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lmb-status-draft {
+    background: #f0f0f1;
+    color: #646970;
+}
+
+.lmb-status-pending {
+    background: #fcf9e8;
+    color: #996800;
+}
+
+.lmb-status-published {
+    background: #edfaef;
+    color: #00a32a;
+}
+
+.lmb-status-denied {
+    background: #fcf0f1;
+    color: #d63638;
+}
+
+/* Ad Type Badges */
+.lmb-ad-type-badge {
+    background: #e7f3ff;
+    color: #0073aa;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* Quick Actions Column */
+.lmb-quick-actions-column {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.lmb-quick-actions-column .button {
+    font-size: 11px;
+    padding: 2px 8px;
+    height: auto;
+    line-height: 1.4;
+}
+
+.lmb-quick-status-change {
+    font-size: 11px;
+    padding: 2px 4px;
+    height: auto;
+}
+
+/* Recent Ads Table */
+.lmb-recent-ads-table {
+    overflow-x: auto;
+}
+
+.lmb-quick-actions-inline {
+    display: flex;
+    gap: 5px;
+}
+
+.lmb-quick-actions-inline .button {
+    font-size: 11px;
+    padding: 2px 8px;
+    height: auto;
+}
+
+/* Payment Verification */
+.lmb-payment-verification .postbox {
+    margin-bottom: 20px;
+}
+
+.lmb-payment-upload {
+    max-width: 600px;
+}
+
+.lmb-payment-upload .form-group {
+    margin-bottom: 15px;
+}
+
+.lmb-payment-upload label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.lmb-payment-upload input,
+.lmb-payment-upload select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .lmb-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .lmb-dashboard-row {
+        flex-direction: column;
+    }
+    
+    .lmb-dashboard-col-8,
+    .lmb-dashboard-col-6,
+    .lmb-dashboard-col-4 {
+        flex: none;
+    }
+    
+    .lmb-metric-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .lmb-metric-icon {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .lmb-quick-actions-column {
+        flex-direction: column;
+    }
+    
+    .lmb-recent-ads-table table {
+        font-size: 12px;
+    }
+    
+    .lmb-recent-ads-table th,
+    .lmb-recent-ads-table td {
+        padding: 8px 4px;
+    }
+}
+
+/* Loading States */
+.lmb-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.lmb-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: lmb-spin 1s linear infinite;
+}
+
+@keyframes lmb-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Notices */
+.lmb-notice {
+    padding: 12px;
+    margin: 5px 0 15px;
+    border-left: 4px solid;
+    background: #fff;
+    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
+}
+
+.lmb-notice.notice-success {
+    border-left-color: #00a32a;
+}
+
+.lmb-notice.notice-error {
+    border-left-color: #d63638;
+}
+
+.lmb-notice.notice-warning {
+    border-left-color: #dba617;
+}
+
+.lmb-notice.notice-info {
+    border-left-color: #0073aa;
+}
+
+/* Form Validation */
+.lmb-field-error {
+    border-color: #d63638 !important;
+    box-shadow: 0 0 0 1px #d63638;
+}
+
+.lmb-error-message {
+    color: #d63638;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Charts Container */
+.lmb-chart-container {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+
+/* Maintenance Page */
+.lmb-system-status .lmb-health-check {
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}

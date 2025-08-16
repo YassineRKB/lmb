@@ -5,6 +5,8 @@ if (!defined('ABSPATH')) {
 
 class LMB_Points {
     const META_KEY = 'lmb_points_balance';
+    const TRANSACTION_CREDIT = 'credit';
+    const TRANSACTION_DEBIT = 'debit';
     
     /**
      * Initialize the points system
@@ -43,7 +45,7 @@ class LMB_Points {
         $new_balance = max(0, (int) $value);
         
         update_user_meta($user_id, self::META_KEY, $new_balance);
-        self::log($user_id, $new_balance - $old_balance, $reason, $old_balance, $new_balance);
+        self::create_ledger_entry($user_id, $new_balance - $old_balance, $reason, $old_balance, $new_balance);
         
         do_action('lmb_points_changed', $user_id, $new_balance, $new_balance - $old_balance, $reason);
         
@@ -58,15 +60,56 @@ class LMB_Points {
             return self::get($user_id);
         }
 
+        global $wpdb;
+        
+        $delta = (int) $delta;
         $old_balance = self::get($user_id);
-        $new_balance = max(0, $old_balance + (int) $delta);
+        $new_balance = max(0, $old_balance + $delta);
         
-        update_user_meta($user_id, self::META_KEY, $new_balance);
-        self::log($user_id, (int) $delta, $reason, $old_balance, $new_balance);
+        // Start transaction for data consistency
+        $wpdb->query('START TRANSACTION');
         
-        do_action('lmb_points_changed', $user_id, $new_balance, (int) $delta, $reason);
-        
-        return $new_balance;
+        try {
+            // Update user meta
+            $meta_updated = update_user_meta($user_id, self::META_KEY, $new_balance);
+            
+            if ($meta_updated === false) {
+                throw new Exception('Failed to update user points balance');
+            }
+            
+            // Log transaction to custom table
+            $log_result = $wpdb->insert(
+                $wpdb->prefix . 'lmb_points_transactions',
+                [
+                    'user_id' => $user_id,
+                    'amount' => $delta,
+                    'balance_before' => $old_balance,
+                    'balance_after' => $new_balance,
+                    'reason' => $reason,
+                    'transaction_type' => $delta > 0 ? self::TRANSACTION_CREDIT : self::TRANSACTION_DEBIT,
+                    'reference' => null
+                ],
+                ['%d', '%d', '%d', '%d', '%s', '%s', '%s']
+            );
+            
+            if ($log_result === false) {
+                throw new Exception('Failed to log points transaction');
+            }
+            
+            // Also create legacy ledger entry for backward compatibility
+            self::create_ledger_entry($user_id, $delta, $reason, $old_balance, $new_balance);
+            
+            $wpdb->query('COMMIT');
+            
+            do_action('lmb_points_changed', $user_id, $new_balance, $delta, $reason);
+            
+            return $new_balance;
+            
+        } catch (Exception $e) {
+            $wpdb->query('ROLLBACK');
+            LMB_Error_Handler::handle_points_error($e->getMessage(), $user_id, $delta, $reason);
+            return false;
+        }
     }
 
     /**
@@ -113,6 +156,25 @@ class LMB_Points {
      * Get points history for a user
      */
     public static function get_history($user_id, $limit = 50) {
+        // Try to get from custom table first
+        $transactions = self::get_transaction_history($user_id, $limit);
+        
+        if (!empty($transactions)) {
+            $history = [];
+            foreach ($transactions as $transaction) {
+                $history[] = [
+                    'date' => $transaction->created_at,
+                    'delta' => $transaction->amount,
+                    'reason' => $transaction->reason,
+                    'balance_after' => $transaction->balance_after,
+                    'balance_before' => $transaction->balance_before,
+                    'type' => $transaction->transaction_type
+                ];
+            }
+            return $history;
+        }
+        
+        // Fallback to legacy method
         $posts = get_posts([
             'post_type' => 'lmb_points_ledger',
             'posts_per_page' => $limit,
@@ -136,6 +198,7 @@ class LMB_Points {
                 'reason' => get_post_meta($post->ID, 'lmb_reason', true),
                 'balance_after' => get_post_meta($post->ID, 'lmb_balance', true),
                 'balance_before' => get_post_meta($post->ID, 'lmb_balance_before', true),
+                'type' => null // Legacy entries don't have type
             ];
         }
 
@@ -143,16 +206,9 @@ class LMB_Points {
     }
 
     /**
-     * Log points transaction
+     * Create legacy ledger entry for backward compatibility
      */
-    protected static function log($user_id, $delta, $reason, $old_balance = null, $new_balance = null) {
-        if ($old_balance === null) {
-            $old_balance = self::get($user_id) - $delta;
-        }
-        if ($new_balance === null) {
-            $new_balance = self::get($user_id);
-        }
-
+    private static function create_ledger_entry($user_id, $delta, $reason, $old_balance, $new_balance) {
         $user = get_userdata($user_id);
         $user_name = $user ? $user->display_name : 'Unknown User';
 
@@ -177,14 +233,107 @@ class LMB_Points {
     }
 
     /**
+     * Get points transaction history from custom table
+     */
+    public static function get_transaction_history($user_id, $limit = 50) {
+        global $wpdb;
+        
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}lmb_points_transactions 
+             WHERE user_id = %d 
+             ORDER BY created_at DESC 
+             LIMIT %d",
+            $user_id,
+            $limit
+        ));
+    }
+
+    /**
      * Get total points in the system
      */
     public static function get_total_points() {
         global $wpdb;
-        return (int) $wpdb->get_var(
-            "SELECT SUM(meta_value) FROM {$wpdb->usermeta} WHERE meta_key = %s",
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(CAST(meta_value AS SIGNED)) FROM {$wpdb->usermeta} WHERE meta_key = %s",
             self::META_KEY
-        );
+        ));
+    }
+    
+    /**
+     * Get points statistics
+     */
+    public static function get_points_stats() {
+        global $wpdb;
+        
+        $stats = [
+            'total_points' => self::get_total_points(),
+            'total_users_with_points' => 0,
+            'average_balance' => 0,
+            'total_transactions' => 0,
+            'points_distributed_today' => 0,
+            'points_spent_today' => 0
+        ];
+        
+        // Users with points
+        $stats['total_users_with_points'] = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = %s AND CAST(meta_value AS SIGNED) > 0",
+            self::META_KEY
+        ));
+        
+        // Average balance
+        if ($stats['total_users_with_points'] > 0) {
+            $stats['average_balance'] = round($stats['total_points'] / $stats['total_users_with_points'], 2);
+        }
+        
+        // Transaction stats (if custom table exists)
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}lmb_points_transactions'");
+        if ($table_exists) {
+            $stats['total_transactions'] = (int) $wpdb->get_var(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}lmb_points_transactions"
+            );
+            
+            $stats['points_distributed_today'] = (int) $wpdb->get_var(
+                "SELECT SUM(amount) FROM {$wpdb->prefix}lmb_points_transactions 
+                 WHERE transaction_type = 'credit' AND DATE(created_at) = CURDATE()"
+            );
+            
+            $stats['points_spent_today'] = abs((int) $wpdb->get_var(
+                "SELECT SUM(amount) FROM {$wpdb->prefix}lmb_points_transactions 
+                 WHERE transaction_type = 'debit' AND DATE(created_at) = CURDATE()"
+            ));
+        }
+        
+        return $stats;
+    }
+    
+    /**
+     * Bulk add points to multiple users
+     */
+    public static function bulk_add_points($user_ids, $points, $reason = 'Bulk points addition') {
+        $results = [];
+        foreach ($user_ids as $user_id) {
+            $result = self::add($user_id, $points, $reason);
+            $results[$user_id] = $result !== false ? $result : 'failed';
+        }
+        return $results;
+    }
+    
+    /**
+     * Get user's points rank
+     */
+    public static function get_user_rank($user_id) {
+        global $wpdb;
+        
+        $user_points = self::get($user_id);
+        
+        $rank = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) + 1 FROM {$wpdb->usermeta} 
+             WHERE meta_key = %s AND CAST(meta_value AS SIGNED) > %d",
+            self::META_KEY,
+            $user_points
+        ));
+        
+        return (int) $rank;
     }
 
     /**
@@ -240,17 +389,6 @@ class LMB_Points {
             $user_query->set('meta_key', self::META_KEY);
             $user_query->set('orderby', 'meta_value_num');
         }
-    }
-
-    /**
-     * Bulk operations for points
-     */
-    public static function bulk_add_points($user_ids, $points, $reason = 'Bulk points addition') {
-        $results = [];
-        foreach ($user_ids as $user_id) {
-            $results[$user_id] = self::add($user_id, $points, $reason);
-        }
-        return $results;
     }
 
     /**
