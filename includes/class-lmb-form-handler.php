@@ -22,17 +22,18 @@ class LMB_Form_Handler {
      * Initialize form handling with multiple hooks
      */
     public static function init() {
-        // Multiple Elementor Pro hooks for better compatibility
+        // Primary Elementor Pro hook
         add_action('elementor_pro/forms/new_record', [__CLASS__, 'handle_ad_submission'], 10, 2);
-        add_action('elementor_pro/forms/validation', [__CLASS__, 'validate_elementor_form'], 10, 2);
+        
+        // Alternative hooks for better compatibility
+        add_action('elementor_pro/forms/process', [__CLASS__, 'handle_elementor_form'], 10, 2);
         
         // AJAX fallback for direct form submissions
         add_action('wp_ajax_lmb_submit_ad', [__CLASS__, 'ajax_submit_ad']);
         add_action('wp_ajax_nopriv_lmb_submit_ad', [__CLASS__, 'ajax_submit_ad_logged_out']);
         
-        // Intercept Elementor AJAX submissions
-        add_action('wp_ajax_elementor_pro_forms_send_form', [__CLASS__, 'intercept_elementor_ajax'], 5);
-        add_action('wp_ajax_nopriv_elementor_pro_forms_send_form', [__CLASS__, 'intercept_elementor_ajax'], 5);
+        // Hook into WordPress form submissions as fallback
+        add_action('wp_loaded', [__CLASS__, 'maybe_process_form']);
         
         // Validation AJAX
         add_action('wp_ajax_lmb_validate_ad', [__CLASS__, 'ajax_validate_ad']);
@@ -44,61 +45,35 @@ class LMB_Form_Handler {
     }
 
     /**
-     * Intercept Elementor AJAX submissions to check for LMB forms
+     * Main entry point for form submissions
      */
-    public static function intercept_elementor_ajax() {
-        // Check if this is an LMB form by looking for our fields
-        if (!isset($_POST['form_fields']) || !is_array($_POST['form_fields'])) {
+    public static function maybe_process_form() {
+        if (!isset($_POST['lmb_form_submit']) || !isset($_POST['ad_type'])) {
             return;
         }
-        
-        $form_fields = $_POST['form_fields'];
-        
-        // Check if this is an LMB form
-        if (!isset($form_fields['ad_type']) || !isset($form_fields['full_text'])) {
-            return; // Not an LMB form, let Elementor handle it
+
+        // Verify nonce for security
+        if (!wp_verify_nonce($_POST['lmb_form_nonce'] ?? '', 'lmb_submit_ad_form')) {
+            wp_die(__('Security check failed.', 'lmb-core'));
         }
-        
+
         try {
-            // Process as LMB form
-            $result = self::process_ad_submission($form_fields);
+            $result = self::process_ad_submission($_POST);
             
             if (is_wp_error($result)) {
-                wp_send_json_error([
-                    'message' => $result->get_error_message(),
-                    'data' => []
-                ]);
+                // Store error for display
+                set_transient('lmb_form_error_' . session_id(), $result->get_error_message(), 300);
+                wp_redirect(wp_get_referer() . '#lmb-form-error');
             } else {
-                wp_send_json_success([
-                    'message' => __('Your legal ad has been submitted successfully and is now pending review.', 'lmb-core'),
-                    'data' => ['ad_id' => $result]
-                ]);
+                // Success - redirect with success message
+                set_transient('lmb_form_success_' . session_id(), __('Ad submitted successfully!', 'lmb-core'), 300);
+                wp_redirect(wp_get_referer() . '#lmb-form-success');
             }
+            exit;
             
         } catch (Exception $e) {
-            LMB_Error_Handler::handle_form_error($e->getMessage(), $form_fields);
-            wp_send_json_error([
-                'message' => __('An error occurred. Please try again.', 'lmb-core'),
-                'data' => []
-            ]);
-        }
-    }
-
-    /**
-     * Validate Elementor form before submission
-     */
-    public static function validate_elementor_form($record, $handler) {
-        $form_data = $record->get_formatted_data();
-        
-        // Only validate LMB forms
-        if (!isset($form_data['ad_type'])) {
-            return;
-        }
-        
-        try {
-            $validated_data = self::validate_and_sanitize($form_data);
-        } catch (Exception $e) {
-            $handler->add_error('validation_failed', $e->getMessage());
+            LMB_Error_Handler::log_error('Form processing exception: ' . $e->getMessage(), $_POST);
+            wp_die(__('An error occurred. Please try again.', 'lmb-core'));
         }
     }
 
@@ -128,9 +103,16 @@ class LMB_Form_Handler {
             ));
 
         } catch (Exception $e) {
-            LMB_Error_Handler::handle_form_error($e->getMessage(), $form_data);
+            LMB_Error_Handler::log_error('Elementor form error: ' . $e->getMessage(), $form_data);
             $handler->add_error('submission_failed', __('Submission failed. Please try again.', 'lmb-core'));
         }
+    }
+
+    /**
+     * Alternative Elementor form handler
+     */
+    public static function handle_elementor_form($record, $handler) {
+        return self::handle_ad_submission($record, $handler);
     }
 
     /**
@@ -228,7 +210,7 @@ class LMB_Form_Handler {
         }
 
         // Validate full_text
-        $full_text = wp_kses_post(trim($form_data['full_text'] ?? ''));
+        $full_text = wp_kses_post($form_data['full_text'] ?? '');
         $text_length = strlen(trim(strip_tags($full_text)));
         
         if (empty($full_text)) {
@@ -255,14 +237,6 @@ class LMB_Form_Handler {
             $sanitized['contact_phone'] = preg_replace('/[^0-9+\-\s\(\)]/', '', $form_data['contact_phone']);
         }
 
-        // Additional validation for specific ad types
-        if (!empty($sanitized['ad_type'])) {
-            $type_specific_validation = self::validate_ad_type_specific($sanitized['ad_type'], $form_data);
-            if (is_wp_error($type_specific_validation)) {
-                $errors[] = $type_specific_validation->get_error_message();
-            }
-        }
-
         if (!empty($errors)) {
             return new WP_Error('validation_failed', implode(' ', $errors));
         }
@@ -270,29 +244,6 @@ class LMB_Form_Handler {
         return $sanitized;
     }
 
-    /**
-     * Validate ad type specific requirements
-     */
-    private static function validate_ad_type_specific($ad_type, $form_data) {
-        // Add specific validation rules based on ad type
-        switch ($ad_type) {
-            case 'Constitution - SARL':
-            case 'Constitution - SARL AU':
-                // Could validate required fields for constitution
-                break;
-                
-            case 'Liquidation - definitive':
-            case 'Liquidation - anticipee':
-                // Could validate liquidation specific fields
-                break;
-                
-            default:
-                // Generic validation
-                break;
-        }
-        
-        return true;
-    }
     /**
      * Validate user permissions and handle points
      */
@@ -313,29 +264,30 @@ class LMB_Form_Handler {
         $is_staff = self::is_user_staff($user_id);
         $points_deducted = 0;
 
-        // Handle points for non-staff users
-        if (!$is_staff) {
-            $points_per_ad = (int) get_option('lmb_points_per_ad', 1);
-            
-            if ($points_per_ad > 0) {
-                $user_points = LMB_Points::get($user_id);
-                
-                if ($user_points < $points_per_ad) {
-                    return new WP_Error(
-                        'insufficient_points',
-                        sprintf(
-                            __('Insufficient points. You have %d points but need %d points to submit an ad.', 'lmb-core'),
-                            $user_points,
-                            $points_per_ad
-                        )
-                    );
-                }
-
-                // Deduct points
-                LMB_Points::deduct($user_id, $points_per_ad, 'Ad submission fee');
-                $points_deducted = $points_per_ad;
-            }
-        }
+        // **NOTE:** Point deduction on submission has been removed.
+        // It should be handled by the user's "Publish" button on their dashboard.
+        // if (!$is_staff) {
+        //     $points_per_ad = (int) get_option('lmb_points_per_ad', 1);
+        //     
+        //     if ($points_per_ad > 0) {
+        //         $user_points = LMB_Points::get($user_id);
+        //         
+        //         if ($user_points < $points_per_ad) {
+        //             return new WP_Error(
+        //                 'insufficient_points',
+        //                 sprintf(
+        //                     __('Insufficient points. You have %d points but need %d points to submit an ad.', 'lmb-core'),
+        //                     $user_points,
+        //                     $points_per_ad
+        //                 )
+        //             );
+        //         }
+        //
+        //         // Deduct points
+        //         LMB_Points::deduct($user_id, $points_per_ad, 'Ad submission fee');
+        //         $points_deducted = $points_per_ad;
+        //     }
+        // }
 
         return [
             'user_id' => $user_id,
@@ -352,7 +304,7 @@ class LMB_Form_Handler {
         $user = get_userdata($user_id);
         
         // Determine initial status
-        $initial_status = $is_staff ? 'published' : 'pending_review';
+        $initial_status = $is_staff ? 'pending_review' : 'draft';
         
         // Create post
         $post_data = [
@@ -413,8 +365,6 @@ class LMB_Form_Handler {
             }
         }
 
-        // Log form submission to custom table
-        self::log_form_submission($user_id, $post_id, $validated_data);
         if (!$acf_success) {
             LMB_Error_Handler::log_error('Some ACF fields failed to save', [
                 'post_id' => $post_id,
@@ -425,26 +375,6 @@ class LMB_Form_Handler {
         return $post_id;
     }
 
-    /**
-     * Log form submission to custom table
-     */
-    private static function log_form_submission($user_id, $post_id, $validated_data) {
-        global $wpdb;
-        
-        $wpdb->insert(
-            $wpdb->prefix . 'lmb_form_submissions',
-            [
-                'user_id' => $user_id,
-                'post_id' => $post_id,
-                'form_type' => $validated_data['ad_type'],
-                'submission_data' => wp_json_encode($validated_data),
-                'status' => 'submitted',
-                'ip_address' => self::get_client_ip(),
-                'user_agent' => sanitize_text_field($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown')
-            ],
-            ['%d', '%d', '%s', '%s', '%s', '%s', '%s']
-        );
-    }
     /**
      * Send notifications for new ad submission
      */
@@ -496,14 +426,28 @@ class LMB_Form_Handler {
      * Log submission for audit trail
      */
     private static function log_submission($post_id, $user_id, $validated_data) {
-        LMB_Error_Handler::log_error('Ad submission completed', [
+        $log_entry = [
+            'timestamp' => current_time('mysql'),
+            'action' => 'ad_submitted',
             'post_id' => $post_id,
             'user_id' => $user_id,
-            'ad_type' => $validated_data['ad_type'],
-            'text_length' => strlen(strip_tags($validated_data['full_text']))
-        ]);
+            'ip_address' => self::get_client_ip(),
+            'user_agent' => sanitize_text_field($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'),
+            'data' => wp_json_encode($validated_data)
+        ];
+
+        // Store in options (you might want to create a custom table for better performance)
+        $logs = get_option('lmb_submission_logs', []);
+        $logs[] = $log_entry;
         
-        do_action('lmb_ad_submitted', $post_id, $user_id, $validated_data);
+        // Keep only the last 1000 entries
+        if (count($logs) > 1000) {
+            $logs = array_slice($logs, -1000);
+        }
+        
+        update_option('lmb_submission_logs', $logs, false);
+
+        do_action('lmb_log_submission', $log_entry);
     }
 
     /**
@@ -677,6 +621,15 @@ class LMB_Form_Handler {
             // Update internal status to match post status
             $internal_status = ($new_status === 'publish') ? 'published' : $new_status;
             update_field('lmb_status', $internal_status, $post->ID);
+            
+            // Refund points if ad is denied and not already refunded
+            if ($internal_status === 'denied' && !get_post_meta($post->ID, '_lmb_points_refunded', true)) {
+                $points_per_ad = (int) get_option('lmb_points_per_ad', 1);
+                if ($points_per_ad > 0) {
+                    LMB_Points::add($client_id, $points_per_ad, 'Points refunded for denied ad');
+                    add_post_meta($post->ID, '_lmb_points_refunded', true, true);
+                }
+            }
             
             // Notify user of status change
             self::notify_status_change($post->ID, $client_id, $internal_status);
