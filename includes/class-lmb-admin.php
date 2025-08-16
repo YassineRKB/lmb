@@ -37,6 +37,9 @@ class LMB_Enhanced_Admin {
         add_action('wp_ajax_lmb_quick_status_change', [__CLASS__, 'ajax_quick_status_change']);
         add_action('wp_ajax_lmb_get_ad_stats', [__CLASS__, 'ajax_get_ad_stats']);
         add_action('wp_ajax_lmb_export_ads', [__CLASS__, 'ajax_export_ads']);
+        
+        // Handle the points update form submission
+        add_action('admin_post_lmb_update_points', [__CLASS__, 'handle_points_update']);
     }
 
     /**
@@ -376,7 +379,7 @@ class LMB_Enhanced_Admin {
                             <td><?php echo human_time_diff(strtotime($ad->post_date), current_time('timestamp')) . ' ' . __('ago', 'lmb-core'); ?></td>
                             <td>
                                 <div class="lmb-quick-actions-inline">
-                                    <button class="button button-small lmb-quick-approve" data-post-id="<?php echo $ad->ID; ?>">
+                                    <button class="button button-small button-primary lmb-quick-approve" data-post-id="<?php echo $ad->ID; ?>">
                                         <?php esc_html_e('Approve', 'lmb-core'); ?>
                                     </button>
                                     <a href="<?php echo get_edit_post_link($ad->ID); ?>" class="button button-small">
@@ -747,12 +750,12 @@ class LMB_Enhanced_Admin {
         wp_mail($client->user_email, $subject, $message);
 
         // Log the notification
-        LMB_Error_Handler::log_error('Status change notification sent', [
-            'post_id' => $post_id,
-            'client_id' => $client_id,
-            'new_status' => $new_status,
-            'admin_user' => get_current_user_id()
-        ]);
+        // LMB_Error_Handler::log_error('Status change notification sent', [
+        //     'post_id' => $post_id,
+        //     'client_id' => $client_id,
+        //     'new_status' => $new_status,
+        //     'admin_user' => get_current_user_id()
+        // ]);
     }
 
     /**
@@ -819,6 +822,107 @@ class LMB_Enhanced_Admin {
     }
 
     /**
+     * Render user points management page
+     */
+    public static function render_points_management() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
+        }
+        
+        $user_id = isset($_GET['user_id']) ? absint($_GET['user_id']) : 0;
+        $user = $user_id ? get_userdata($user_id) : null;
+        $current_points = $user ? get_user_meta($user->ID, 'lmb_points', true) : null;
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('User Points Management', 'lmb-core'); ?></h1>
+            <p><?php esc_html_e('Adjust user points and view their transaction history.', 'lmb-core'); ?></p>
+
+            <div class="postbox">
+                <div class="postbox-header">
+                    <h2><?php esc_html_e('Update User Points', 'lmb-core'); ?></h2>
+                </div>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="lmb_update_points">
+                    <?php wp_nonce_field('lmb_update_points_nonce'); ?>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><label for="user_email"><?php esc_html_e('User Email or ID', 'lmb-core'); ?></label></th>
+                            <td>
+                                <input type="text" name="user_email" id="user_email" class="regular-text" value="<?php echo $user ? esc_attr($user->user_email) : ''; ?>" required>
+                                <?php if ($user): ?>
+                                <p class="description"><strong><?php esc_html_e('Current Points:', 'lmb-core'); ?></strong> <?php echo number_format($current_points); ?></p>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="points_amount"><?php esc_html_e('Points Amount', 'lmb-core'); ?></label></th>
+                            <td>
+                                <input type="number" name="points_amount" id="points_amount" class="regular-text" required>
+                                <p class="description"><?php esc_html_e('Enter a positive number to add points, or a negative number to deduct.', 'lmb-core'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="points_reason"><?php esc_html_e('Reason', 'lmb-core'); ?></label></th>
+                            <td>
+                                <input type="text" name="points_reason" id="points_reason" class="regular-text" placeholder="<?php esc_attr_e('Reason for the change (e.g., Manual Adjustment)', 'lmb-core'); ?>">
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="submit">
+                        <input type="submit" name="submit_points_change" id="submit" class="button button-primary" value="<?php esc_attr_e('Update Points', 'lmb-core'); ?>">
+                    </p>
+                </form>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Handle the form submission for updating user points.
+     */
+    public static function handle_points_update() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to perform this action.', 'lmb-core'));
+        }
+
+        check_admin_referer('lmb_update_points_nonce');
+
+        $user_input = sanitize_text_field($_POST['user_email']);
+        $points_amount = intval($_POST['points_amount']);
+        $points_reason = sanitize_text_field($_POST['points_reason']);
+
+        if (is_email($user_input)) {
+            $user = get_user_by('email', $user_input);
+        } else {
+            $user = get_user_by('id', intval($user_input));
+        }
+
+        if (!$user) {
+            wp_die(__('User not found.', 'lmb-core'));
+        }
+
+        // Add or deduct points using the LMB_Points class
+        if (class_exists('LMB_Points')) {
+            $current_points = LMB_Points::get($user->ID);
+            $new_points = $current_points + $points_amount;
+            
+            // Log the transaction
+            LMB_Points::add_points($user->ID, $points_amount, $points_reason);
+            
+            $redirect_url = add_query_arg([
+                'page' => 'lmb-core-points',
+                'user_id' => $user->ID,
+                'points_updated' => 'true',
+                'new_balance' => $new_points
+            ], admin_url('admin.php'));
+            wp_redirect($redirect_url);
+            exit;
+        } else {
+            wp_die(__('LMB_Points class not found. Please ensure the plugin is fully active.', 'lmb-core'));
+        }
+    }
+    
+    /**
      * Render reports page
      */
     public static function render_reports() {
@@ -826,7 +930,7 @@ class LMB_Enhanced_Admin {
             wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
         }
 
-        $stats = LMB_Form_Handler::get_submission_stats();
+        // $stats = LMB_Form_Handler::get_submission_stats();
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('LMB Core Reports', 'lmb-core'); ?></h1>
@@ -837,19 +941,8 @@ class LMB_Enhanced_Admin {
                         <h2><?php esc_html_e('Submission Statistics', 'lmb-core'); ?></h2>
                     </div>
                     <div class="inside">
-                        <table class="widefat striped">
-                            <tr>
-                                <td><strong><?php esc_html_e('Total Submissions', 'lmb-core'); ?></strong></td>
-                                <td><?php echo number_format($stats['total_submissions']); ?></td>
-                            </tr>
-                            <?php foreach ($stats['by_status'] as $status => $count): ?>
-                            <tr>
-                                <td><strong><?php echo esc_html(ucfirst(str_replace('_', ' ', $status))); ?></strong></td>
-                                <td><?php echo number_format($count); ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </table>
-                    </div>
+                        <p>This is a placeholder for the reports section.</p>
+                        </div>
                 </div>
             </div>
         </div>
