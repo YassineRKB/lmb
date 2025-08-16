@@ -820,10 +820,10 @@ class LMB_Enhanced_Admin {
     /**
      * Render points management page
      */
-    public static function render_points_management() {
+    //public static function render_points_management() {
         // Include the existing points management page content
-        LMB_Enhanced_Admin::render_points();
-    }
+        //LMB_Enhanced_Admin::render_points();
+    //}
 
     /**
      * Render reports page
@@ -900,6 +900,99 @@ class LMB_Enhanced_Admin {
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render points management page
+     */
+    public static function render_points_management() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
+        }
+
+        $stats = LMB_Points::get_points_stats();
+        $leaderboard = LMB_Points::get_leaderboard(5);
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('User Points Management', 'lmb-core'); ?></h1>
+            <p><?php esc_html_e('Manage user points and view points statistics.', 'lmb-core'); ?></p>
+            
+            <div class="lmb-points-dashboard">
+                <div class="lmb-points-stats">
+                    <div class="lmb-stat-card">
+                        <h3><?php esc_html_e('Total Points', 'lmb-core'); ?></h3>
+                        <p class="lmb-stat-value"><?php echo number_format($stats['total_points']); ?></p>
+                    </div>
+                    <div class="lmb-stat-card">
+                        <h3><?php esc_html_e('Users with Points', 'lmb-core'); ?></h3>
+                        <p class="lmb-stat-value"><?php echo number_format($stats['total_users_with_points']); ?></p>
+                    </div>
+                    <div class="lmb-stat-card">
+                        <h3><?php esc_html_e('Avg. Balance', 'lmb-core'); ?></h3>
+                        <p class="lmb-stat-value"><?php echo number_format($stats['average_balance']); ?></p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h2><?php esc_html_e('Top 5 Users by Points', 'lmb-core'); ?></h2>
+                <table class="wp-list-table widefat striped">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Rank', 'lmb-core'); ?></th>
+                            <th><?php esc_html_e('User', 'lmb-core'); ?></th>
+                            <th><?php esc_html_e('Points', 'lmb-core'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($leaderboard)): ?>
+                            <tr><td colspan="3"><?php esc_html_e('No users with points found.', 'lmb-core'); ?></td></tr>
+                        <?php else: ?>
+                            <?php foreach ($leaderboard as $index => $user): ?>
+                                <tr>
+                                    <td><?php echo $index + 1; ?></td>
+                                    <td><a href="<?php echo esc_url(get_edit_user_link($user->ID)); ?>"><?php echo esc_html($user->display_name); ?></a></td>
+                                    <td><?php echo number_format(LMB_Points::get($user->ID)); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+
+                <hr>
+
+                <h2><?php esc_html_e('Manual Points Management', 'lmb-core'); ?></h2>
+                <p><?php esc_html_e('Find a user and adjust their points balance.', 'lmb-core'); ?></p>
+                <form method="post" action="">
+                    <?php wp_nonce_field('lmb_points_management_action', 'lmb_points_nonce'); ?>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><label for="user_id"><?php esc_html_e('User', 'lmb-core'); ?></label></th>
+                            <td>
+                                <input type="text" name="user_id" id="user_id" class="regular-text" placeholder="<?php esc_attr_e('Enter User ID, Email or Username', 'lmb-core'); ?>" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="points_amount"><?php esc_html_e('Points Amount', 'lmb-core'); ?></label></th>
+                            <td>
+                                <input type="number" name="points_amount" id="points_amount" class="regular-text" required>
+                                <p class="description"><?php esc_html_e('Enter a positive number to add points, or a negative number to deduct.', 'lmb-core'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="points_reason"><?php esc_html_e('Reason', 'lmb-core'); ?></label></th>
+                            <td>
+                                <input type="text" name="points_reason" id="points_reason" class="regular-text" placeholder="<?php esc_attr_e('Reason for the change (e.g., Manual Adjustment)', 'lmb-core'); ?>">
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="submit">
+                        <input type="submit" name="submit_points_change" id="submit" class="button button-primary" value="<?php esc_attr_e('Update Points', 'lmb-core'); ?>">
+                    </p>
+                </form>
             </div>
         </div>
         <?php
