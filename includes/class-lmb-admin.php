@@ -814,7 +814,7 @@ class LMB_Enhanced_Admin {
      */
     public static function render_settings() {
         // Include the existing settings page content
-        LMB_Admin::render_settings();
+        LMB_Enhanced_Admin::render_settings();
     }
 
     /**
@@ -822,7 +822,7 @@ class LMB_Enhanced_Admin {
      */
     public static function render_points_management() {
         // Include the existing points management page content
-        LMB_Admin::render_points();
+        LMB_Enhanced_Admin::render_points();
     }
 
     /**
