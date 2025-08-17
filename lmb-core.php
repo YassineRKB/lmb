@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core (auth, CPTs, points, invoices, payments, PDFs, directories, dashboards).
- * Version: 2.0.0
+ * Version: 2.1.0
  * Author: LMB
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -11,7 +11,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('LMB_CORE_VERSION', '2.0.0');
+define('LMB_CORE_VERSION', '2.1.0');
 define('LMB_CORE_FILE', __FILE__);
 define('LMB_CORE_PATH', plugin_dir_path(__FILE__));
 define('LMB_CORE_URL',  plugin_dir_url(__FILE__));
@@ -36,7 +36,7 @@ register_activation_hook(__FILE__, function () {
     LMB_CPT::init();
     LMB_User::create_custom_roles();
     LMB_Database_Manager::create_custom_tables();
-    flush_rewrite_rules(); // Crucial for CPTs to work correctly on activation
+    flush_rewrite_rules();
     
     // Default settings
     add_option('lmb_bank_name', 'Your Bank Name');
@@ -62,6 +62,7 @@ add_action('plugins_loaded', function(){
     LMB_User_Dashboard::init();
     LMB_Database_Manager::init();
     LMB_Error_Handler::init();
+    LMB_Invoice_Handler::init(); // Initialize the invoice handler for AJAX
     new LMB_User();
 });
 
@@ -69,6 +70,12 @@ add_action('plugins_loaded', function(){
 add_action('wp_enqueue_scripts', function(){
     wp_enqueue_style('lmb-core', LMB_CORE_URL.'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
     wp_enqueue_script('lmb-core', LMB_CORE_URL.'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
+
+    // Pass data to our script
+    wp_localize_script('lmb-core', 'lmbAjax', [
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce'   => wp_create_nonce('lmb_frontend_ajax_nonce'),
+    ]);
     
     // Load Chart.js only when the chart shortcode is present
     global $post;

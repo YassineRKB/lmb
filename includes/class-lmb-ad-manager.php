@@ -12,6 +12,27 @@ class LMB_Ad_Manager {
         // Admin list table customizations
         add_filter('manage_lmb_legal_ad_posts_columns', [__CLASS__, 'set_custom_columns']);
         add_action('manage_lmb_legal_ad_posts_custom_column', [__CLASS__, 'render_custom_columns'], 10, 2);
+        add_action('wp_ajax_lmb_submit_for_review', [__CLASS__, 'ajax_user_submit_for_review']);
+    }
+
+    public static function ajax_user_submit_for_review() {
+        check_ajax_referer('lmb_frontend_ajax_nonce', 'nonce');
+
+        if (!is_user_logged_in() || !isset($_POST['ad_id'])) {
+            wp_send_json_error(['message' => 'Invalid request.']);
+        }
+        
+        $ad_id = intval($_POST['ad_id']);
+        $ad = get_post($ad_id);
+
+        if (!$ad || $ad->post_type !== 'lmb_legal_ad' || $ad->post_author != get_current_user_id()) {
+            wp_send_json_error(['message' => 'Permission denied.']);
+        }
+
+        update_post_meta($ad_id, 'lmb_status', 'pending_review');
+        self::log_activity(sprintf('Ad #%d submitted for review by %s via AJAX.', $ad_id, wp_get_current_user()->display_name));
+        
+        wp_send_json_success();
     }
 
     public static function set_custom_columns($columns) {

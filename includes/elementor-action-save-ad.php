@@ -29,21 +29,16 @@ class LMB_Save_Ad_Action extends \ElementorPro\Modules\Forms\Classes\Action_Base
 
         try {
             LMB_Form_Handler::create_legal_ad($processed_fields);
-            // Optionally, redirect on success
-            // $redirect_url = $record->get_form_settings('redirect_to');
-            // if ($redirect_url) {
-            //     $ajax_handler->add_response_data('redirect_url', $redirect_url);
-            // }
         } catch (Exception $e) {
             $ajax_handler->add_error_message('Error: ' . $e->getMessage());
         }
     }
 
     public function register_settings_section($widget) {
-        // You can add settings here if needed, but for now, it's automatic.
+        // No settings needed for this action
     }
 
     public function on_export($element) {
-        // Not needed
+        // No export handling needed
     }
 }

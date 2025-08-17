@@ -15,11 +15,6 @@ class LMB_Subscribe_Package_Widget extends Widget_Base {
             return;
         }
 
-        // Handle invoice generation
-        if (isset($_GET['lmb_get_invoice'], $_GET['pkg_id']) && wp_verify_nonce($_GET['_wpnonce'] ?? '', 'lmb_get_invoice_nonce')) {
-            $this->generate_invoice_for_user();
-        }
-
         $packages = get_posts(['post_type'=>'lmb_package','post_status'=>'publish','numberposts'=>-1, 'orderby' => 'meta_value_num', 'meta_key' => 'price', 'order' => 'ASC']);
         
         if (!$packages) {
@@ -32,12 +27,6 @@ class LMB_Subscribe_Package_Widget extends Widget_Base {
             $price = get_post_meta($p->ID, 'price', true);
             $points = get_post_meta($p->ID, 'points', true);
             $ad_cost = get_post_meta($p->ID, 'cost_per_ad', true);
-            
-            $url = add_query_arg([
-                'lmb_get_invoice' => 1,
-                'pkg_id' => $p->ID,
-                '_wpnonce' => wp_create_nonce('lmb_get_invoice_nonce')
-            ], get_permalink());
 
             echo '<div class="lmb-package-item">';
                 echo '<h3 class="lmb-package-title">'.esc_html($p->post_title).'</h3>';
@@ -48,32 +37,11 @@ class LMB_Subscribe_Package_Widget extends Widget_Base {
                     echo '<li><strong>'.esc_html($ad_cost).'</strong> Points Per Ad</li>';
                 echo '</ul>';
                 echo '<div class="lmb-package-action">';
-                    echo '<a class="lmb-btn lmb-btn-primary" href="'.esc_url($url).'">'.esc_html__('Get Invoice','lmb-core').'</a>';
+                    // This button now has a class and data-attribute for our AJAX script to target
+                    echo '<button class="lmb-btn lmb-btn-primary lmb-get-invoice-btn" data-pkg-id="'.esc_attr($p->ID).'">'.esc_html__('Get Invoice','lmb-core').'</button>';
                 echo '</div>';
             echo '</div>';
         }
         echo '</div>';
-    }
-    
-    private function generate_invoice_for_user() {
-        $pkg_id = (int) $_GET['pkg_id'];
-        $package = get_post($pkg_id);
-        if (!$package || $package->post_type !== 'lmb_package') return;
-
-        $price = get_post_meta($pkg_id, 'price', true);
-        $details = $package->post_content;
-        $ref  = 'LMB-'.get_current_user_id().'-'.time();
-        
-        // Generate the PDF and get its URL
-        $pdf_url = LMB_Invoice_Handler::create_package_invoice(get_current_user_id(), $pkg_id, $price, $details, $ref);
-
-        // Force download the generated PDF
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="invoice-'.$ref.'.pdf"');
-        header('Cache-Control: must-revalidate');
-        header('Pragma: public');
-        readfile(str_replace(site_url('/'), ABSPATH, $pdf_url));
-        exit;
     }
 }

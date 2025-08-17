@@ -1,23 +1,35 @@
 /* LMB Core Frontend Styles */
-.lmb-pricing-table { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
-.lmb-package-item { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; text-align: center; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
-.lmb-package-title { font-size: 20px; font-weight: 600; margin-top: 0; }
-.lmb-package-price { font-size: 42px; font-weight: 700; color: #0073aa; margin: 15px 0; }
-.lmb-package-price span { font-size: 20px; vertical-align: super; }
-.lmb-package-description { color: #666; margin-bottom: 20px; }
-.lmb-package-features { list-style: none; padding: 0; margin: 20px 0; }
-.lmb-package-features li { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
-.lmb-package-action { margin-top: 25px; }
-.lmb-btn { background: #0073aa; color: #fff; text-decoration: none; padding: 12px 30px; border-radius: 5px; display: inline-block; font-weight: 500; transition: background .3s ease; }
-.lmb-btn:hover { background: #005a87; color: #fff; }
+.lmb-directory-container { max-width: 1140px; margin: 0 auto; }
+.lmb-filters-form { display: flex; gap: 15px; margin-bottom: 30px; }
+.lmb-filters-form input, .lmb-filters-form select { padding: 10px 15px; border: 1px solid #ddd; border-radius: 5px; flex-grow: 1; }
+.lmb-filters-form button { background: #0073aa; color: #fff; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; }
 
-.lmb-notice { padding: 15px 20px; border-radius: 5px; margin: 20px 0; border-left: 5px solid; }
-.lmb-notice-error { background-color: #f8d7da; border-color: #d63638; color: #721c24; }
-.lmb-notice-success { background-color: #d4edda; border-color: #28a745; color: #155724; }
+/* Ads & News Grids */
+.lmb-ads-grid, .lmb-news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
+.lmb-ad-card, .lmb-news-card { background: #fff; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.07); overflow: hidden; transition: all .3s ease; }
+.lmb-ad-card:hover, .lmb-news-card:hover { transform: translateY(-5px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+.lmb-ad-card-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #f9f9f9; border-bottom: 1px solid #eee; }
+.lmb-ad-type-badge { background: #e7f3ff; color: #005a87; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.lmb-ad-date { font-size: 13px; color: #777; }
+.lmb-ad-title { font-size: 18px; padding: 0 20px; margin: 15px 0; }
+.lmb-ad-excerpt { padding: 0 20px; color: #555; font-size: 15px; margin-bottom: 20px; }
+.lmb-ad-card .lmb-btn { margin: 0 20px 20px; }
 
-/* User Stats Widget */
-.lmb-user-stats-widget .lmb-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-.lmb-user-stats-widget .lmb-stat-card { background: #fff; padding: 20px; text-align: center; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-.lmb-user-stats-widget .lmb-stat-number { font-size: 28px; font-weight: 600; color: #0073aa; }
-.lmb-user-stats-widget .lmb-stat-label { color: #666; font-size: 14px; }
-.lmb-user-ads-list { margin-top: 40px; }
+.lmb-news-thumbnail img { display: block; width: 100%; height: auto; }
+.lmb-news-content { padding: 20px; }
+.lmb-news-title { font-size: 18px; margin-top: 0; }
+.lmb-news-meta { color: #777; margin-bottom: 15px; }
+
+/* User Dashboard Ads List */
+.lmb-user-ads-list .lmb-user-ad-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #ccc; }
+.lmb-user-ad-item.status-draft { border-color: #777; }
+.lmb-user-ad-item.status-pending_review { border-color: #ffb900; }
+.lmb-user-ad-item.status-published { border-color: #4ab866; }
+.lmb-user-ad-item.status-denied { border-color: #d63638; background: #fff5f5; }
+.lmb-ad-status { display: block; font-size: 11px; text-transform: uppercase; color: #777; font-weight: 600; margin-bottom: 5px; }
+.lmb-ad-title { font-size: 16px; margin: 0; font-weight: 600; }
+.lmb-ad-meta { font-size: 13px; color: #777; }
+.lmb-ad-reason { font-size: 13px; margin-top: 5px; color: #d63638; }
+.lmb-btn-sm { font-size: 13px; padding: 8px 15px; }
+
+.lmb-pagination { margin-top: 40px; text-align: center; }

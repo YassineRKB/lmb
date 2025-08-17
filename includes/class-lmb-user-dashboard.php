@@ -109,23 +109,59 @@ class LMB_User_Dashboard {
         return ob_get_clean();
     }
 
-    // Ad List Shortcode
+    // Ad List Shortcode (Redesigned)
     public static function render_user_ads_list() {
-        if (!is_user_logged_in()) return '<p>'.esc_html__('Login required.','lmb-core').'</p>';
-        $q = new WP_Query(['post_type' => 'lmb_legal_ad', 'author' => get_current_user_id(), 'post_status' => ['draft', 'pending_review', 'publish', 'denied'], 'posts_per_page' => 10]);
+        if (!is_user_logged_in()) return '<p>'.esc_html__('Login required.', 'lmb-core').'</p>';
+        
+        $user_id = get_current_user_id();
+        $q = new WP_Query([
+            'post_type' => 'lmb_legal_ad',
+            'author' => $user_id,
+            'post_status' => ['draft', 'pending_review', 'publish', 'denied'],
+            'posts_per_page' => 10,
+        ]);
         
         ob_start();
-        echo '<h3>'.esc_html__('Your Recent Legal Ads','lmb-core').'</h3>';
-        if (!$q->have_posts()) {
-            echo '<p>'.esc_html__('You have not submitted any ads yet.','lmb-core').'</p>';
-        } else {
-            echo '<div class="lmb-ads-list">';
-            while($q->have_posts()){ $q->the_post();
-                $status = get_post_meta(get_the_ID(), 'lmb_status', true);
-                echo '<div class="lmb-ad-item"><div class="lmb-ad-header"><h4>'.esc_html(get_the_title()).'</h4><span class="lmb-status-badge lmb-status-'.esc_attr(str_replace('_', '-', $status)).'">'.esc_html(ucwords(str_replace('_', ' ', $status))).'</span></div></div>';
-            }
-            echo '</div>';
-        }
+        ?>
+        <div class="lmb-user-ads-list-wrapper">
+            <h3><?php esc_html_e('Your Recent Legal Ads', 'lmb-core'); ?></h3>
+            <?php if (!$q->have_posts()): ?>
+                <p><?php esc_html_e('You have not submitted any ads yet.', 'lmb-core'); ?></p>
+            <?php else: ?>
+                <div class="lmb-user-ads-list">
+                    <?php while($q->have_posts()): $q->the_post();
+                        $status = get_post_meta(get_the_ID(), 'lmb_status', true);
+                        ?>
+                        <div class="lmb-user-ad-item status-<?php echo esc_attr($status); ?>">
+                            <div class="lmb-ad-info">
+                                <span class="lmb-ad-status"><?php echo esc_html(str_replace('_', ' ', $status)); ?></span>
+                                <h4 class="lmb-ad-title"><?php the_title(); ?></h4>
+                                <div class="lmb-ad-meta"><?php echo get_the_date(); ?></div>
+                                <?php if($status === 'denied'): ?>
+                                    <div class="lmb-ad-reason"><strong><?php _e('Reason:', 'lmb-core'); ?></strong> <?php echo esc_html(get_post_meta(get_the_ID(), 'denial_reason', true)); ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="lmb-ad-actions">
+                                <?php if ($status === 'draft'): ?>
+                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                        <input type="hidden" name="action" value="lmb_user_publish_ad" />
+                                        <input type="hidden" name="ad_id" value="<?php echo get_the_ID(); ?>" />
+                                        <?php wp_nonce_field('lmb_user_publish_ad'); ?>
+                                        <button type="submit" class="lmb-btn-sm"><?php _e('Submit for Review', 'lmb-core'); ?></button>
+                                    </form>
+                                <?php elseif ($status === 'published'): 
+                                    $pdf_url = get_post_meta(get_the_ID(), 'ad_pdf_url', true);
+                                    if ($pdf_url): ?>
+                                        <a href="<?php echo esc_url($pdf_url); ?>" target="_blank" class="lmb-btn-sm lmb-btn-secondary"><?php _e('Download PDF', 'lmb-core'); ?></a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endwhile; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php
         wp_reset_postdata();
         return ob_get_clean();
     }

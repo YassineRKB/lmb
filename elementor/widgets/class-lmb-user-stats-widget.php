@@ -10,7 +10,7 @@ class LMB_User_Stats_Widget extends Widget_Base {
     public function get_categories(){ return ['lmb-widgets']; }
 
     protected function render() {
-        // The shortcode [lmb_user_stats] will execute this exact same function.
-        echo LMB_User_Dashboard::render_user_stats();
+        // This widget simply renders the content from the main shortcode
+        echo do_shortcode('[lmb_user_stats]');
     }
 }
