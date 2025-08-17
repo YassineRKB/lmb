@@ -1,135 +1,101 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
-    exit; // Exit if accessed directly.
-}
+if (!defined('ABSPATH')) exit;
 
 class LMB_Ad_Manager {
-
-    protected static $_instance = null;
-
-    public static function instance() {
-        if ( is_null( self::$_instance ) ) {
-            self::$_instance = new self();
-        }
-        return self::$_instance;
+    public static function init() {
+        // user clicks "Publish" from dashboard → set status pending_review
+        add_action('admin_post_lmb_user_publish_ad', [__CLASS__, 'user_publish_ad']);
+        // admin actions
+        add_action('admin_post_lmb_admin_accept_ad', [__CLASS__, 'admin_accept_ad']);
+        add_action('admin_post_lmb_admin_deny_ad',   [__CLASS__, 'admin_deny_ad']);
+        // columns for admin list
+        add_filter('manage_lmb_legal_ad_posts_columns', [__CLASS__, 'cols']);
+        add_action('manage_lmb_legal_ad_posts_custom_column', [__CLASS__, 'col_content'], 10, 2);
     }
 
-    public function __construct() {
-        // Add a new column to the Legal Ads list in the admin.
-        add_filter( 'manage_lmb_legal_ad_posts_columns', array( $this, 'add_custom_columns' ) );
-        add_action( 'manage_lmb_legal_ad_posts_custom_column', array( $this, 'display_custom_columns' ), 10, 2 );
-
-        // Admin-side hooks for PDF upload.
-        add_action( 'admin_menu', array( $this, 'add_admin_menu_pages' ) );
-        add_action( 'admin_post_lmb_upload_newspaper', array( $this, 'handle_newspaper_upload' ) );
+    public static function cols($cols) {
+        $cols['ad_owner'] = __('Owner', 'lmb-core');
+        $cols['status']   = __('Status', 'lmb-core');
+        return $cols;
     }
-
-    // Add 'Status' and 'Client' columns to the admin list.
-    public function add_custom_columns( $columns ) {
-        $new_columns = array();
-        $new_columns['ad_status'] = __( 'Status', 'lmb-core' );
-        $new_columns['ad_client'] = __( 'Client', 'lmb-core' );
-        return array_merge( $columns, $new_columns );
-    }
-
-    // Display data in the new custom columns.
-    public function display_custom_columns( $column, $post_id ) {
-        switch ( $column ) {
-            case 'ad_status':
-                $status = get_field( 'lmb_status', $post_id );
-                echo esc_html( $status );
-                break;
-            case 'ad_client':
-                $user_id = get_field( 'lmb_client_id', $post_id );
-                if ( $user_id ) {
-                    $user_info = get_userdata( $user_id );
-                    echo '<a href="' . esc_url( get_edit_user_link( $user_id ) ) . '">' . esc_html( $user_info->display_name ) . '</a>';
-                }
-                break;
+    public static function col_content($col, $post_id) {
+        if ($col === 'ad_owner') {
+            $u = get_userdata((int) get_post_meta($post_id, 'ad_owner', true));
+            echo $u ? esc_html($u->user_login) : '-';
+        } elseif ($col === 'status') {
+            echo esc_html(get_post_status_object(get_post_status($post_id))->label ?? get_post_status($post_id));
         }
     }
 
-    // Add 'Newspaper Upload' to the admin menu.
-    public function add_admin_menu_pages() {
-        add_submenu_page(
-            'edit.php?post_type=lmb_legal_ad',
-            'Upload Newspaper',
-            'Upload Newspaper',
-            'edit_posts',
-            'lmb-newspaper-upload',
-            array( $this, 'render_newspaper_upload_page' )
-        );
+    /** User requests publication → pending_review */
+    public static function user_publish_ad() {
+        if (!is_user_logged_in()) wp_die('Auth required.');
+        check_admin_referer('lmb_user_publish_ad');
+
+        $ad_id = isset($_POST['ad_id']) ? (int) $_POST['ad_id'] : 0;
+        $owner = (int) get_post_meta($ad_id, 'ad_owner', true);
+        if (!$ad_id || $owner !== get_current_user_id()) wp_die('Invalid ad.');
+
+        wp_update_post(['ID' => $ad_id, 'post_status' => 'pending_review']);
+        wp_safe_redirect(add_query_arg(['ad_pending' => 1], home_url('/dashboard')));
+        exit;
     }
 
-    // Render the HTML for the newspaper upload page.
-    public function render_newspaper_upload_page() {
-        if ( ! current_user_can( 'edit_posts' ) ) {
-            return;
+    /** Admin accepts: publish, deduct points, generate PDFs */
+    public static function admin_accept_ad() {
+        if (!current_user_can('edit_others_posts')) wp_die('No permission.');
+        check_admin_referer('lmb_admin_accept_ad');
+
+        $ad_id  = (int) ($_POST['ad_id'] ?? 0);
+        $owner  = (int) get_post_meta($ad_id, 'ad_owner', true);
+        if (!$ad_id || !$owner) wp_die('Invalid ad.');
+
+        $cost = LMB_Points::get_cost_per_ad($owner);
+        if ($cost <= 0) $cost = (int) get_option('lmb_default_cost_per_ad', 1);
+
+        if (!LMB_Points::deduct($owner, $cost)) {
+            wp_safe_redirect(add_query_arg(['ad_accept_failed' => 'insufficient_points'], wp_get_referer()));
+            exit;
         }
-        ?>
-        <div class="wrap">
-            <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-            <form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" enctype="multipart/form-data">
-                <input type="hidden" name="action" value="lmb_upload_newspaper">
-                <?php wp_nonce_field( 'lmb_upload_newspaper_nonce', 'lmb_upload_newspaper_nonce_field' ); ?>
-                <table class="form-table">
-                    <tr>
-                        <th scope="row"><label for="newspaper_pdf">Newspaper PDF</label></th>
-                        <td><input type="file" name="newspaper_pdf" id="newspaper_pdf" required></td>
-                    </tr>
-                </table>
-                <?php submit_button( 'Upload PDF' ); ?>
-            </form>
-        </div>
-        <?php
+
+        // publish
+        wp_update_post(['ID' => $ad_id, 'post_status' => 'publish']);
+
+        // PDFs
+        $ad_pdf = LMB_PDF_Generator::create_ad_pdf_from_fulltext($ad_id);
+        update_post_meta($ad_id, 'ad_pdf_url', esc_url_raw($ad_pdf));
+
+        $bal = LMB_Points::get_balance($owner);
+        $invoice_pdf = LMB_Invoice_Handler::create_ad_publication_invoice($owner, $ad_id, $cost, $bal);
+        update_post_meta($ad_id, 'ad_invoice_pdf_url', esc_url_raw($invoice_pdf));
+
+        // Activity log
+        self::log_activity(sprintf('Ad #%d accepted & published by %s. Cost %d points.', $ad_id, wp_get_current_user()->user_login, $cost));
+
+        wp_safe_redirect(add_query_arg(['ad_published' => 1], wp_get_referer()));
+        exit;
     }
 
-    // Handle the form submission for newspaper upload.
-    public function handle_newspaper_upload() {
-        if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_die( 'You do not have permission to perform this action.' );
-        }
+    /** Admin denies → lmb_denied */
+    public static function admin_deny_ad() {
+        if (!current_user_can('edit_others_posts')) wp_die('No permission.');
+        check_admin_referer('lmb_admin_deny_ad');
 
-        if ( ! isset( $_POST['lmb_upload_newspaper_nonce_field'] ) || ! wp_verify_nonce( $_POST['lmb_upload_newspaper_nonce_field'], 'lmb_upload_newspaper_nonce' ) ) {
-            wp_die( 'Nonce verification failed.' );
-        }
-        
-        if ( empty( $_FILES['newspaper_pdf'] ) ) {
-            wp_die( 'No file was uploaded.' );
-        }
+        $ad_id  = (int) ($_POST['ad_id'] ?? 0);
+        if (!$ad_id) wp_die('Invalid ad.');
+        wp_update_post(['ID' => $ad_id, 'post_status' => 'lmb_denied']);
 
-        $upload_dir = wp_upload_dir();
-        $file = $_FILES['newspaper_pdf'];
+        self::log_activity(sprintf('Ad #%d denied by %s.', $ad_id, wp_get_current_user()->user_login));
 
-        $file_name = sanitize_file_name( $file['name'] );
-        $file_path = $upload_dir['path'] . '/' . $file_name;
-
-        if ( move_uploaded_file( $file['tmp_name'], $file_path ) ) {
-            $attachment_id = wp_insert_attachment( array(
-                'guid'           => $upload_dir['url'] . '/' . $file_name,
-                'post_mime_type' => $file['type'],
-                'post_title'     => preg_replace( '/\.[^.]+$/', '', $file_name ),
-                'post_content'   => '',
-                'post_status'    => 'inherit',
-            ), $file_path );
-
-            if ( ! is_wp_error( $attachment_id ) ) {
-                // Create a new post to represent the newspaper.
-                $post_id = wp_insert_post( array(
-                    'post_title'  => 'Newspaper: ' . $file_name,
-                    'post_status' => 'publish',
-                    'post_type'   => 'lmb_newspaper', // You will need to register this CPT in lmb-core.php.
-                ) );
-
-                if ( ! is_wp_error( $post_id ) ) {
-                    update_field( 'newspaper_pdf', $attachment_id, $post_id );
-                    wp_redirect( admin_url( 'edit.php?post_type=lmb_legal_ad&page=lmb-newspaper-upload&upload=success' ) );
-                    exit;
-                }
-            }
-        }
-        wp_die( 'An error occurred during file upload.' );
+        wp_safe_redirect(add_query_arg(['ad_denied' => 1], wp_get_referer()));
+        exit;
     }
 
+    public static function log_activity($msg) {
+        $log = get_option('lmb_activity_log', []);
+        if (!is_array($log)) $log = [];
+        array_unshift($log, ['time'=> current_time('mysql'), 'msg'=> sanitize_text_field($msg), 'user'=> get_current_user_id()]);
+        $log = array_slice($log, 0, 200);
+        update_option('lmb_activity_log', $log);
+    }
 }
-LMB_Ad_Manager::instance();
