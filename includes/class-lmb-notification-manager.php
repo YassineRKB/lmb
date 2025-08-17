@@ -46,7 +46,7 @@ class LMB_Notification_Manager {
     /**
      * Notify user when their ad is denied
      */
-    public static function notify_ad_denied($user_id, $ad_id) {
+    public static function notify_ad_denied($user_id, $ad_id, $reason) {
         $user = get_userdata($user_id);
         if (!$user) return;
         
@@ -54,9 +54,10 @@ class LMB_Notification_Manager {
         $subject = sprintf(__('Your legal ad "%s" has been denied', 'lmb-core'), $ad_title);
         
         $message = sprintf(
-            __('Hello %s,<br><br>Unfortunately, your legal ad "%s" has been denied.<br><br>Please contact us for more information or to resubmit with corrections.<br><br>Best regards,<br>LMB Team', 'lmb-core'),
+            __('Hello %s,<br><br>Unfortunately, your legal ad "%s" has been denied for the following reason: %s<br><br>Please contact us for more information or to resubmit with corrections.<br><br>Best regards,<br>LMB Team', 'lmb-core'),
             $user->display_name,
-            $ad_title
+            $ad_title,
+            $reason
         );
         
         self::send_email($user->user_email, $subject, $message);
@@ -87,7 +88,7 @@ class LMB_Notification_Manager {
      */
     public static function notify_points_change($user_id, $new_balance, $amount_changed, $reason) {
         // Only notify for significant changes (not small deductions)
-        if (abs($amount_changed) < 10) return;
+        if (abs($amount_changed) < 10 && strpos($reason, 'publication') === false) return;
         
         $user = get_userdata($user_id);
         if (!$user) return;
@@ -107,26 +108,6 @@ class LMB_Notification_Manager {
         );
         
         self::send_email($user->user_email, $subject, $message);
-    }
-    
-    /**
-     * Notify admin of new user registration
-     */
-    public static function notify_new_user($user_id) {
-        $user = get_userdata($user_id);
-        if (!$user) return;
-        
-        $subject = sprintf(__('New user registration: %s', 'lmb-core'), $user->display_name);
-        
-        $message = sprintf(
-            __('A new user has registered:<br><br>Name: %s<br>Email: %s<br>Registration Date: %s<br><br>View user: %s', 'lmb-core'),
-            $user->display_name,
-            $user->user_email,
-            $user->user_registered,
-            admin_url('user-edit.php?user_id=' . $user_id)
-        );
-        
-        self::notify_admin($subject, $message);
     }
     
     /**
