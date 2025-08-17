@@ -4,68 +4,64 @@ if (!defined('ABSPATH')) exit;
 class LMB_CPT {
     public static function init() {
         add_action('init', [__CLASS__, 'register']);
-        add_action('init', [__CLASS__, 'register_statuses']);
+        // No need to register statuses here, as we can use meta fields for more flexibility.
     }
 
     public static function register() {
         // Legal Ad
         register_post_type('lmb_legal_ad', [
-            'label' => __('Legal Ads', 'lmb-core'),
+            'labels' => ['name' => __('Legal Ads', 'lmb-core'), 'singular_name' => __('Legal Ad', 'lmb-core')],
             'public' => true,
-            'publicly_queryable' => true,
+            'publicly_queryable' => true, // This is crucial for single views
             'show_ui' => true,
-            'has_archive' => 'announces',
-            'supports' => ['title'],
-            'menu_icon' => 'dashicons-media-text',
             'show_in_menu' => 'lmb-core',
-            'rewrite' => ['slug' => 'announces'],
+            'has_archive' => 'announces',
+            'rewrite' => ['slug' => 'announces', 'with_front' => false], // Important for clean URLs
+            'supports' => ['title', 'author'],
+            'menu_icon' => 'dashicons-media-text',
         ]);
 
         // Newspaper
         register_post_type('lmb_newspaper', [
-            'label' => __('Newspapers', 'lmb-core'),
+            'labels' => ['name' => __('Newspapers', 'lmb-core'), 'singular_name' => __('Newspaper', 'lmb-core')],
             'public' => true,
+            'publicly_queryable' => true,
+            'show_ui' => true,
+            'show_in_menu' => 'lmb-core',
             'has_archive' => 'journaux',
+            'rewrite' => ['slug' => 'journaux', 'with_front' => false],
             'supports' => ['title', 'editor', 'thumbnail'],
             'menu_icon' => 'dashicons-media-document',
-            'rewrite' => ['slug' => 'journaux'],
-            'show_in_menu' => 'lmb-core',
         ]);
 
         // Payment
         register_post_type('lmb_payment', [
-            'label' => __('Payments', 'lmb-core'),
-            'public' => false,
+            'labels' => ['name' => __('Payments', 'lmb-core'), 'singular_name' => __('Payment', 'lmb-core')],
+            'public' => false, // Not for public viewing
             'show_ui' => true,
+            'show_in_menu' => 'lmb-core',
             'supports' => ['title'],
             'menu_icon' => 'dashicons-money-alt',
-            'show_in_menu' => 'lmb-core',
+            'capabilities' => ['create_posts' => 'do_not_allow'], // Prevent manual creation
+            'map_meta_cap' => true,
         ]);
 
         // Package
         register_post_type('lmb_package', [
-            'label' => __('Packages', 'lmb-core'),
+            'labels' => ['name' => __('Packages', 'lmb-core'), 'singular_name' => __('Package', 'lmb-core')],
             'public' => false,
             'show_ui' => true,
-            'supports' => ['title', 'editor'],
-            'menu_icon' => 'dashicons-admin-generic',
             'show_in_menu' => 'lmb-core',
+            'supports' => ['title', 'editor'],
+            'menu_icon' => 'dashicons-products',
         ]);
         
         // Add meta boxes
         add_action('add_meta_boxes', [__CLASS__, 'add_meta_boxes']);
-        add_action('save_post', [__CLASS__, 'save_package_meta']);
+        add_action('save_post_lmb_package', [__CLASS__, 'save_package_meta']);
     }
     
     public static function add_meta_boxes() {
-        add_meta_box(
-            'lmb_ad_actions',
-            __('Ad Actions', 'lmb-core'),
-            [__CLASS__, 'render_ad_actions_metabox'],
-            'lmb_legal_ad',
-            'side',
-            'high'
-        );
         add_meta_box(
             'lmb_package_details',
             __('Package Details', 'lmb-core'),
@@ -75,34 +71,6 @@ class LMB_CPT {
             'high'
         );
     }
-    
-    public static function render_ad_actions_metabox($post) {
-        $status = get_post_meta($post->ID, 'lmb_status', true);
-        $client_id = get_post_meta($post->ID, 'lmb_client_id', true);
-        $client = get_userdata($client_id);
-        
-        echo '<div class="lmb-ad-actions">';
-        echo '<p><strong>Client:</strong> ' . ($client ? esc_html($client->display_name) : 'Unknown') . '</p>';
-        echo '<p><strong>Status:</strong> ' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</p>';
-        
-        if ($status === 'pending_review' && current_user_can('edit_others_posts')) {
-            wp_nonce_field('lmb_admin_ad_action', '_lmb_nonce');
-            echo '<button class="button button-primary lmb-quick-approve" data-post-id="' . $post->ID . '">Approve & Publish</button>';
-            echo '<button class="button lmb-quick-deny" data-post-id="' . $post->ID . '">Deny</button>';
-        }
-        
-        $pdf_url = get_post_meta($post->ID, 'ad_pdf_url', true);
-        if ($pdf_url) {
-            echo '<p><a href="' . esc_url($pdf_url) . '" target="_blank" class="button">Download Ad PDF</a></p>';
-        }
-        
-        $invoice_url = get_post_meta($post->ID, 'ad_invoice_pdf_url', true);
-        if ($invoice_url) {
-            echo '<p><a href="' . esc_url($invoice_url) . '" target="_blank" class="button">Download Invoice</a></p>';
-        }
-        
-        echo '</div>';
-    }
 
     public static function render_package_metabox($post) {
         wp_nonce_field('lmb_save_package_meta', 'lmb_package_nonce');
@@ -110,60 +78,33 @@ class LMB_CPT {
         $points = get_post_meta($post->ID, 'points', true);
         $cost_per_ad = get_post_meta($post->ID, 'cost_per_ad', true);
         ?>
-        <p>
-            <label for="lmb_package_price"><?php _e('Price (MAD)', 'lmb-core'); ?></label>
-            <input type="number" id="lmb_package_price" name="lmb_package_price" value="<?php echo esc_attr($price); ?>" />
-        </p>
-        <p>
-            <label for="lmb_package_points"><?php _e('Points', 'lmb-core'); ?></label>
-            <input type="number" id="lmb_package_points" name="lmb_package_points" value="<?php echo esc_attr($points); ?>" />
-        </p>
-        <p>
-            <label for="lmb_package_cost_per_ad"><?php _e('Cost per Ad', 'lmb-core'); ?></label>
-            <input type="number" id="lmb_package_cost_per_ad" name="lmb_package_cost_per_ad" value="<?php echo esc_attr($cost_per_ad); ?>" />
-        </p>
+        <table class="form-table">
+            <tr>
+                <th><label for="lmb_package_price"><?php _e('Price (MAD)', 'lmb-core'); ?></label></th>
+                <td><input type="number" step="0.01" id="lmb_package_price" name="price" value="<?php echo esc_attr($price); ?>" class="regular-text" /></td>
+            </tr>
+            <tr>
+                <th><label for="lmb_package_points"><?php _e('Points Awarded', 'lmb-core'); ?></label></th>
+                <td><input type="number" id="lmb_package_points" name="points" value="<?php echo esc_attr($points); ?>" class="regular-text" /></td>
+            </tr>
+            <tr>
+                <th><label for="lmb_package_cost_per_ad"><?php _e('New Cost Per Ad (Points)', 'lmb-core'); ?></label></th>
+                <td><input type="number" id="lmb_package_cost_per_ad" name="cost_per_ad" value="<?php echo esc_attr($cost_per_ad); ?>" class="regular-text" /></td>
+            </tr>
+        </table>
         <?php
     }
 
     public static function save_package_meta($post_id) {
-        if (!isset($_POST['lmb_package_nonce']) || !wp_verify_nonce($_POST['lmb_package_nonce'], 'lmb_save_package_meta')) {
-            return;
-        }
-        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-            return;
-        }
-        if (!current_user_can('edit_post', $post_id)) {
-            return;
-        }
+        if (!isset($_POST['lmb_package_nonce']) || !wp_verify_nonce($_POST['lmb_package_nonce'], 'lmb_save_package_meta')) return;
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+        if (!current_user_can('edit_post', $post_id)) return;
 
-        if (isset($_POST['lmb_package_price'])) {
-            update_post_meta($post_id, 'price', sanitize_text_field($_POST['lmb_package_price']));
+        $fields = ['price', 'points', 'cost_per_ad'];
+        foreach ($fields as $field) {
+            if (isset($_POST[$field])) {
+                update_post_meta($post_id, $field, sanitize_text_field($_POST[$field]));
+            }
         }
-        if (isset($_POST['lmb_package_points'])) {
-            update_post_meta($post_id, 'points', sanitize_text_field($_POST['lmb_package_points']));
-        }
-        if (isset($_POST['lmb_package_cost_per_ad'])) {
-            update_post_meta($post_id, 'cost_per_ad', sanitize_text_field($_POST['lmb_package_cost_per_ad']));
-        }
-    }
-
-    public static function register_statuses() {
-        register_post_status('pending_review', [
-            'label'                     => _x('Pending Review', 'post', 'lmb-core'),
-            'public'                    => false,
-            'internal'                  => true,
-            'show_in_admin_all_list'    => true,
-            'show_in_admin_status_list' => true,
-            'label_count'               => _n_noop('Pending Review <span class="count">(%s)</span>', 'Pending Review <span class="count">(%s)</span>'),
-        ]);
-
-        register_post_status('denied', [
-            'label'                     => _x('Denied', 'post', 'lmb-core'),
-            'public'                    => false,
-            'internal'                  => true,
-            'show_in_admin_all_list'    => true,
-            'show_in_admin_status_list' => true,
-            'label_count'               => _n_noop('Denied <span class="count">(%s)</span>', 'Denied <span class="count">(%s)</span>'),
-        ]);
     }
 }
