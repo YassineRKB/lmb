@@ -99,7 +99,12 @@ add_action('admin_enqueue_scripts', function($hook) {
         wp_localize_script('lmb-admin', 'lmbAdmin', [
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('lmb_admin_nonce'),
-            'strings' => [ /* ... */ ]
+            'strings' => [
+                'confirm_status_change' => __('Are you sure you want to change the status?', 'lmb-core'),
+                'status_changed' => __('Status changed successfully.', 'lmb-core'),
+                'error_occurred' => __('An error occurred. Please try again.', 'lmb-core'),
+                'confirm_bulk_action' => __('Are you sure you want to perform this bulk action?', 'lmb-core'),
+            ]
         ]);
     }
     
@@ -108,7 +113,13 @@ add_action('admin_enqueue_scripts', function($hook) {
         wp_localize_script('lmb-payment-verifier', 'lmbPaymentVerifier', [
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('lmb_payment_verifier'),
-            'strings' => [ /* ... */ ]
+            'strings' => [
+                'confirm_verify' => __('Are you sure you want to verify this payment?', 'lmb-core'),
+                'confirm_reject' => __('Are you sure you want to reject this payment?', 'lmb-core'),
+                'verified' => __('Payment verified!', 'lmb-core'),
+                'rejected' => __('Payment rejected.', 'lmb-core'),
+                'error' => __('An error occurred. Please try again.', 'lmb-core'),
+            ]
         ]);
     }
 });
