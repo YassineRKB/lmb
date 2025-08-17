@@ -1,92 +1,70 @@
 <?php
-if (!defined('ABSPATH')) { exit; }
+if (!defined('ABSPATH')) exit;
 
 class LMB_CPT {
+    public static function init() {
+        add_action('init', [__CLASS__, 'register']);
+        add_action('init', [__CLASS__, 'register_statuses']);
+    }
+
     public static function register() {
         // Legal Ad
-        register_post_type('legal_ad', [
-            'labels' => [
-                'name' => __('Legal Ads','lmb-core'),
-                'singular_name' => __('Legal Ad','lmb-core'),
-            ],
+        register_post_type('lmb_legal_ad', [
+            'label' => __('Legal Ads', 'lmb-core'),
             'public' => false,
             'show_ui' => true,
-            'supports' => ['title','editor','author','custom-fields'],
-            'capability_type' => 'post',
-            'map_meta_cap' => true,
+            'supports' => ['title'],
             'menu_icon' => 'dashicons-media-text',
+            'show_in_menu' => 'lmb-core',
         ]);
 
         // Newspaper
-        register_post_type('newspaper', [
-            'labels' => [
-                'name' => __('Newspapers','lmb-core'),
-                'singular_name' => __('Newspaper','lmb-core'),
-            ],
+        register_post_type('lmb_newspaper', [
+            'label' => __('Newspapers', 'lmb-core'),
             'public' => true,
             'has_archive' => true,
-            'show_ui' => true,
-            'supports' => ['title','editor','thumbnail','custom-fields'],
+            'supports' => ['title'],
             'menu_icon' => 'dashicons-media-document',
+            'rewrite' => ['slug' => 'journaux'],
+            'show_in_menu' => 'lmb-core',
         ]);
 
-        // Package (admin-defined)
+        // Payment (Bank proof + subscriptions)
+        register_post_type('lmb_payment', [
+            'label' => __('Payments', 'lmb-core'),
+            'public' => false,
+            'show_ui' => true,
+            'supports' => ['title'],
+            'menu_icon' => 'dashicons-money-alt',
+            'show_in_menu' => 'lmb-core',
+        ]);
+
+        // Package (for subscriptions)
         register_post_type('lmb_package', [
-            'labels' => [
-                'name' => __('Packages','lmb-core'),
-                'singular_name' => __('Package','lmb-core'),
-            ],
+            'label' => __('Packages', 'lmb-core'),
             'public' => false,
             'show_ui' => true,
-            'supports' => ['title','editor','custom-fields'],
-            'menu_icon' => 'dashicons-products',
-        ]);
-
-        // Order (user subscription intent; proof + verification)
-        register_post_type('lmb_order', [
-            'labels' => [
-                'name' => __('Orders','lmb-core'),
-                'singular_name' => __('Order','lmb-core'),
-            ],
-            'public' => false,
-            'show_ui' => true,
-            'supports' => ['title','author','custom-fields'],
-            'menu_icon' => 'dashicons-clipboard',
+            'supports' => ['title', 'editor'],
+            'menu_icon' => 'dashicons-admin-generic',
+            'show_in_menu' => 'lmb-core',
         ]);
     }
 
     public static function register_statuses() {
-        register_post_status('pending_admin', [
-            'label' => _x('Pending Admin','Status','lmb-core'),
-            'public' => false,
-            'internal' => true,
-            'protected' => true,
-            'label_count' => _n_noop('Pending Admin (%s)','Pending Admin (%s)')
+        register_post_status('pending_review', [
+            'label'                     => _x('Pending Review', 'post', 'lmb-core'),
+            'public'                    => false,
+            'internal'                  => true,
+            'show_in_admin_all_list'    => true,
+            'show_in_admin_status_list' => true,
         ]);
 
-        register_post_status('denied', [
-            'label' => _x('Denied','Status','lmb-core'),
-            'public' => false,
-            'internal' => true,
-            'protected' => true,
-            'label_count' => _n_noop('Denied (%s)','Denied (%s)')
-        ]);
-
-        // Orders
-        register_post_status('proof_submitted', [
-            'label' => _x('Proof Submitted','Status','lmb-core'),
-            'public' => false,
-            'internal' => true,
-            'protected' => true,
-            'label_count' => _n_noop('Proof Submitted (%s)','Proof Submitted (%s)')
-        ]);
-
-        register_post_status('paid_verified', [
-            'label' => _x('Paid & Verified','Status','lmb-core'),
-            'public' => false,
-            'internal' => true,
-            'protected' => true,
-            'label_count' => _n_noop('Paid & Verified (%s)','Paid & Verified (%s)')
+        register_post_status('lmb_denied', [
+            'label'                     => _x('Denied', 'post', 'lmb-core'),
+            'public'                    => false,
+            'internal'                  => true,
+            'show_in_admin_all_list'    => true,
+            'show_in_admin_status_list' => true,
         ]);
     }
 }
