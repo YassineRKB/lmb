@@ -60,7 +60,6 @@ add_action('plugins_loaded', function(){
     LMB_Payment_Verifier::init();
     LMB_Admin::init();
     LMB_User_Dashboard::init();
-    // LMB_Notification_Manager::init(); // <-- THIS LINE IS REMOVED
     LMB_Database_Manager::init();
     LMB_Error_Handler::init();
     new LMB_User();
