@@ -3,84 +3,129 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Payment_Verifier {
     public static function init() {
-        // user proof upload
-        add_action('admin_post_lmb_upload_bank_proof', [__CLASS__, 'upload_proof']);
-        // admin validate
-        add_action('admin_post_lmb_admin_validate_payment', [__CLASS__, 'admin_validate_payment']);
-        // columns
-        add_filter('manage_lmb_payment_posts_columns', [__CLASS__, 'cols']);
-        add_action('manage_lmb_payment_posts_custom_column', [__CLASS__, 'col_content'], 10, 2);
+        // Admin AJAX actions for verifying/rejecting payments
+        add_action('wp_ajax_lmb_verify_payment', [__CLASS__, 'ajax_verify_payment']);
+        add_action('wp_ajax_lmb_reject_payment', [__CLASS__, 'ajax_reject_payment']);
+        
+        // Admin list customization
+        add_filter('manage_lmb_payment_posts_columns', [__CLASS__, 'set_custom_edit_columns']);
+        add_action('manage_lmb_payment_posts_custom_column', [__CLASS__, 'custom_column_content'], 10, 2);
     }
 
-    public static function cols($cols) {
-        $cols['payer']   = __('Payer', 'lmb-core');
-        $cols['package'] = __('Package', 'lmb-core');
-        $cols['status']  = __('Status', 'lmb-core');
-        return $cols;
-    }
-    public static function col_content($col, $post_id) {
-        if ($col==='payer')   echo esc_html(get_post_meta($post_id, 'user_id', true) ?: '-');
-        if ($col==='package') echo esc_html(get_post_meta($post_id, 'package_id', true) ?: '-');
-        if ($col==='status')  echo esc_html(get_post_meta($post_id, 'payment_status', true) ?: 'pending');
-    }
-
-    /** User uploads bank transfer proof (creates lmb_payment post). */
-    public static function upload_proof() {
-        if (!is_user_logged_in()) wp_die('Auth required.');
-        check_admin_referer('lmb_upload_bank_proof');
-
-        $user_id   = get_current_user_id();
-        $package_id= (int) ($_POST['package_id'] ?? 0);
-        $notes     = sanitize_text_field(wp_unslash($_POST['notes'] ?? ''));
-
-        if (empty($_FILES['proof_file']['name'])) wp_die('No file.');
-
-        $att_id = media_handle_upload('proof_file', 0);
-        if (is_wp_error($att_id)) wp_die($att_id->get_error_message());
-
-        $pay_id = wp_insert_post([
-            'post_type'   => 'lmb_payment',
-            'post_title'  => 'Payment proof by user '.$user_id,
-            'post_status' => 'publish',
-            'meta_input'  => [
-                'user_id'        => $user_id,
-                'package_id'     => $package_id,
-                'proof_attach_id'=> $att_id,
-                'payment_status' => 'pending',
-                'notes'          => $notes,
-            ]
-        ], true);
-
-        if (is_wp_error($pay_id)) wp_die($pay_id->get_error_message());
-
-        LMB_Ad_Manager::log_activity('Payment proof uploaded by user '.$user_id.' for package '.$package_id);
-
-        wp_safe_redirect(add_query_arg(['proof_uploaded'=>1], home_url('/dashboard')));
-        exit;
+    public static function set_custom_edit_columns($columns) {
+        unset($columns['date']);
+        $columns['payer'] = __('Client', 'lmb-core');
+        $columns['package'] = __('Package', 'lmb-core');
+        $columns['proof'] = __('Proof', 'lmb-core');
+        $columns['status'] = __('Status', 'lmb-core');
+        $columns['actions'] = __('Actions', 'lmb-core');
+        $columns['date'] = __('Date', 'lmb-core');
+        return $columns;
     }
 
-    /** Admin validates a payment → assign package values to user (points + ad cost). */
-    public static function admin_validate_payment() {
-        if (!current_user_can('edit_others_posts')) wp_die('No permission.');
-        check_admin_referer('lmb_admin_validate_payment');
+    public static function custom_column_content($col, $post_id) {
+        switch ($col) {
+            case 'payer':
+                $user_id = get_post_meta($post_id, 'user_id', true);
+                $user = get_userdata($user_id);
+                echo $user ? esc_html($user->display_name) : 'N/A';
+                break;
+            case 'package':
+                $package_id = get_post_meta($post_id, 'package_id', true);
+                echo $package_id ? esc_html(get_the_title($package_id)) : 'N/A';
+                break;
+            case 'proof':
+                $attachment_id = get_post_meta($post_id, 'proof_attachment_id', true);
+                $url = wp_get_attachment_url($attachment_id);
+                if ($url) {
+                    echo '<a href="'.esc_url($url).'" target="_blank" class="button button-small">View Proof</a>';
+                } else {
+                    echo '—';
+                }
+                break;
+            case 'status':
+                $status = get_post_meta($post_id, 'payment_status', true);
+                $badge_class = 'lmb-status-' . esc_attr($status);
+                echo '<span class="lmb-status-badge ' . $badge_class . '">' . esc_html(ucfirst($status)) . '</span>';
+                break;
+            case 'actions':
+                $status = get_post_meta($post_id, 'payment_status', true);
+                if ($status === 'pending') {
+                    echo '<button class="button button-primary button-small lmb-verify-payment" data-payment-id="' . $post_id . '">Verify</button>';
+                    echo '<button class="button button-small lmb-reject-payment" data-payment-id="' . $post_id . '">Reject</button>';
+                } else {
+                    echo '—';
+                }
+                break;
+        }
+    }
 
-        $pay_id = (int) ($_POST['payment_id'] ?? 0);
-        $status = sanitize_text_field($_POST['new_status'] ?? 'approved');
-        $points = (int) ($_POST['points'] ?? 0);
-        $cost   = (int) ($_POST['cost_per_ad'] ?? 0);
-
-        $user_id = (int) get_post_meta($pay_id, 'user_id', true);
-
-        update_post_meta($pay_id, 'payment_status', $status);
-        if ($status === 'approved' && $user_id) {
-            if ($points > 0) LMB_Points::add($user_id, $points);
-            if ($cost >= 0)  LMB_Points::set_cost_per_ad($user_id, $cost);
-            LMB_Ad_Manager::log_activity('Payment #'.$pay_id.' approved. User '.$user_id.' +'.$points.' points, cost/ad '.$cost.'.');
-        } else {
-            LMB_Ad_Manager::log_activity('Payment #'.$pay_id.' updated status = '.$status.'.');
+    public static function ajax_verify_payment() {
+        check_ajax_referer('lmb_payment_verifier', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Permission denied.']);
+        }
+        
+        $payment_id = isset($_POST['payment_id']) ? intval($_POST['payment_id']) : 0;
+        if (!$payment_id) {
+            wp_send_json_error(['message' => 'Invalid Payment ID.']);
         }
 
-        wp_safe_redirect(add_query_arg(['payment_updated'=>1], wp_get_referer()));
-        exit;
+        $user_id = (int) get_post_meta($payment_id, 'user_id', true);
+        $package_id = (int) get_post_meta($payment_id, 'package_id', true);
+
+        if (!$user_id || !$package_id) {
+            wp_send_json_error(['message' => 'User or Package ID missing from payment record.']);
+        }
+
+        $points_to_add = (int) get_post_meta($package_id, 'points', true);
+        $cost_per_ad = (int) get_post_meta($package_id, 'cost_per_ad', true);
+
+        // Add points and set new cost per ad
+        LMB_Points::add($user_id, $points_to_add, 'Package purchase: ' . get_the_title($package_id));
+        LMB_Points::set_cost_per_ad($user_id, $cost_per_ad);
+        
+        // Update payment status
+        update_post_meta($payment_id, 'payment_status', 'approved');
+
+        LMB_Ad_Manager::log_activity(sprintf(
+            'Payment #%d approved by %s. Assigned %d points and %d cost/ad to user #%d.',
+            $payment_id, wp_get_current_user()->display_name, $points_to_add, $cost_per_ad, $user_id
+        ));
+        
+        // Notify user
+        LMB_Notification_Manager::notify_payment_verified($user_id, $package_id, $points_to_add);
+        
+        wp_send_json_success([
+            'message' => 'Payment verified successfully!',
+            'points_added' => $points_to_add
+        ]);
+    }
+    
+    public static function ajax_reject_payment() {
+        check_ajax_referer('lmb_payment_verifier', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Permission denied.']);
+        }
+        
+        $payment_id = isset($_POST['payment_id']) ? intval($_POST['payment_id']) : 0;
+        if (!$payment_id) {
+            wp_send_json_error(['message' => 'Invalid Payment ID.']);
+        }
+        
+        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : 'No reason provided.';
+        
+        update_post_meta($payment_id, 'payment_status', 'rejected');
+        update_post_meta($payment_id, 'rejection_reason', $reason);
+
+        LMB_Ad_Manager::log_activity(sprintf(
+            'Payment #%d rejected by %s. Reason: %s',
+            $payment_id, wp_get_current_user()->display_name, $reason
+        ));
+        
+        // Optionally, notify the user of rejection
+        // LMB_Notification_Manager::notify_payment_rejected($user_id, $reason);
+        
+        wp_send_json_success(['message' => 'Payment rejected.']);
     }
 }
