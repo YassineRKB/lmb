@@ -116,5 +116,3 @@ class LMB_User {
         <?php
     }
 }
-
-new LMB_User(); // This line is crucial to kick off the class.
