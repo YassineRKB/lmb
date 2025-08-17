@@ -34,8 +34,8 @@ class LMB_User_Dashboard {
         
         echo '<div class="lmb-ads-list">';
         while($q->have_posts()){ $q->the_post();
-            $status = get_field('lmb_status', get_the_ID());
-            $ad_type = get_field('ad_type', get_the_ID());
+            $status = get_post_meta(get_the_ID(), 'lmb_status', true);
+            $ad_type = get_post_meta(get_the_ID(), 'ad_type', true);
             
             echo '<div class="lmb-ad-item">';
             echo '<div class="lmb-ad-header">';
@@ -51,13 +51,13 @@ class LMB_User_Dashboard {
             echo '<div class="lmb-ad-actions">';
             if ($status === 'draft') {
                 echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'" class="lmb-inline-form">';
-                wp_nonce_field('lmb_user_publish_ad');
+                wp_nonce_field('lmb_user_publish_ad', '_wpnonce');
                 echo '<input type="hidden" name="action" value="lmb_user_publish_ad" />';
                 echo '<input type="hidden" name="ad_id" value="'.get_the_ID().'" />';
                 echo '<button type="submit" class="lmb-btn lmb-btn-primary">'.esc_html__('Submit for Review','lmb-core').'</button>';
                 echo '</form>';
             } else {
-                $pdf = get_field('ad_pdf_url', get_the_ID());
+                $pdf = get_post_meta(get_the_ID(), 'ad_pdf_url', true);
                 if ($pdf) {
                     echo '<a class="lmb-btn lmb-btn-secondary" target="_blank" href="'.esc_url($pdf).'">'.esc_html__('Download PDF','lmb-core').'</a>';
                 }
@@ -73,27 +73,6 @@ class LMB_User_Dashboard {
         echo '</div>';
         wp_reset_postdata();
         echo '</div>';
-        
-        // Add styles
-        echo '<style>
-        .lmb-user-ads { margin: 20px 0; }
-        .lmb-ads-list { display: flex; flex-direction: column; gap: 15px; }
-        .lmb-ad-item { border: 1px solid #ddd; border-radius: 8px; padding: 20px; background: white; }
-        .lmb-ad-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .lmb-ad-header h4 { margin: 0; }
-        .lmb-status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
-        .lmb-status-draft { background: #f0f0f1; color: #646970; }
-        .lmb-status-pending-review { background: #fcf9e8; color: #996800; }
-        .lmb-status-published { background: #edfaef; color: #00a32a; }
-        .lmb-status-denied { background: #fcf0f1; color: #d63638; }
-        .lmb-ad-meta { display: flex; gap: 15px; margin-bottom: 15px; color: #666; font-size: 14px; }
-        .lmb-ad-actions { display: flex; gap: 10px; }
-        .lmb-btn { padding: 8px 16px; border: none; border-radius: 4px; text-decoration: none; cursor: pointer; font-size: 14px; }
-        .lmb-btn-primary { background: #0073aa; color: white; }
-        .lmb-btn-secondary { background: #f0f0f1; color: #646970; }
-        .lmb-btn:hover { opacity: 0.8; }
-        .lmb-inline-form { display: inline; }
-        </style>';
         
         return ob_get_clean();
     }
@@ -142,24 +121,6 @@ class LMB_User_Dashboard {
         }
         
         echo '</div>';
-        
-        // Add styles
-        echo '<style>
-        .lmb-user-points { margin: 20px 0; }
-        .lmb-points-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-        .lmb-points-balance, .lmb-points-cost { text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: white; }
-        .lmb-points-label { display: block; color: #666; font-size: 14px; margin-bottom: 5px; }
-        .lmb-points-value { display: block; font-size: 24px; font-weight: bold; color: #0073aa; }
-        .lmb-recent-transactions h4 { margin-bottom: 15px; }
-        .lmb-transactions-list { background: white; border: 1px solid #ddd; border-radius: 8px; }
-        .lmb-transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f1; }
-        .lmb-transaction-item:last-child { border-bottom: none; }
-        .lmb-transaction-reason { font-weight: 500; }
-        .lmb-transaction-date { display: block; color: #666; font-size: 12px; margin-top: 2px; }
-        .lmb-transaction-amount { font-weight: bold; }
-        .lmb-amount-credit { color: #00a32a; }
-        .lmb-amount-debit { color: #d63638; }
-        </style>';
         
         return ob_get_clean();
     }
