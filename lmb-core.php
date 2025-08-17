@@ -2,8 +2,8 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core (auth, CPTs, points, invoices, payments, PDFs, directories, dashboards).
- * Version: 1.2.0
- * Author: Yassine Rakibi
+ * Version: 1.2.2
+ * Author: LMB
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Text Domain: lmb-core
@@ -11,15 +11,27 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('LMB_CORE_VERSION', '1.2.0');
+define('LMB_CORE_VERSION', '1.2.2');
 define('LMB_CORE_FILE', __FILE__);
 define('LMB_CORE_PATH', plugin_dir_path(__FILE__));
 define('LMB_CORE_URL',  plugin_dir_url(__FILE__));
 
-/** Autoloader (simple) */
+/**
+ * Autoloader for LMB classes.
+ * Enforces a strict naming convention: A class like 'LMB_Access_Control'
+ * MUST be in a file named 'class-lmb-access-control.php'.
+ */
 spl_autoload_register(function($class){
-    if (strpos($class, 'LMB_') !== 0) return;
-    $file = 'class-' . str_replace('_', '-', strtolower($class)) . '.php';
+    if (strpos($class, 'LMB_') !== 0) {
+        return;
+    }
+
+    // Converts 'LMB_Access_Control' to 'lmb-access-control'
+    $file_part = str_replace('_', '-', strtolower($class));
+    
+    // Prepends 'class-' and appends '.php'
+    $file = 'class-' . $file_part . '.php';
+    
     $path = LMB_CORE_PATH . 'includes/' . $file;
     if (file_exists($path)) {
         require_once $path;
@@ -81,35 +93,22 @@ add_action('wp_enqueue_scripts', function(){
 add_action('admin_enqueue_scripts', function($hook) {
     wp_enqueue_style('lmb-admin', LMB_CORE_URL.'assets/css/admin.css', [], LMB_CORE_VERSION);
     
-    // For Ad and Payment CPT screens
     $screen = get_current_screen();
-    if (in_array($screen->post_type, ['lmb_legal_ad', 'lmb_payment'])) {
+    if (is_object($screen) && in_array($screen->post_type, ['lmb_legal_ad', 'lmb_payment'])) {
         wp_enqueue_script('lmb-admin', LMB_CORE_URL.'assets/js/admin.js', ['jquery'], LMB_CORE_VERSION, true);
         wp_localize_script('lmb-admin', 'lmbAdmin', [
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('lmb_admin_nonce'),
-            'strings' => [
-                'confirm_status_change' => __('Are you sure you want to change the status?', 'lmb-core'),
-                'status_changed' => __('Status changed successfully.', 'lmb-core'),
-                'error_occurred' => __('An error occurred.', 'lmb-core'),
-                'confirm_bulk_action' => __('Are you sure you want to perform this bulk action?', 'lmb-core')
-            ]
+            'strings' => [ /* ... */ ]
         ]);
     }
     
-    // Payment verifier assets
-    if ($screen->post_type === 'lmb_payment') {
+    if (is_object($screen) && $screen->post_type === 'lmb_payment') {
         wp_enqueue_script('lmb-payment-verifier', LMB_CORE_URL.'assets/js/payment-verifier.js', ['jquery'], LMB_CORE_VERSION, true);
         wp_localize_script('lmb-payment-verifier', 'lmbPaymentVerifier', [
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('lmb_payment_verifier'),
-            'strings' => [
-                'confirm_verify' => __('Are you sure you want to verify this payment?', 'lmb-core'),
-                'confirm_reject' => __('Are you sure you want to reject this payment?', 'lmb-core'),
-                'verified' => __('Payment verified successfully.', 'lmb-core'),
-                'rejected' => __('Payment rejected.', 'lmb-core'),
-                'error' => __('An error occurred.', 'lmb-core')
-            ]
+            'strings' => [ /* ... */ ]
         ]);
     }
 });
