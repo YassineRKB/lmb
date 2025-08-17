@@ -51,6 +51,7 @@ spl_autoload_register(function($class){
 
 /** Elementor widgets */
 require_once LMB_CORE_PATH.'elementor/class-lmb-elementor-widgets.php';
+require_once LMB_CORE_PATH . 'includes/class-lmb-access-control.php';
 
 /** Shortcodes (fallbacks) */
 add_shortcode('lmb_ads_directory', ['LMB_Elementor_Widgets_Helper', 'ads_directory_shortcode']);

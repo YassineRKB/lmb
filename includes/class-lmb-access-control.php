@@ -1,23 +1,48 @@
 <?php
-if (!defined('ABSPATH')) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 class LMB_Access_Control {
-    public static function init() {
-        add_action('template_redirect', [__CLASS__, 'protect']);
+
+    public function __construct() {
+        add_action( 'init', array( $this, 'register_roles' ) );
     }
-    public static function protect() {
-        $slugs = array_filter(array_map('trim', explode("\n", (string) get_option('lmb_protected_slugs', "/dashboard\n/administration"))));
-        if (!$slugs) return;
-        $req = wp_parse_url(home_url(add_query_arg([],'')), PHP_URL_PATH);
-        $cur = wp_parse_url(add_query_arg([],''), PHP_URL_PATH);
-        foreach ($slugs as $slug) {
-            if (strpos($cur, $slug) === 0) {
-                if ($slug === '/administration' && !current_user_can('edit_others_posts')) {
-                    auth_redirect();
-                } elseif ($slug === '/dashboard' && !is_user_logged_in()) {
-                    auth_redirect();
-                }
-            }
+
+    /**
+     * Register custom roles or capabilities for admins and users
+     */
+    public function register_roles() {
+        // Client role
+        add_role(
+            'lmb_client',
+            __( 'Client', 'lmb-core' ),
+            array(
+                'read' => true,
+                'upload_files' => true,
+            )
+        );
+
+        // Ensure admins have full capabilities
+        $admin = get_role( 'administrator' );
+        if ( $admin ) {
+            $admin->add_cap( 'manage_lmb_ads' );
+            $admin->add_cap( 'manage_lmb_newspapers' );
+            $admin->add_cap( 'manage_lmb_payments' );
         }
+    }
+
+    /**
+     * Check if current user is admin
+     */
+    public static function is_admin() {
+        return current_user_can( 'administrator' );
+    }
+
+    /**
+     * Check if current user is client
+     */
+    public static function is_client() {
+        return current_user_can( 'lmb_client' );
     }
 }
