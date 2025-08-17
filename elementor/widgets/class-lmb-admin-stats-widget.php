@@ -5,86 +5,58 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Admin_Stats_Widget extends Widget_Base {
     public function get_name() { return 'lmb_admin_stats'; }
-    public function get_title(){ return __('LMB Admin Stats','lmb-core'); }
+    public function get_title(){ return __('LMB Admin Stats & Overview','lmb-core'); }
     public function get_icon() { return 'eicon-dashboard'; }
     public function get_categories(){ return ['lmb-widgets']; }
 
     protected function render() {
-        if (!current_user_can('edit_others_posts')) { echo '<p>'.esc_html__('Admins only.','lmb-core').'</p>'; return; }
-        
-        $stats = LMB_Admin::collect_stats();
-        
-        echo '<div class="lmb-admin-stats-widget">';
-        echo '<h3>'.esc_html__('System Overview','lmb-core').'</h3>';
-        
-        // Metrics grid
-        echo '<div class="lmb-stats-grid">';
-        
-        echo '<div class="lmb-stat-card">';
-        echo '<div class="lmb-stat-number">'.number_format($stats['users_total']).'</div>';
-        echo '<div class="lmb-stat-label">'.esc_html__('Total Users','lmb-core').'</div>';
-        echo '</div>';
-        
-        echo '<div class="lmb-stat-card pending">';
-        echo '<div class="lmb-stat-number">'.number_format($stats['ads_pending']).'</div>';
-        echo '<div class="lmb-stat-label">'.esc_html__('Pending Ads','lmb-core').'</div>';
-        echo '</div>';
-        
-        echo '<div class="lmb-stat-card">';
-        echo '<div class="lmb-stat-number">'.number_format($stats['ads_total']).'</div>';
-        echo '<div class="lmb-stat-label">'.esc_html__('Total Ads','lmb-core').'</div>';
-        echo '</div>';
-        
-        echo '<div class="lmb-stat-card">';
-        echo '<div class="lmb-stat-number">'.number_format($stats['news_total']).'</div>';
-        echo '<div class="lmb-stat-label">'.esc_html__('Newspapers','lmb-core').'</div>';
-        echo '</div>';
-        
-        echo '</div>';
-        
-        // Revenue section
-        echo '<div class="lmb-revenue-section">';
-        echo '<h4>'.esc_html__('Revenue (Points)','lmb-core').'</h4>';
-        echo '<div class="lmb-revenue-grid">';
-        
-        echo '<div class="lmb-revenue-item">';
-        echo '<span class="lmb-revenue-label">'.esc_html__('Today','lmb-core').'</span>';
-        echo '<span class="lmb-revenue-value">'.number_format($stats['rev_today']).'</span>';
-        echo '</div>';
-        
-        echo '<div class="lmb-revenue-item">';
-        echo '<span class="lmb-revenue-label">'.esc_html__('This Month','lmb-core').'</span>';
-        echo '<span class="lmb-revenue-value">'.number_format($stats['rev_month']).'</span>';
-        echo '</div>';
-        
-        echo '<div class="lmb-revenue-item">';
-        echo '<span class="lmb-revenue-label">'.esc_html__('This Year','lmb-core').'</span>';
-        echo '<span class="lmb-revenue-value">'.number_format($stats['rev_year']).'</span>';
-        echo '</div>';
-        
-        echo '</div>';
-        echo '</div>';
-
-        // Recent activity
-        $log = get_option('lmb_activity_log', []);
-        if ($log) {
-            echo '<div class="lmb-activity-section">';
-            echo '<h4>'.esc_html__('Recent Activity','lmb-core').'</h4>';
-            echo '<div class="lmb-activity-feed">';
-            
-            foreach (array_slice($log, 0, 5) as $row) {
-                $user = get_userdata($row['user']);
-                echo '<div class="lmb-activity-item">';
-                echo '<div class="lmb-activity-time">'.esc_html(human_time_diff(strtotime($row['time']), current_time('timestamp')) . ' ago').'</div>';
-                echo '<div class="lmb-activity-user">'.esc_html($user ? $user->display_name : 'System').'</div>';
-                echo '<div class="lmb-activity-message">'.esc_html($row['msg']).'</div>';
-                echo '</div>';
-            }
-            
-            echo '</div>';
-            echo '</div>';
+        if (!current_user_can('manage_options')) {
+            echo '<p>'.esc_html__('This widget is for administrators only.','lmb-core').'</p>';
+            return;
         }
         
-        echo '</div>';
+        $stats = LMB_Admin::collect_stats();
+        ?>
+        <div class="lmb-admin-stats-widget">
+            <div class="lmb-stats-grid">
+                <div class="lmb-stat-card">
+                    <div class="lmb-stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="lmb-stat-content">
+                        <div class="lmb-stat-number"><?php echo number_format($stats['users_total']); ?></div>
+                        <div class="lmb-stat-label"><?php esc_html_e('Total Clients','lmb-core'); ?></div>
+                    </div>
+                </div>
+                 <div class="lmb-stat-card">
+                    <div class="lmb-stat-icon"><i class="fas fa-gavel"></i></div>
+                    <div class="lmb-stat-content">
+                        <div class="lmb-stat-number"><?php echo number_format($stats['ads_total']); ?></div>
+                        <div class="lmb-stat-label"><?php esc_html_e('Total Legal Ads','lmb-core'); ?></div>
+                    </div>
+                </div>
+                 <div class="lmb-stat-card">
+                    <div class="lmb-stat-icon"><i class="far fa-newspaper"></i></div>
+                    <div class="lmb-stat-content">
+                        <div class="lmb-stat-number"><?php echo number_format($stats['news_total']); ?></div>
+                        <div class="lmb-stat-label"><?php esc_html_e('Total Newspapers','lmb-core'); ?></div>
+                    </div>
+                </div>
+                <div class="lmb-stat-card">
+                    <div class="lmb-stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="lmb-stat-content">
+                        <div class="lmb-stat-number"><?php echo number_format($stats['rev_year']); ?></div>
+                        <div class="lmb-stat-label"><?php printf(__('Points Spent (%s)', 'lmb-core'), date('Y')); ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <style>
+            .lmb-admin-stats-widget .lmb-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+            .lmb-admin-stats-widget .lmb-stat-card { display: flex; align-items: center; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all .3s ease; }
+            .lmb-admin-stats-widget .lmb-stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+            .lmb-admin-stats-widget .lmb-stat-icon { font-size: 28px; color: #0073aa; margin-right: 20px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: #f0f5fa; border-radius: 50%; }
+            .lmb-admin-stats-widget .lmb-stat-number { font-size: 26px; font-weight: 600; color: #1d2327; line-height: 1.1; }
+            .lmb-admin-stats-widget .lmb-stat-label { font-size: 14px; color: #50575e; }
+        </style>
+        <?php
     }
 }
