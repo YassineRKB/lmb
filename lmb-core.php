@@ -86,12 +86,17 @@ add_action('plugins_loaded', function(){
 /** Assets */
 add_action('wp_enqueue_scripts', function(){
     wp_enqueue_style('lmb-core', LMB_CORE_URL.'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
-    wp_enqueue_script('lmb-core', LMB_CORE_URL.'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
+    
+    // Enqueue Chart.js for the user dashboard
+    if (is_page('dashboard')) { // Or wherever you use the chart shortcode
+        wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], '3.7.0', true);
+    }
 });
 
 /** Admin Assets */
 add_action('admin_enqueue_scripts', function($hook) {
     wp_enqueue_style('lmb-admin', LMB_CORE_URL.'assets/css/admin.css', [], LMB_CORE_VERSION);
+    wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
     
     $screen = get_current_screen();
     if (is_object($screen) && in_array($screen->post_type, ['lmb_legal_ad', 'lmb_payment'])) {
