@@ -2,8 +2,8 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core (auth, CPTs, points, invoices, payments, PDFs, directories, dashboards).
- * Version: 1.2.3
- * Author: Yassine Rakibi
+ * Version: 2.0.0
+ * Author: LMB
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Text Domain: lmb-core
@@ -11,66 +11,49 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('LMB_CORE_VERSION', '1.2.2');
+define('LMB_CORE_VERSION', '2.0.0');
 define('LMB_CORE_FILE', __FILE__);
 define('LMB_CORE_PATH', plugin_dir_path(__FILE__));
 define('LMB_CORE_URL',  plugin_dir_url(__FILE__));
 
-/**
- * Autoloader for LMB classes.
- * Enforces a strict naming convention: A class like 'LMB_Access_Control'
- * MUST be in a file named 'class-lmb-access-control.php'.
- */
+// Autoloader for all classes in the /includes directory
 spl_autoload_register(function($class){
     if (strpos($class, 'LMB_') !== 0) {
         return;
     }
-
-    // Converts 'LMB_Access_Control' to 'lmb-access-control'
-    $file_part = str_replace('_', '-', strtolower($class));
-    
-    // Prepends 'class-' and appends '.php'
-    $file = 'class-' . $file_part . '.php';
-    
+    $file = 'class-' . str_replace('_', '-', strtolower($class)) . '.php';
     $path = LMB_CORE_PATH . 'includes/' . $file;
     if (file_exists($path)) {
         require_once $path;
     }
 });
 
-/** Elementor widgets */
-require_once LMB_CORE_PATH.'elementor/class-lmb-elementor-widgets.php';
+// Load Elementor widgets
+require_once LMB_CORE_PATH . 'elementor/class-lmb-elementor-widgets.php';
 
-/** Shortcodes (fallbacks) */
-add_shortcode('lmb_ads_directory', ['LMB_Elementor_Widgets_Helper', 'ads_directory_shortcode']);
-add_shortcode('lmb_newspaper_directory', ['LMB_Elementor_Widgets_Helper', 'newspaper_directory_shortcode']);
-
-/** Activation */
+// Activation Hook
 register_activation_hook(__FILE__, function () {
-    // Default settings
-    add_option('lmb_invoice_template_html', '<h1>Invoice {{invoice_number}}</h1><p>User: {{user_name}} (ID {{user_id}})</p><p>Package: {{package_name}}</p><p>Price: {{package_price}} MAD</p><p>Bank: {{our_bank_name}}</p><p>IBAN/RIB: {{our_iban}}</p><p>Reference: {{payment_reference}}</p><p>Date: {{invoice_date}}</p>');
-    add_option('lmb_protected_slugs', "/dashboard\n/administration");
-    add_option('lmb_staff_roles', "administrator,editor");
-    add_option('lmb_default_cost_per_ad', 1);
-    add_option('lmb_bank_name', 'Your Bank Name');
-    add_option('lmb_bank_iban', 'YOUR-IBAN-RIB-HERE');
-
-    // Register CPTs, statuses, rewrites
     LMB_CPT::init();
     LMB_User::create_custom_roles();
     LMB_Database_Manager::create_custom_tables();
-    flush_rewrite_rules();
+    flush_rewrite_rules(); // Crucial for CPTs to work correctly on activation
+    
+    // Default settings
+    add_option('lmb_bank_name', 'Your Bank Name');
+    add_option('lmb_bank_iban', 'YOUR-IBAN-RIB-HERE');
+    add_option('lmb_default_cost_per_ad', 1);
+    add_option('lmb_enable_email_notifications', 1);
+    add_option('lmb_invoice_template_html', '<h1>Invoice {{invoice_number}}</h1><p>Date: {{invoice_date}}</p><hr><h3>Client Details</h3><p>Name: {{user_name}}<br>Email: {{user_email}}</p><hr><h3>Item Details</h3><p><strong>Package:</strong> {{package_name}}<br><strong>Price:</strong> {{package_price}} MAD</p><p><strong>Payment Reference:</strong> {{payment_reference}}</p><hr><h3>Payment Instructions</h3><p>Please make a bank transfer to:<br><strong>Bank:</strong> {{our_bank_name}}<br><strong>IBAN/RIB:</strong> {{our_iban}}</p>');
 });
 
-/** Deactivation */
+// Deactivation Hook
 register_deactivation_hook(__FILE__, function () {
     wp_clear_scheduled_hook('lmb_daily_maintenance');
     flush_rewrite_rules();
 });
 
-/** Init bootstrap */
+// Initialize all plugin components on plugins_loaded hook
 add_action('plugins_loaded', function(){
-    LMB_Access_Control::init();
     LMB_CPT::init();
     LMB_Form_Handler::init();
     LMB_Ad_Manager::init();
@@ -83,48 +66,26 @@ add_action('plugins_loaded', function(){
     new LMB_User();
 });
 
-/** Assets */
+// Enqueue Frontend Scripts & Styles
 add_action('wp_enqueue_scripts', function(){
     wp_enqueue_style('lmb-core', LMB_CORE_URL.'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
+    wp_enqueue_script('lmb-core', LMB_CORE_URL.'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
     
-    // Enqueue Chart.js for the user dashboard
-    if (is_page('dashboard')) { // Or wherever you use the chart shortcode
+    // Load Chart.js only when the chart shortcode is present
+    global $post;
+    if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'lmb_user_charts')) {
         wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], '3.7.0', true);
     }
 });
 
-/** Admin Assets */
+// Enqueue Admin Scripts & Styles
 add_action('admin_enqueue_scripts', function($hook) {
-    wp_enqueue_style('lmb-admin', LMB_CORE_URL.'assets/css/admin.css', [], LMB_CORE_VERSION);
+    wp_enqueue_style('lmb-admin-styles', LMB_CORE_URL.'assets/css/admin.css', [], LMB_CORE_VERSION);
     wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
-    
-    $screen = get_current_screen();
-    if (is_object($screen) && in_array($screen->post_type, ['lmb_legal_ad', 'lmb_payment'])) {
-        wp_enqueue_script('lmb-admin', LMB_CORE_URL.'assets/js/admin.js', ['jquery'], LMB_CORE_VERSION, true);
-        wp_localize_script('lmb-admin', 'lmbAdmin', [
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('lmb_admin_nonce'),
-            'strings' => [
-                'confirm_status_change' => __('Are you sure you want to change the status?', 'lmb-core'),
-                'status_changed' => __('Status changed successfully.', 'lmb-core'),
-                'error_occurred' => __('An error occurred. Please try again.', 'lmb-core'),
-                'confirm_bulk_action' => __('Are you sure you want to perform this bulk action?', 'lmb-core'),
-            ]
-        ]);
-    }
-    
-    if (is_object($screen) && $screen->post_type === 'lmb_payment') {
-        wp_enqueue_script('lmb-payment-verifier', LMB_CORE_URL.'assets/js/payment-verifier.js', ['jquery'], LMB_CORE_VERSION, true);
-        wp_localize_script('lmb-payment-verifier', 'lmbPaymentVerifier', [
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('lmb_payment_verifier'),
-            'strings' => [
-                'confirm_verify' => __('Are you sure you want to verify this payment?', 'lmb-core'),
-                'confirm_reject' => __('Are you sure you want to reject this payment?', 'lmb-core'),
-                'verified' => __('Payment verified!', 'lmb-core'),
-                'rejected' => __('Payment rejected.', 'lmb-core'),
-                'error' => __('An error occurred. Please try again.', 'lmb-core'),
-            ]
-        ]);
-    }
+
+    wp_enqueue_script('lmb-admin-scripts', LMB_CORE_URL.'assets/js/admin.js', ['jquery'], LMB_CORE_VERSION, true);
+    wp_localize_script('lmb-admin-scripts', 'lmbAdmin', [
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce'   => wp_create_nonce('lmb_admin_ajax_nonce'),
+    ]);
 });

@@ -3,129 +3,86 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Payment_Verifier {
     public static function init() {
-        // Admin AJAX actions for verifying/rejecting payments
-        add_action('wp_ajax_lmb_verify_payment', [__CLASS__, 'ajax_verify_payment']);
-        add_action('wp_ajax_lmb_reject_payment', [__CLASS__, 'ajax_reject_payment']);
+        add_action('wp_ajax_lmb_payment_action', [__CLASS__, 'ajax_payment_action']);
         
-        // Admin list customization
-        add_filter('manage_lmb_payment_posts_columns', [__CLASS__, 'set_custom_edit_columns']);
-        add_action('manage_lmb_payment_posts_custom_column', [__CLASS__, 'custom_column_content'], 10, 2);
+        add_filter('manage_lmb_payment_posts_columns', [__CLASS__, 'set_custom_columns']);
+        add_action('manage_lmb_payment_posts_custom_column', [__CLASS__, 'render_custom_columns'], 10, 2);
     }
 
-    public static function set_custom_edit_columns($columns) {
-        unset($columns['date']);
-        $columns['payer'] = __('Client', 'lmb-core');
+    public static function set_custom_columns($columns) {
+        unset($columns['title'], $columns['date']);
+        $columns['client'] = __('Client', 'lmb-core');
         $columns['package'] = __('Package', 'lmb-core');
+        $columns['reference'] = __('Reference', 'lmb-core');
         $columns['proof'] = __('Proof', 'lmb-core');
         $columns['status'] = __('Status', 'lmb-core');
         $columns['actions'] = __('Actions', 'lmb-core');
-        $columns['date'] = __('Date', 'lmb-core');
+        $columns['date'] = __('Submitted', 'lmb-core');
         return $columns;
     }
 
-    public static function custom_column_content($col, $post_id) {
+    public static function render_custom_columns($col, $post_id) {
         switch ($col) {
-            case 'payer':
-                $user_id = get_post_meta($post_id, 'user_id', true);
-                $user = get_userdata($user_id);
-                echo $user ? esc_html($user->display_name) : 'N/A';
+            case 'client':
+                $user = get_userdata(get_post_meta($post_id, 'user_id', true));
+                echo $user ? '<a href="'.get_edit_user_link($user->ID).'">'.esc_html($user->display_name).'</a>' : 'N/A';
                 break;
             case 'package':
-                $package_id = get_post_meta($post_id, 'package_id', true);
-                echo $package_id ? esc_html(get_the_title($package_id)) : 'N/A';
+                echo esc_html(get_the_title(get_post_meta($post_id, 'package_id', true)));
+                break;
+            case 'reference':
+                echo '<strong>'.esc_html(get_post_meta($post_id, 'payment_reference', true)).'</strong>';
                 break;
             case 'proof':
-                $attachment_id = get_post_meta($post_id, 'proof_attachment_id', true);
-                $url = wp_get_attachment_url($attachment_id);
-                if ($url) {
-                    echo '<a href="'.esc_url($url).'" target="_blank" class="button button-small">View Proof</a>';
-                } else {
-                    echo '—';
-                }
+                $url = wp_get_attachment_url(get_post_meta($post_id, 'proof_attachment_id', true));
+                if ($url) echo '<a href="'.esc_url($url).'" target="_blank" class="button button-small">View Proof</a>';
                 break;
             case 'status':
                 $status = get_post_meta($post_id, 'payment_status', true);
-                $badge_class = 'lmb-status-' . esc_attr($status);
-                echo '<span class="lmb-status-badge ' . $badge_class . '">' . esc_html(ucfirst($status)) . '</span>';
+                echo '<span class="lmb-status-badge lmb-status-'.esc_attr($status).'">'.esc_html(ucfirst($status)).'</span>';
                 break;
             case 'actions':
-                $status = get_post_meta($post_id, 'payment_status', true);
-                if ($status === 'pending') {
-                    echo '<button class="button button-primary button-small lmb-verify-payment" data-payment-id="' . $post_id . '">Verify</button>';
-                    echo '<button class="button button-small lmb-reject-payment" data-payment-id="' . $post_id . '">Reject</button>';
-                } else {
-                    echo '—';
+                if (get_post_meta($post_id, 'payment_status', true) === 'pending') {
+                    echo '<button class="button button-primary button-small lmb-payment-action" data-action="approve" data-id="'.$post_id.'">'.__('Approve', 'lmb-core').'</button>';
+                    echo '<button class="button button-secondary button-small lmb-payment-action" data-action="reject" data-id="'.$post_id.'">'.__('Reject', 'lmb-core').'</button>';
                 }
                 break;
         }
     }
 
-    public static function ajax_verify_payment() {
-        check_ajax_referer('lmb_payment_verifier', 'nonce');
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Permission denied.']);
-        }
-        
+    public static function ajax_payment_action() {
+        check_ajax_referer('lmb_admin_ajax_nonce', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
+
         $payment_id = isset($_POST['payment_id']) ? intval($_POST['payment_id']) : 0;
-        if (!$payment_id) {
-            wp_send_json_error(['message' => 'Invalid Payment ID.']);
-        }
+        $action = isset($_POST['payment_action']) ? sanitize_key($_POST['payment_action']) : '';
 
         $user_id = (int) get_post_meta($payment_id, 'user_id', true);
         $package_id = (int) get_post_meta($payment_id, 'package_id', true);
 
-        if (!$user_id || !$package_id) {
-            wp_send_json_error(['message' => 'User or Package ID missing from payment record.']);
+        if (!$user_id || !$package_id) wp_send_json_error(['message' => 'Payment record is missing data.']);
+        
+        if ($action === 'approve') {
+            $points = (int) get_post_meta($package_id, 'points', true);
+            $cost_per_ad = (int) get_post_meta($package_id, 'cost_per_ad', true);
+            
+            LMB_Points::add($user_id, $points, 'Purchase of package: ' . get_the_title($package_id));
+            LMB_Points::set_cost_per_ad($user_id, $cost_per_ad);
+            
+            update_post_meta($payment_id, 'payment_status', 'approved');
+            LMB_Ad_Manager::log_activity(sprintf('Payment #%d approved by %s.', $payment_id, wp_get_current_user()->display_name));
+            LMB_Notification_Manager::notify_payment_verified($user_id, $package_id, $points);
+            
+            wp_send_json_success(['message' => 'Payment approved!']);
+
+        } elseif ($action === 'reject') {
+            $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : 'No reason provided.';
+            update_post_meta($payment_id, 'payment_status', 'rejected');
+            update_post_meta($payment_id, 'rejection_reason', $reason);
+            LMB_Ad_Manager::log_activity(sprintf('Payment #%d rejected by %s.', $payment_id, wp_get_current_user()->display_name));
+            // You might want a notification for rejected payments as well.
+            
+            wp_send_json_success(['message' => 'Payment rejected.']);
         }
-
-        $points_to_add = (int) get_post_meta($package_id, 'points', true);
-        $cost_per_ad = (int) get_post_meta($package_id, 'cost_per_ad', true);
-
-        // Add points and set new cost per ad
-        LMB_Points::add($user_id, $points_to_add, 'Package purchase: ' . get_the_title($package_id));
-        LMB_Points::set_cost_per_ad($user_id, $cost_per_ad);
-        
-        // Update payment status
-        update_post_meta($payment_id, 'payment_status', 'approved');
-
-        LMB_Ad_Manager::log_activity(sprintf(
-            'Payment #%d approved by %s. Assigned %d points and %d cost/ad to user #%d.',
-            $payment_id, wp_get_current_user()->display_name, $points_to_add, $cost_per_ad, $user_id
-        ));
-        
-        // Notify user
-        LMB_Notification_Manager::notify_payment_verified($user_id, $package_id, $points_to_add);
-        
-        wp_send_json_success([
-            'message' => 'Payment verified successfully!',
-            'points_added' => $points_to_add
-        ]);
-    }
-    
-    public static function ajax_reject_payment() {
-        check_ajax_referer('lmb_payment_verifier', 'nonce');
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Permission denied.']);
-        }
-        
-        $payment_id = isset($_POST['payment_id']) ? intval($_POST['payment_id']) : 0;
-        if (!$payment_id) {
-            wp_send_json_error(['message' => 'Invalid Payment ID.']);
-        }
-        
-        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : 'No reason provided.';
-        
-        update_post_meta($payment_id, 'payment_status', 'rejected');
-        update_post_meta($payment_id, 'rejection_reason', $reason);
-
-        LMB_Ad_Manager::log_activity(sprintf(
-            'Payment #%d rejected by %s. Reason: %s',
-            $payment_id, wp_get_current_user()->display_name, $reason
-        ));
-        
-        // Optionally, notify the user of rejection
-        // LMB_Notification_Manager::notify_payment_rejected($user_id, $reason);
-        
-        wp_send_json_success(['message' => 'Payment rejected.']);
     }
 }

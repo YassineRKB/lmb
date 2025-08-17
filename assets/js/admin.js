@@ -1,35 +1,59 @@
 jQuery(document).ready(function($) {
-    // Quick status change for ads
-    $('.lmb-quick-approve, .lmb-quick-deny').on('click', function(e) {
+    // Handle Ad Approve/Deny actions
+    $('.lmb-ad-action').on('click', function(e) {
         e.preventDefault();
+        var button = $(this);
+        var ad_id = button.data('id');
+        var ad_action = button.data('action');
+        var reason = '';
+
+        if (ad_action === 'deny') {
+            reason = prompt('Please provide a reason for denial (optional):', '');
+            if (reason === null) return; // User cancelled
+        }
+
+        button.closest('.lmb_actions').html('Processing...');
+
+        $.post(lmbAdmin.ajaxurl, {
+            action: 'lmb_ad_status_change',
+            nonce: lmbAdmin.nonce,
+            ad_id: ad_id,
+            ad_action: ad_action,
+            reason: reason
+        }).done(function() {
+            location.reload();
+        }).fail(function(response) {
+            alert('Error: ' + response.responseJSON.data.message);
+            location.reload();
+        });
+    });
+
+    // Handle Payment Approve/Reject actions
+    $('.lmb-payment-action').on('click', function(e) {
+        e.preventDefault();
+        var button = $(this);
+        var payment_id = button.data('id');
+        var payment_action = button.data('action');
+        var reason = '';
+
+        if (payment_action === 'reject') {
+            reason = prompt('Please provide a reason for rejection:', '');
+            if (reason === null) return;
+        }
         
-        const button = $(this);
-        const postId = button.data('post-id');
-        const newStatus = button.hasClass('lmb-quick-approve') ? 'published' : 'denied';
-        
-        button.prop('disabled', true);
-        
-        $.ajax({
-            url: lmbAdmin.ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'lmb_quick_status_change',
-                post_id: postId,
-                new_status: newStatus,
-                nonce: lmbAdmin.nonce
-            },
-            success: function(response) {
-                if (response.success) {
-                    location.reload();
-                } else {
-                    alert(response.data.message);
-                    button.prop('disabled', false);
-                }
-            },
-            error: function() {
-                alert(lmbAdmin.strings.error_occurred);
-                button.prop('disabled', false);
-            }
+        button.closest('td').html('Processing...');
+
+        $.post(lmbAdmin.ajaxurl, {
+            action: 'lmb_payment_action',
+            nonce: lmbAdmin.nonce,
+            payment_id: payment_id,
+            payment_action: payment_action,
+            reason: reason
+        }).done(function() {
+            location.reload();
+        }).fail(function(response) {
+            alert('Error: ' + response.responseJSON.data.message);
+            location.reload();
         });
     });
 });
