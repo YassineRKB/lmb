@@ -9,7 +9,6 @@ jQuery(document).ready(function($) {
         
         const button = $(this);
         const paymentId = button.data('payment-id');
-        const row = button.closest('tr');
         
         button.prop('disabled', true).text('Verifying...');
         
@@ -23,17 +22,9 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    row.fadeOut(function() {
-                        row.remove();
-                    });
-                    
-                    // Show success message
-                    $('<div class="notice notice-success is-dismissible"><p>' + 
-                      lmbPaymentVerifier.strings.verified + 
-                      ' Points added: ' + response.data.points_added + 
-                      '</p></div>').insertAfter('.wrap h1');
+                    location.reload();
                 } else {
-                    alert(response.data.message || lmbPaymentVerifier.strings.error);
+                    alert(response.data.message);
                     button.prop('disabled', false).text('Verify');
                 }
             },
@@ -49,15 +40,10 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         
         const reason = prompt('Reason for rejection (optional):');
-        if (reason === null) return; // User cancelled
-        
-        if (!confirm(lmbPaymentVerifier.strings.confirm_reject)) {
-            return;
-        }
+        if (reason === null) return;
         
         const button = $(this);
         const paymentId = button.data('payment-id');
-        const row = button.closest('tr');
         
         button.prop('disabled', true).text('Rejecting...');
         
@@ -72,16 +58,9 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    row.fadeOut(function() {
-                        row.remove();
-                    });
-                    
-                    // Show success message
-                    $('<div class="notice notice-success is-dismissible"><p>' + 
-                      lmbPaymentVerifier.strings.rejected + 
-                      '</p></div>').insertAfter('.wrap h1');
+                    location.reload();
                 } else {
-                    alert(response.data.message || lmbPaymentVerifier.strings.error);
+                    alert(response.data.message);
                     button.prop('disabled', false).text('Reject');
                 }
             },
