@@ -2,65 +2,53 @@
 use Elementor\Widget_Base;
 use WP_Query;
 
-if ( ! defined( 'ABSPATH' ) ) {
-    exit; // Exit if accessed directly.
-}
+if (!defined('ABSPATH')) exit;
 
 class LMB_Ads_Directory_Widget extends Widget_Base {
-
-    public function get_name() {
-        return 'lmb_ads_directory';
-    }
-
-    public function get_title() {
-        return __( 'LMB Ads Directory', 'lmb-core' );
-    }
-
-    public function get_icon() {
-        return 'eicon-folder-o';
-    }
-
-    public function get_categories() {
-        return [ 'general' ];
-    }
+    public function get_name() { return 'lmb_ads_directory'; }
+    public function get_title() { return __('LMB Ads Directory','lmb-core'); }
+    public function get_icon() { return 'eicon-library-download'; }
+    public function get_categories() { return ['general']; }
 
     protected function render() {
-        $args = array(
+        $search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+        $type   = isset($_GET['type']) ? sanitize_text_field(wp_unslash($_GET['type'])) : '';
+
+        echo '<form method="get" class="lmb-filter">';
+        echo '<input type="text" name="s" value="'.esc_attr($search).'" placeholder="'.esc_attr__('Search title…','lmb-core').'" />';
+        echo '<input type="text" name="type" value="'.esc_attr($type).'" placeholder="'.esc_attr__('Ad type…','lmb-core').'" />';
+        echo '<button type="submit">'.esc_html__('Search','lmb-core').'</button>';
+        echo '</form>';
+
+        $meta = [];
+        if ($type) $meta[] = ['key'=>'ad_type','value'=>$type,'compare'=>'LIKE'];
+
+        $q = new WP_Query([
             'post_type' => 'lmb_legal_ad',
-            'posts_per_page' => -1,
-            'meta_query' => array(
-                array(
-                    'key'     => 'lmb_status',
-                    'value'   => 'published',
-                    'compare' => '='
-                )
-            )
-        );
+            'post_status' => 'publish',
+            's' => $search,
+            'meta_query' => $meta,
+            'posts_per_page' => 12,
+            'paged' => max(1, (int)($_GET['paged'] ?? 1))
+        ]);
 
-        $ads_query = new WP_Query( $args );
-
-        if ( $ads_query->have_posts() ) {
-            echo '<h2>' . esc_html__( 'Legal Ads Directory', 'lmb-core' ) . '</h2>';
-            echo '<div class="lmb-ad-list">';
-            while ( $ads_query->have_posts() ) {
-                $ads_query->the_post();
-                $ad_type = get_field( 'ad_type' );
-                $full_text = get_field( 'full_text' );
-                $ad_pdf_url = get_field('ad_pdf_url'); // You'll need to create this field and save the PDF URL here.
-                
-                echo '<div class="lmb-ad-item">';
-                echo '<h3>' . esc_html( get_the_title() ) . '</h3>';
-                echo '<p><strong>' . esc_html__( 'Ad Type:', 'lmb-core' ) . '</strong> ' . esc_html( $ad_type ) . '</p>';
-                echo '<div class="lmb-ad-content">' . wp_kses_post( $full_text ) . '</div>';
-                if ($ad_pdf_url) {
-                    echo '<a href="' . esc_url($ad_pdf_url) . '" class="lmb-download-btn" target="_blank">' . esc_html__('Download PDF', 'lmb-core') . '</a>';
-                }
-                echo '</div>';
+        if ($q->have_posts()){
+            echo '<div class="lmb-ads-grid">';
+            while($q->have_posts()){ $q->the_post();
+                $full = (string) get_post_meta(get_the_ID(), 'full_text', true);
+                $ad_type = (string) get_post_meta(get_the_ID(), 'ad_type', true);
+                $pdf = get_post_meta(get_the_ID(), 'ad_pdf_url', true);
+                echo '<article class="lmb-ad">';
+                echo '<h3>'.esc_html(get_the_title()).'</h3>';
+                echo '<p><strong>'.esc_html__('Ad Type:','lmb-core').'</strong> '.esc_html($ad_type).'</p>';
+                echo '<div class="lmb-ad-content">'.wp_kses_post($full).'</div>';
+                if ($pdf) echo '<p><a target="_blank" href="'.esc_url($pdf).'">'.esc_html__('Download PDF','lmb-core').'</a></p>';
+                echo '</article>';
             }
             echo '</div>';
             wp_reset_postdata();
         } else {
-            echo '<p>' . esc_html__( 'No legal ads found.', 'lmb-core' ) . '</p>';
+            echo '<p>'.esc_html__('No legal ads found.','lmb-core').'</p>';
         }
     }
 }
