@@ -84,11 +84,48 @@ add_action('plugins_loaded', function(){
     LMB_Payment_Verifier::init();
     LMB_Admin::init();
     LMB_User_Dashboard::init();
-    LMB_Notifications_Manager::init();
+    LMB_Notification_Manager::init();
+    LMB_Database_Manager::init();
+    LMB_Error_Handler::init();
 });
 
 /** Assets */
 add_action('wp_enqueue_scripts', function(){
-    wp_register_style('lmb-core', LMB_CORE_URL.'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
-    wp_register_script('lmb-core', LMB_CORE_URL.'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
+    wp_enqueue_style('lmb-core', LMB_CORE_URL.'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
+    wp_enqueue_script('lmb-core', LMB_CORE_URL.'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
+});
+
+/** Admin Assets */
+add_action('admin_enqueue_scripts', function($hook) {
+    if (strpos($hook, 'lmb') !== false || get_post_type() === 'lmb_legal_ad') {
+        wp_enqueue_style('lmb-admin', LMB_CORE_URL.'assets/css/admin.css', [], LMB_CORE_VERSION);
+        wp_enqueue_script('lmb-admin', LMB_CORE_URL.'assets/js/admin.js', ['jquery'], LMB_CORE_VERSION, true);
+        
+        wp_localize_script('lmb-admin', 'lmbAdmin', [
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('lmb_admin_nonce'),
+            'strings' => [
+                'confirm_status_change' => __('Are you sure you want to change the status?', 'lmb-core'),
+                'status_changed' => __('Status changed successfully.', 'lmb-core'),
+                'error_occurred' => __('An error occurred.', 'lmb-core'),
+                'confirm_bulk_action' => __('Are you sure you want to perform this bulk action?', 'lmb-core')
+            ]
+        ]);
+    }
+    
+    // Payment verifier assets
+    if ($hook === 'edit.php' && isset($_GET['post_type']) && $_GET['post_type'] === 'lmb_payment') {
+        wp_enqueue_script('lmb-payment-verifier', LMB_CORE_URL.'assets/js/payment-verifier.js', ['jquery'], LMB_CORE_VERSION, true);
+        wp_localize_script('lmb-payment-verifier', 'lmbPaymentVerifier', [
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('lmb_payment_verifier'),
+            'strings' => [
+                'confirm_verify' => __('Are you sure you want to verify this payment?', 'lmb-core'),
+                'confirm_reject' => __('Are you sure you want to reject this payment?', 'lmb-core'),
+                'verified' => __('Payment verified successfully.', 'lmb-core'),
+                'rejected' => __('Payment rejected.', 'lmb-core'),
+                'error' => __('An error occurred.', 'lmb-core')
+            ]
+        ]);
+    }
 });

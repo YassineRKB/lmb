@@ -12,16 +12,200 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
     protected function render() {
         if (!is_user_logged_in()) { echo '<p>'.esc_html__('Login required.','lmb-core').'</p>'; return; }
 
+        // Handle form submission
+        if (isset($_POST['lmb_upload_proof']) && wp_verify_nonce($_POST['_wpnonce'], 'lmb_upload_bank_proof')) {
+            $result = self::handle_upload();
+            if ($result['success']) {
+                echo '<div class="lmb-success-message">';
+                echo '<h3>'.esc_html__('Payment Proof Uploaded Successfully','lmb-core').'</h3>';
+                echo '<p>'.esc_html($result['message']).'</p>';
+                echo '</div>';
+            } else {
+                echo '<div class="lmb-error-message">';
+                echo '<h3>'.esc_html__('Upload Failed','lmb-core').'</h3>';
+                echo '<p>'.esc_html($result['message']).'</p>';
+                echo '</div>';
+            }
+        }
+
         $packages = get_posts(['post_type'=>'lmb_package','post_status'=>'publish','numberposts'=>-1]);
-        echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'" enctype="multipart/form-data" class="lmb-form">';
-        echo '<input type="hidden" name="action" value="lmb_upload_bank_proof">';
+        
+        echo '<div class="lmb-upload-form-container">';
+        echo '<h3>'.esc_html__('Upload Payment Proof','lmb-core').'</h3>';
+        echo '<p>'.esc_html__('Please upload proof of your bank transfer to verify your payment.','lmb-core').'</p>';
+        
+        echo '<form method="post" enctype="multipart/form-data" class="lmb-upload-form">';
         wp_nonce_field('lmb_upload_bank_proof');
-        echo '<p><label>'.esc_html__('Package','lmb-core').'</label> <select name="package_id">';
-        foreach ($packages as $p) echo '<option value="'.$p->ID.'">'.esc_html($p->post_title).'</option>';
-        echo '</select></p>';
-        echo '<p><label>'.esc_html__('Proof file','lmb-core').'</label> <input type="file" name="proof_file" required></p>';
-        echo '<p><label>'.esc_html__('Notes','lmb-core').'</label> <input type="text" name="notes"></p>';
-        echo '<p><button class="button button-primary" type="submit">'.esc_html__('Upload','lmb-core').'</button></p>';
+        
+        echo '<div class="lmb-form-group">';
+        echo '<label for="package_id">'.esc_html__('Package','lmb-core').'</label>';
+        echo '<select name="package_id" id="package_id" required>';
+        echo '<option value="">'.esc_html__('Select a package','lmb-core').'</option>';
+        foreach ($packages as $p) {
+            $price = get_post_meta($p->ID, 'price', true);
+            echo '<option value="'.$p->ID.'">'.esc_html($p->post_title).' - '.esc_html($price).' MAD</option>';
+        }
+        echo '</select>';
+        echo '</div>';
+        
+        echo '<div class="lmb-form-group">';
+        echo '<label for="proof_file">'.esc_html__('Payment Proof','lmb-core').'</label>';
+        echo '<input type="file" name="proof_file" id="proof_file" accept="image/*,.pdf" required>';
+        echo '<small>'.esc_html__('Accepted formats: JPG, PNG, PDF (Max 5MB)','lmb-core').'</small>';
+        echo '</div>';
+        
+        echo '<div class="lmb-form-group">';
+        echo '<label for="payment_reference">'.esc_html__('Payment Reference','lmb-core').'</label>';
+        echo '<input type="text" name="payment_reference" id="payment_reference" placeholder="'.esc_attr__('Enter your payment reference','lmb-core').'">';
+        echo '<small>'.esc_html__('The reference number from your invoice','lmb-core').'</small>';
+        echo '</div>';
+        
+        echo '<div class="lmb-form-group">';
+        echo '<label for="notes">'.esc_html__('Additional Notes','lmb-core').'</label>';
+        echo '<textarea name="notes" id="notes" rows="3" placeholder="'.esc_attr__('Any additional information...','lmb-core').'"></textarea>';
+        echo '</div>';
+        
+        echo '<div class="lmb-form-group">';
+        echo '<button type="submit" name="lmb_upload_proof" class="lmb-submit-btn">'.esc_html__('Upload Payment Proof','lmb-core').'</button>';
+        echo '</div>';
+        
         echo '</form>';
+        echo '</div>';
+        
+        // Show user's previous uploads
+        $user_payments = get_posts([
+            'post_type' => 'lmb_payment',
+            'meta_query' => [
+                ['key' => 'user_id', 'value' => get_current_user_id(), 'compare' => '=']
+            ],
+            'posts_per_page' => 5,
+            'orderby' => 'date',
+            'order' => 'DESC'
+        ]);
+        
+        if ($user_payments) {
+            echo '<div class="lmb-payment-history">';
+            echo '<h3>'.esc_html__('Your Recent Payments','lmb-core').'</h3>';
+            echo '<table class="lmb-payments-table">';
+            echo '<thead><tr><th>'.esc_html__('Date','lmb-core').'</th><th>'.esc_html__('Package','lmb-core').'</th><th>'.esc_html__('Status','lmb-core').'</th></tr></thead>';
+            echo '<tbody>';
+            
+            foreach ($user_payments as $payment) {
+                $package_id = get_post_meta($payment->ID, 'package_id', true);
+                $status = get_post_meta($payment->ID, 'payment_status', true);
+                $package_title = $package_id ? get_the_title($package_id) : 'Unknown';
+                
+                echo '<tr>';
+                echo '<td>'.esc_html(get_the_date('', $payment->ID)).'</td>';
+                echo '<td>'.esc_html($package_title).'</td>';
+                echo '<td><span class="lmb-status-'.esc_attr($status).'">'.esc_html(ucfirst($status)).'</span></td>';
+                echo '</tr>';
+            }
+            
+            echo '</tbody></table>';
+            echo '</div>';
+        }
+        
+        ?>
+        <style>
+        .lmb-upload-form-container { max-width: 600px; margin: 0 auto; }
+        .lmb-upload-form { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .lmb-form-group { margin-bottom: 20px; }
+        .lmb-form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .lmb-form-group input, .lmb-form-group select, .lmb-form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .lmb-form-group small { display: block; margin-top: 5px; color: #666; font-size: 12px; }
+        .lmb-submit-btn { background: #0073aa; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .lmb-submit-btn:hover { background: #005a87; }
+        .lmb-success-message, .lmb-error-message { padding: 20px; border-radius: 4px; margin-bottom: 20px; }
+        .lmb-success-message { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .lmb-error-message { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .lmb-payment-history { margin-top: 40px; }
+        .lmb-payments-table { width: 100%; border-collapse: collapse; }
+        .lmb-payments-table th, .lmb-payments-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        .lmb-payments-table th { background: #f8f9fa; }
+        .lmb-status-pending { color: #856404; background: #fff3cd; padding: 2px 8px; border-radius: 3px; }
+        .lmb-status-approved { color: #155724; background: #d4edda; padding: 2px 8px; border-radius: 3px; }
+        .lmb-status-rejected { color: #721c24; background: #f8d7da; padding: 2px 8px; border-radius: 3px; }
+        </style>
+        <?php
+    }
+    
+    private static function handle_upload() {
+        if (!is_user_logged_in()) {
+            return ['success' => false, 'message' => 'Authentication required'];
+        }
+        
+        $user_id = get_current_user_id();
+        $package_id = (int) ($_POST['package_id'] ?? 0);
+        $payment_reference = sanitize_text_field($_POST['payment_reference'] ?? '');
+        $notes = sanitize_textarea_field($_POST['notes'] ?? '');
+        
+        if (!$package_id) {
+            return ['success' => false, 'message' => 'Please select a package'];
+        }
+        
+        if (empty($_FILES['proof_file']['name'])) {
+            return ['success' => false, 'message' => 'Please select a file to upload'];
+        }
+        
+        // Validate file
+        $file = $_FILES['proof_file'];
+        $allowed_types = ['image/jpeg', 'image/png', 'application/pdf'];
+        $max_size = 5 * 1024 * 1024; // 5MB
+        
+        if (!in_array($file['type'], $allowed_types)) {
+            return ['success' => false, 'message' => 'Invalid file type. Please upload JPG, PNG, or PDF files only.'];
+        }
+        
+        if ($file['size'] > $max_size) {
+            return ['success' => false, 'message' => 'File too large. Maximum size is 5MB.'];
+        }
+        
+        // Upload file
+        $attachment_id = media_handle_upload('proof_file', 0);
+        if (is_wp_error($attachment_id)) {
+            return ['success' => false, 'message' => 'File upload failed: ' . $attachment_id->get_error_message()];
+        }
+        
+        // Create payment record
+        $payment_id = wp_insert_post([
+            'post_type' => 'lmb_payment',
+            'post_title' => 'Payment proof by ' . wp_get_current_user()->display_name,
+            'post_status' => 'publish',
+        ]);
+        
+        if (is_wp_error($payment_id)) {
+            return ['success' => false, 'message' => 'Failed to create payment record'];
+        }
+        
+        // Save payment metadata
+        update_post_meta($payment_id, 'user_id', $user_id);
+        update_post_meta($payment_id, 'package_id', $package_id);
+        update_post_meta($payment_id, 'proof_attachment_id', $attachment_id);
+        update_post_meta($payment_id, 'payment_reference', $payment_reference);
+        update_post_meta($payment_id, 'payment_status', 'pending');
+        update_post_meta($payment_id, 'notes', $notes);
+        
+        // Log activity
+        LMB_Ad_Manager::log_activity(sprintf(
+            'Payment proof uploaded by %s for package %s',
+            wp_get_current_user()->display_name,
+            get_the_title($package_id)
+        ));
+        
+        // Notify admin
+        LMB_Notification_Manager::notify_admin(
+            'New Payment Proof Uploaded',
+            sprintf(
+                'User %s has uploaded payment proof for package %s. Please review and verify.',
+                wp_get_current_user()->display_name,
+                get_the_title($package_id)
+            )
+        );
+        
+        return [
+            'success' => true, 
+            'message' => 'Payment proof uploaded successfully. We will review and verify your payment within 24 hours.'
+        ];
     }
 }
