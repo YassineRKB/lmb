@@ -20,7 +20,7 @@ class LMB_Invoice_Widget extends Widget_Base {
     }
 
     public function get_categories() {
-        return [ 'general' ];
+        return [ 'lmb-widgets' ];
     }
 
     protected function render() {

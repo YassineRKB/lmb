@@ -7,7 +7,7 @@ class LMB_Admin_Stats_Widget extends Widget_Base {
     public function get_name() { return 'lmb_admin_stats'; }
     public function get_title(){ return __('LMB Admin Stats','lmb-core'); }
     public function get_icon() { return 'eicon-dashboard'; }
-    public function get_categories(){ return ['general']; }
+    public function get_categories(){ return ['lmb-widgets']; }
 
     protected function render() {
         if (!current_user_can('edit_others_posts')) { echo '<p>'.esc_html__('Admins only.','lmb-core').'</p>'; return; }
@@ -86,34 +86,5 @@ class LMB_Admin_Stats_Widget extends Widget_Base {
         }
         
         echo '</div>';
-        
-        // Add styles
-        ?>
-        <style>
-        .lmb-admin-stats-widget { padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .lmb-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .lmb-stat-card { text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; }
-        .lmb-stat-card.pending { border-left: 4px solid #d63638; }
-        .lmb-stat-number { font-size: 24px; font-weight: bold; color: #0073aa; margin-bottom: 5px; }
-        .lmb-stat-label { color: #666; font-size: 12px; text-transform: uppercase; }
-        .lmb-revenue-section { margin-bottom: 30px; }
-        .lmb-revenue-section h4 { margin-bottom: 15px; color: #333; }
-        .lmb-revenue-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .lmb-revenue-item { display: flex; justify-content: space-between; padding: 10px 15px; background: #f0f8ff; border-radius: 4px; }
-        .lmb-revenue-label { color: #666; }
-        .lmb-revenue-value { font-weight: bold; color: #0073aa; }
-        .lmb-activity-section h4 { margin-bottom: 15px; color: #333; }
-        .lmb-activity-feed { max-height: 300px; overflow-y: auto; }
-        .lmb-activity-item { padding: 10px; border-bottom: 1px solid #f0f0f1; }
-        .lmb-activity-time { color: #666; font-size: 12px; }
-        .lmb-activity-user { font-weight: bold; color: #0073aa; }
-        .lmb-activity-message { color: #333; margin-top: 2px; }
-        
-        @media (max-width: 768px) {
-            .lmb-stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .lmb-revenue-grid { grid-template-columns: 1fr; }
-        }
-        </style>
-        <?php
     }
 }

@@ -8,7 +8,7 @@ class LMB_Newspaper_Directory_Widget extends Widget_Base {
     public function get_name() { return 'lmb_newspaper_directory'; }
     public function get_title() { return __('LMB Newspaper Directory','lmb-core'); }
     public function get_icon()  { return 'eicon-library-upload'; }
-    public function get_categories(){ return ['general']; }
+    public function get_categories(){ return ['lmb-widgets']; }
 
     protected function render() {
         $search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
@@ -46,16 +46,8 @@ class LMB_Newspaper_Directory_Widget extends Widget_Base {
             
             echo '<div class="lmb-news-grid">';
             while($q->have_posts()){ $q->the_post();
-                $pdf_field = get_field('newspaper_pdf', get_the_ID());
-                $pdf_url = '';
-                
-                if ($pdf_field) {
-                    if (is_array($pdf_field)) {
-                        $pdf_url = $pdf_field['url'] ?? '';
-                    } else {
-                        $pdf_url = wp_get_attachment_url($pdf_field);
-                    }
-                }
+                $pdf_field = get_post_meta(get_the_ID(), 'newspaper_pdf', true);
+                $pdf_url = wp_get_attachment_url($pdf_field);
                 
                 echo '<article class="lmb-news">';
                 echo '<div class="lmb-news-header">';
@@ -109,30 +101,5 @@ class LMB_Newspaper_Directory_Widget extends Widget_Base {
             }
             echo '</div>';
         }
-        
-        ?>
-        <style>
-        .lmb-directory-header { margin-bottom: 30px; }
-        .lmb-filter-form { margin-top: 20px; }
-        .lmb-filter-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .lmb-search-input { flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; }
-        .lmb-search-btn { padding: 8px 20px; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .lmb-news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; }
-        .lmb-news { border: 1px solid #ddd; border-radius: 8px; padding: 20px; background: white; }
-        .lmb-news-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-        .lmb-news-title { margin: 0; font-size: 18px; }
-        .lmb-news-date { color: #666; font-size: 14px; }
-        .lmb-news-thumbnail { margin-bottom: 15px; }
-        .lmb-news-thumbnail img { width: 100%; height: auto; border-radius: 4px; }
-        .lmb-news-excerpt { margin-bottom: 15px; color: #666; }
-        .lmb-news-actions { display: flex; gap: 10px; }
-        .lmb-download-btn, .lmb-view-btn { padding: 8px 16px; border: 1px solid #0073aa; background: white; color: #0073aa; text-decoration: none; border-radius: 4px; }
-        .lmb-download-btn:hover, .lmb-view-btn:hover { background: #0073aa; color: white; }
-        .lmb-pagination { text-align: center; margin: 30px 0; }
-        .lmb-pagination a, .lmb-pagination span { padding: 8px 12px; margin: 0 4px; border: 1px solid #ddd; text-decoration: none; }
-        .lmb-pagination .current { background: #0073aa; color: white; }
-        .lmb-no-results { text-align: center; padding: 40px; color: #666; }
-        </style>
-        <?php
     }
 }

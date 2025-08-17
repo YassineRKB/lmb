@@ -7,12 +7,11 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
     public function get_name() { return 'lmb_upload_bank_proof'; }
     public function get_title(){ return __('LMB Upload Bank Proof','lmb-core'); }
     public function get_icon() { return 'eicon-upload'; }
-    public function get_categories(){ return ['general']; }
+    public function get_categories(){ return ['lmb-widgets']; }
 
     protected function render() {
         if (!is_user_logged_in()) { echo '<p>'.esc_html__('Login required.','lmb-core').'</p>'; return; }
 
-        // Handle form submission
         if (isset($_POST['lmb_upload_proof']) && wp_verify_nonce($_POST['_wpnonce'], 'lmb_upload_bank_proof')) {
             $result = self::handle_upload();
             if ($result['success']) {
@@ -72,7 +71,6 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
         echo '</form>';
         echo '</div>';
         
-        // Show user's previous uploads
         $user_payments = get_posts([
             'post_type' => 'lmb_payment',
             'meta_query' => [
@@ -105,29 +103,6 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
             echo '</tbody></table>';
             echo '</div>';
         }
-        
-        ?>
-        <style>
-        .lmb-upload-form-container { max-width: 600px; margin: 0 auto; }
-        .lmb-upload-form { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .lmb-form-group { margin-bottom: 20px; }
-        .lmb-form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .lmb-form-group input, .lmb-form-group select, .lmb-form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        .lmb-form-group small { display: block; margin-top: 5px; color: #666; font-size: 12px; }
-        .lmb-submit-btn { background: #0073aa; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        .lmb-submit-btn:hover { background: #005a87; }
-        .lmb-success-message, .lmb-error-message { padding: 20px; border-radius: 4px; margin-bottom: 20px; }
-        .lmb-success-message { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
-        .lmb-error-message { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
-        .lmb-payment-history { margin-top: 40px; }
-        .lmb-payments-table { width: 100%; border-collapse: collapse; }
-        .lmb-payments-table th, .lmb-payments-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-        .lmb-payments-table th { background: #f8f9fa; }
-        .lmb-status-pending { color: #856404; background: #fff3cd; padding: 2px 8px; border-radius: 3px; }
-        .lmb-status-approved { color: #155724; background: #d4edda; padding: 2px 8px; border-radius: 3px; }
-        .lmb-status-rejected { color: #721c24; background: #f8d7da; padding: 2px 8px; border-radius: 3px; }
-        </style>
-        <?php
     }
     
     private static function handle_upload() {
@@ -148,7 +123,6 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
             return ['success' => false, 'message' => 'Please select a file to upload'];
         }
         
-        // Validate file
         $file = $_FILES['proof_file'];
         $allowed_types = ['image/jpeg', 'image/png', 'application/pdf'];
         $max_size = 5 * 1024 * 1024; // 5MB
@@ -161,13 +135,11 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
             return ['success' => false, 'message' => 'File too large. Maximum size is 5MB.'];
         }
         
-        // Upload file
         $attachment_id = media_handle_upload('proof_file', 0);
         if (is_wp_error($attachment_id)) {
             return ['success' => false, 'message' => 'File upload failed: ' . $attachment_id->get_error_message()];
         }
         
-        // Create payment record
         $payment_id = wp_insert_post([
             'post_type' => 'lmb_payment',
             'post_title' => 'Payment proof by ' . wp_get_current_user()->display_name,
@@ -178,7 +150,6 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
             return ['success' => false, 'message' => 'Failed to create payment record'];
         }
         
-        // Save payment metadata
         update_post_meta($payment_id, 'user_id', $user_id);
         update_post_meta($payment_id, 'package_id', $package_id);
         update_post_meta($payment_id, 'proof_attachment_id', $attachment_id);
@@ -186,14 +157,12 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
         update_post_meta($payment_id, 'payment_status', 'pending');
         update_post_meta($payment_id, 'notes', $notes);
         
-        // Log activity
         LMB_Ad_Manager::log_activity(sprintf(
             'Payment proof uploaded by %s for package %s',
             wp_get_current_user()->display_name,
             get_the_title($package_id)
         ));
         
-        // Notify admin
         LMB_Notification_Manager::notify_admin(
             'New Payment Proof Uploaded',
             sprintf(
