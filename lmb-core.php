@@ -2,8 +2,8 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core (auth, CPTs, points, invoices, payments, PDFs, directories, dashboards).
- * Version: 1.2.2
- * Author: LMB
+ * Version: 1.2.3
+ * Author: Yassine Rakibi
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Text Domain: lmb-core
