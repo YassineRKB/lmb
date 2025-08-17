@@ -1,167 +1,135 @@
 <?php
-if (!defined('ABSPATH')) exit;
+if (!defined('ABSPATH')) {
+    exit;
+}
 
-class LMB_Form_Handler {
+/**
+ * Enhanced error handling and logging system
+ */
+class LMB_Error_Handler {
+    private static $log_file;
+    private static $max_log_size = 10485760; // 10MB
+    
     public static function init() {
-        // Elementor form hooks
-        add_action('elementor_pro/forms/new_record', [__CLASS__, 'handle_elementor_form'], 10, 2);
+        $upload_dir = wp_upload_dir();
+        self::$log_file = $upload_dir['basedir'] . '/lmb-errors.log';
         
-        // Fallback hooks
-        add_action('admin_post_nopriv_lmb_submit_ad', [__CLASS__, 'submit_ad']);
-        add_action('admin_post_lmb_submit_ad', [__CLASS__, 'submit_ad']);
-        
-        // AJAX hooks for form interception
-        add_action('wp_ajax_elementor_pro_forms_send_form', [__CLASS__, 'intercept_elementor_form'], 5);
-        add_action('wp_ajax_nopriv_elementor_pro_forms_send_form', [__CLASS__, 'intercept_elementor_form'], 5);
+        add_action('admin_menu', [__CLASS__, 'add_logs_page']);
     }
     
     /**
-     * Handle Elementor Pro form submissions
+     * Log error with context
      */
-    public static function handle_elementor_form($record, $handler) {
-        $form_name = $record->get_form_settings('form_name');
-        $raw_fields = $record->get('fields');
+    public static function log_error($message, $context = []) {
+        $timestamp = current_time('mysql');
+        $user_id = get_current_user_id();
+        $ip = self::get_client_ip();
         
-        // Check if this is an LMB form by looking for ad_type field
-        $fields = [];
-        foreach ($raw_fields as $id => $field) {
-            $fields[$field['id']] = $field['value'];
+        $log_entry = sprintf(
+            "[%s] [User:%d] [IP:%s] %s %s\n",
+            $timestamp,
+            $user_id,
+            $ip,
+            $message,
+            !empty($context) ? json_encode($context, JSON_UNESCAPED_UNICODE) : ''
+        );
+        
+        // Rotate log if too large
+        if (file_exists(self::$log_file) && filesize(self::$log_file) > self::$max_log_size) {
+            self::rotate_log();
         }
         
-        if (isset($fields['ad_type'])) {
-            self::process_lmb_form($fields, $record);
-        }
+        error_log($log_entry, 3, self::$log_file);
     }
     
     /**
-     * Intercept Elementor form AJAX calls
+     * Get client IP address
      */
-    public static function intercept_elementor_form() {
-        if (isset($_POST['form_fields']['ad_type'])) {
-            self::process_lmb_form($_POST['form_fields']);
-        }
-    }
-    
-    /**
-     * Process LMB form submission
-     */
-    public static function process_lmb_form($fields, $record = null) {
-        if (!is_user_logged_in()) {
-            LMB_Error_Handler::log_error('Unauthorized form submission attempt');
-            return;
-        }
-        
-        try {
-            $validated_data = self::validate_form_data($fields);
-            $post_id = self::create_legal_ad($validated_data);
-            
-            // Log activity
-            LMB_Ad_Manager::log_activity(sprintf(
-                'Legal ad #%d submitted by user %s',
-                $post_id,
-                wp_get_current_user()->user_login
-            ));
-            
-        } catch (Exception $e) {
-            LMB_Error_Handler::handle_form_error($e, $fields);
-            if ($record) {
-                $record->add_error('submission_error', $e->getMessage());
+    private static function get_client_ip() {
+        foreach (['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'] as $key){
+            if (array_key_exists($key, $_SERVER) === true){
+                foreach (explode(',', $_SERVER[$key]) as $ip){
+                    $ip = trim($ip); // just to be safe
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false){
+                        return $ip;
+                    }
+                }
             }
         }
+        return 'UNKNOWN';
     }
     
     /**
-     * Validate form data
+     * Rotate log file
      */
-    public static function validate_form_data($fields) {
-        $allowed_ad_types = [
-            'Liquidation - definitive',
-            'Liquidation - anticipee',
-            'Constitution - SARL',
-            'Constitution - SARL AU',
-            'Modification - Capital',
-            'Modification - parts',
-            'Modification - denomination',
-            'Modification - seige',
-            'Modification - gerant',
-            'Modification - objects'
-        ];
-        
-        $ad_type = sanitize_text_field($fields['ad_type'] ?? '');
-        $full_text = wp_kses_post($fields['full_text'] ?? ''); // Keep HTML formatting
-        
-        if (empty($ad_type) || !in_array($ad_type, $allowed_ad_types)) {
-            throw new Exception(__('Invalid ad type.', 'lmb-core'));
+    private static function rotate_log() {
+        if (file_exists(self::$log_file)) {
+            $backup_file = self::$log_file . '.old';
+            if (file_exists($backup_file)) {
+                unlink($backup_file);
+            }
+            rename(self::$log_file, $backup_file);
         }
-        
-        if (empty($full_text) || strlen($full_text) < 50) {
-            throw new Exception(__('Ad content is too short.', 'lmb-core'));
-        }
-        
-        return [
-            'ad_type' => $ad_type,
-            'full_text' => $full_text,
-            'title' => sanitize_text_field($fields['title'] ?? $ad_type . ' - ' . current_time('Y-m-d'))
-        ];
     }
     
     /**
-     * Create legal ad post
+     * Add logs page to admin menu
      */
-    public static function create_legal_ad($data) {
-        $user_id = get_current_user_id();
-        
-        $post_id = wp_insert_post([
-            'post_type' => 'lmb_legal_ad',
-            'post_title' => $data['title'],
-            'post_status' => 'draft',
-            'post_author' => $user_id,
-        ], true);
-        
-        if (is_wp_error($post_id)) {
-            throw new Exception($post_id->get_error_message());
+    public static function add_logs_page() {
+        add_submenu_page(
+            'lmb-core',
+            __('Error Logs', 'lmb-core'),
+            __('Error Logs', 'lmb-core'),
+            'manage_options',
+            'lmb-error-logs',
+            [__CLASS__, 'render_logs_page']
+        );
+    }
+    
+    /**
+     * Render logs page
+     */
+    public static function render_logs_page() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
         }
         
-        // Save post meta
-        update_post_meta($post_id, 'ad_type', $data['ad_type']);
-        update_post_meta($post_id, 'full_text', $data['full_text']);
-        update_post_meta($post_id, 'lmb_status', 'draft');
-        update_post_meta($post_id, 'lmb_client_id', $user_id);
+        // Handle log clearing
+        if (isset($_POST['clear_logs']) && wp_verify_nonce($_POST['_wpnonce'], 'clear_logs')) {
+            if (file_exists(self::$log_file)) {
+                unlink(self::$log_file);
+            }
+            echo '<div class="notice notice-success"><p>' . __('Logs cleared successfully.', 'lmb-core') . '</p></div>';
+        }
         
-        return $post_id;
-    }
-
-    /**
-     * User submits a Legal Ad:
-     * - store full HTML in 'full_text' (NO stripping)
-     * - set status 'draft' initially (user can publish later from dashboard widget)
-     */
-    public static function submit_ad() {
-        if (!is_user_logged_in()) wp_die('Auth required.');
-
-        check_admin_referer('lmb_submit_ad_action', '_wpnonce');
-
-        $user_id   = get_current_user_id();
-        $title     = isset($_POST['lmb_ad_title']) ? sanitize_text_field(wp_unslash($_POST['lmb_ad_title'])) : '';
-        $ad_type   = isset($_POST['lmb_ad_type']) ? sanitize_text_field(wp_unslash($_POST['lmb_ad_type'])) : '';
-        $full_html = isset($_POST['lmb_full_text']) ? wp_kses_post(wp_unslash($_POST['lmb_full_text'])) : '';
-
-        // Create post in draft
-        $post_id = wp_insert_post([
-            'post_type'   => 'lmb_legal_ad',
-            'post_title'  => $title ?: ('Ad by user '.$user_id),
-            'post_status' => 'draft',
-        ], true);
-
-        if (is_wp_error($post_id)) wp_die($post_id->get_error_message());
-        
-        // Save post meta
-        update_post_meta($post_id, 'ad_type', $ad_type);
-        update_post_meta($post_id, 'full_text', $full_html);
-        update_post_meta($post_id, 'lmb_status', 'draft');
-        update_post_meta($post_id, 'lmb_client_id', $user_id);
-
-        wp_safe_redirect(add_query_arg(['ad_submitted' => 1, 'ad_id' => $post_id], home_url('/dashboard')));
-        exit;
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('LMB Error Logs', 'lmb-core'); ?></h1>
+            
+            <form method="post" style="margin-bottom: 20px;">
+                <?php wp_nonce_field('clear_logs'); ?>
+                <button type="submit" name="clear_logs" class="button button-secondary" 
+                        onclick="return confirm('<?php esc_attr_e('Are you sure you want to clear all logs?', 'lmb-core'); ?>')">
+                    <?php esc_html_e('Clear Logs', 'lmb-core'); ?>
+                </button>
+            </form>
+            
+            <div style="background: #f1f1f1; padding: 20px; border-radius: 5px; max-height: 600px; overflow-y: auto;">
+                <pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">
+                    <?php
+                    if (file_exists(self::$log_file)) {
+                        $logs = file_get_contents(self::$log_file);
+                        // Show last 100 lines
+                        $lines = explode("\n", $logs);
+                        $lines = array_slice($lines, -100);
+                        echo esc_html(implode("\n", $lines));
+                    } else {
+                        esc_html_e('No logs found.', 'lmb-core');
+                    }
+                    ?>
+                </pre>
+            </div>
+        </div>
+        <?php
     }
 }
