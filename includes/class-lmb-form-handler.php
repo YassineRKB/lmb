@@ -10,7 +10,10 @@ class LMB_Form_Handler {
     public static function register_elementor_action($form_actions_registrar) {
         // This file contains the action's logic
         require_once LMB_CORE_PATH . 'includes/elementor-action-save-ad.php';
-        $form_actions_registrar->add_action_instance(new LMB_Save_Ad_Action());
+        
+        // --- THIS IS THE FIX ---
+        // The correct method is add_action(), not add_action_instance().
+        $form_actions_registrar->add_action(new LMB_Save_Ad_Action());
     }
 
     // Centralized function to create the legal ad post from form data
