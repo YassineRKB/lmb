@@ -18,7 +18,7 @@ class LMB_Subscribe_Package_Widget extends Widget_Base {
         $packages = get_posts(['post_type'=>'lmb_package','post_status'=>'publish','numberposts'=>-1, 'orderby' => 'meta_value_num', 'meta_key' => 'price', 'order' => 'ASC']);
         
         if (!$packages) {
-            echo '<p>'.esc_html__('No subscription packages are available at the moment.', 'lmb-core').'</p>';
+            echo '<div class="lmb-notice"><p>'.esc_html__('No subscription packages are available at the moment.', 'lmb-core').'</p></div>';
             return;
         }
 
@@ -30,14 +30,13 @@ class LMB_Subscribe_Package_Widget extends Widget_Base {
 
             echo '<div class="lmb-package-item">';
                 echo '<h3 class="lmb-package-title">'.esc_html($p->post_title).'</h3>';
-                echo '<div class="lmb-package-price"><span>'.esc_html($price).'</span> MAD</div>';
+                echo '<div class="lmb-package-price"><span>MAD</span>'.esc_html($price).'</div>';
                 echo '<div class="lmb-package-description">'.wp_kses_post($p->post_content).'</div>';
                 echo '<ul class="lmb-package-features">';
                     echo '<li><strong>'.esc_html($points).'</strong> Points Included</li>';
                     echo '<li><strong>'.esc_html($ad_cost).'</strong> Points Per Ad</li>';
                 echo '</ul>';
                 echo '<div class="lmb-package-action">';
-                    // This button now has a class and data-attribute for our AJAX script to target
                     echo '<button class="lmb-btn lmb-btn-primary lmb-get-invoice-btn" data-pkg-id="'.esc_attr($p->ID).'">'.esc_html__('Get Invoice','lmb-core').'</button>';
                 echo '</div>';
             echo '</div>';

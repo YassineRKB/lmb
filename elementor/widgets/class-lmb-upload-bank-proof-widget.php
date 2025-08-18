@@ -15,7 +15,6 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
             return;
         }
 
-        // Handle form submission
         if (isset($_POST['lmb_upload_proof']) && wp_verify_nonce($_POST['_wpnonce'], 'lmb_upload_bank_proof')) {
             $result = self::handle_upload();
             if ($result['success']) {
@@ -26,47 +25,53 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
         }
 
         $packages = get_posts(['post_type'=>'lmb_package','post_status'=>'publish','numberposts'=>-1, 'orderby' => 'title', 'order' => 'ASC']);
-        
-        echo '<div class="lmb-upload-form-container">';
-        echo '<h2>'.esc_html__('Upload Payment Proof','lmb-core').'</h2>';
-        echo '<p>'.esc_html__('After making a bank transfer, please upload a proof of payment (e.g., a screenshot or PDF receipt) for the package you purchased.','lmb-core').'</p>';
-        
-        echo '<form method="post" enctype="multipart/form-data" class="lmb-form">';
-            wp_nonce_field('lmb_upload_bank_proof');
+        ?>
+        <div class="lmb-upload-form-container">
+            <div class="lmb-upload-header">
+                <h2><i class="fas fa-file-invoice-dollar"></i> <?php esc_html_e('Upload Payment Proof','lmb-core'); ?></h2>
+                <p><?php esc_html_e('After making a bank transfer, upload your proof of payment for verification.','lmb-core'); ?></p>
+            </div>
             
-            echo '<div class="lmb-form-group">';
-                echo '<label for="package_id">'.esc_html__('For Package','lmb-core').'</label>';
-                echo '<select name="package_id" id="package_id" required>';
-                    echo '<option value="">'.esc_html__('Select the package you paid for...','lmb-core').'</option>';
-                    foreach ($packages as $p) {
-                        $price = get_post_meta($p->ID, 'price', true);
-                        echo '<option value="'.esc_attr($p->ID).'">'.esc_html($p->post_title).' - '.esc_html($price).' MAD</option>';
-                    }
-                echo '</select>';
-            echo '</div>';
-            
-            echo '<div class="lmb-form-group">';
-                echo '<label for="payment_reference">'.esc_html__('Payment Reference','lmb-core').'</label>';
-                echo '<input type="text" name="payment_reference" id="payment_reference" placeholder="'.esc_attr__('Enter the reference from your invoice','lmb-core').'" required>';
-                echo '<small>'.esc_html__('This is the unique reference number provided on the invoice you downloaded.','lmb-core').'</small>';
-            echo '</div>';
+            <form method="post" enctype="multipart/form-data" class="lmb-form">
+                <?php wp_nonce_field('lmb_upload_bank_proof'); ?>
+                
+                <div class="lmb-form-group">
+                    <label for="package_id"><i class="fas fa-box-open"></i> <?php esc_html_e('For Package','lmb-core'); ?></label>
+                    <select name="package_id" id="package_id" required>
+                        <option value=""><?php esc_html_e('Select the package you paid for...','lmb-core'); ?></option>
+                        <?php foreach ($packages as $p) :
+                            $price = get_post_meta($p->ID, 'price', true); ?>
+                            <option value="<?php echo esc_attr($p->ID); ?>"><?php echo esc_html($p->post_title); ?> - <?php echo esc_html($price); ?> MAD</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
+                <div class="lmb-form-group">
+                    <label for="payment_reference"><i class="fas fa-receipt"></i> <?php esc_html_e('Payment Reference','lmb-core'); ?></label>
+                    <input type="text" class="lmb-input" name="payment_reference" id="payment_reference" placeholder="<?php esc_attr_e('Enter the reference from your invoice','lmb-core'); ?>" required>
+                    <small><?php esc_html_e('This is the unique reference number provided on the invoice you downloaded.','lmb-core'); ?></small>
+                </div>
 
-            echo '<div class="lmb-form-group">';
-                echo '<label for="proof_file">'.esc_html__('Proof of Payment File','lmb-core').'</label>';
-                echo '<input type="file" name="proof_file" id="proof_file" accept="image/jpeg,image/png,application/pdf" required>';
-                echo '<small>'.esc_html__('Accepted formats: JPG, PNG, PDF. Maximum size: 5MB.','lmb-core').'</small>';
-            echo '</div>';
-            
-            echo '<div class="lmb-form-group">';
-                echo '<label for="notes">'.esc_html__('Additional Notes (Optional)','lmb-core').'</label>';
-                echo '<textarea name="notes" id="notes" rows="3" placeholder="'.esc_attr__('Any additional information for our team...','lmb-core').'"></textarea>';
-            echo '</div>';
-            
-            echo '<div class="lmb-form-group">';
-                echo '<button type="submit" name="lmb_upload_proof" class="lmb-btn lmb-btn-primary">'.esc_html__('Submit Proof for Verification','lmb-core').'</button>';
-            echo '</div>';
-        echo '</form>';
-        echo '</div>';
+                <div class="lmb-form-group">
+                    <label for="proof_file"><i class="fas fa-paperclip"></i> <?php esc_html_e('Proof of Payment File','lmb-core'); ?></label>
+                    <div class="lmb-file-upload">
+                        <input type="file" name="proof_file" id="proof_file" class="lmb-file-input" accept="image/jpeg,image/png,application/pdf" required>
+                        <label for="proof_file" class="lmb-file-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span><?php esc_html_e('Choose proof file...','lmb-core'); ?></span>
+                        </label>
+                    </div>
+                    <small><?php esc_html_e('Accepted formats: JPG, PNG, PDF. Maximum size: 5MB.','lmb-core'); ?></small>
+                </div>
+                
+                <div class="lmb-form-actions">
+                    <button type="submit" name="lmb_upload_proof" class="lmb-btn lmb-btn-primary lmb-btn-large">
+                        <i class="fas fa-check-circle"></i> <?php esc_html_e('Submit Proof for Verification','lmb-core'); ?>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <?php
     }
     
     private static function handle_upload() {
@@ -84,7 +89,6 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
         $package_title = get_the_title($package_id);
         $payment_reference = sanitize_text_field($_POST['payment_reference']);
 
-        // File validation
         $file = $_FILES['proof_file'];
         $file_return = wp_check_filetype($file['name']);
         if(!in_array($file_return['ext'], ['jpg', 'jpeg', 'png', 'pdf'])) {
@@ -94,35 +98,31 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
             return ['success' => false, 'message' => __('File is too large. Maximum size is 5MB.', 'lmb-core')];
         }
 
-        // Handle the upload
         $attachment_id = media_handle_upload('proof_file', 0);
         if (is_wp_error($attachment_id)) {
             return ['success' => false, 'message' => $attachment_id->get_error_message()];
         }
 
-        // Create the 'lmb_payment' post
         $payment_post_title = sprintf('Proof from %s for %s', $user->display_name, $package_title);
         $payment_id = wp_insert_post([
             'post_type' => 'lmb_payment',
             'post_title' => $payment_post_title,
-            'post_status' => 'publish', // Important: it must be a public status to be visible in the admin list
+            'post_status' => 'publish',
             'post_author' => $user_id,
         ]);
 
         if (is_wp_error($payment_id)) {
-            wp_delete_attachment($attachment_id, true); // Clean up uploaded file
+            wp_delete_attachment($attachment_id, true);
             return ['success' => false, 'message' => __('Could not create payment record.', 'lmb-core')];
         }
 
-        // Save all metadata
         update_post_meta($payment_id, 'user_id', $user_id);
         update_post_meta($payment_id, 'package_id', $package_id);
         update_post_meta($payment_id, 'proof_attachment_id', $attachment_id);
         update_post_meta($payment_id, 'payment_reference', $payment_reference);
         update_post_meta($payment_id, 'notes', sanitize_textarea_field($_POST['notes'] ?? ''));
-        update_post_meta($payment_id, 'payment_status', 'pending'); // Initial status
+        update_post_meta($payment_id, 'payment_status', 'pending');
         
-        // Associate the attachment with the payment post
         wp_update_post(['ID' => $attachment_id, 'post_parent' => $payment_id]);
 
         LMB_Ad_Manager::log_activity(sprintf('Payment proof #%d submitted by %s for package "%s"', $payment_id, $user->display_name, $package_title));

@@ -24,13 +24,25 @@ class LMB_Invoice_Widget extends Widget_Base {
     }
 
     protected function render() {
+        // Note: The AJAX functionality for package invoices is handled by the pricing table widget.
+        // This widget is a fallback or for a different purpose, e.g., a generic invoice.
         $invoice_url = site_url( '?lmb-generate-invoice=true' );
-        echo '<div class="lmb-invoice-widget">';
-        echo '<h3>' . esc_html__( 'Generate Payment Invoice', 'lmb-core' ) . '</h3>';
-        echo '<p>' . esc_html__( 'Click the button below to generate a PDF invoice with a unique reference number for bank payment.', 'lmb-core' ) . '</p>';
-        echo '<a href="' . esc_url( $invoice_url ) . '" class="elementor-button elementor-button-link elementor-size-sm" target="_blank">';
-        echo '<span>' . esc_html__( 'Generate Invoice', 'lmb-core' ) . '</span>';
-        echo '</a>';
-        echo '</div>';
+        ?>
+        <div class="lmb-package-item" style="text-align: left; max-width: 500px; margin: auto;">
+            <div class="lmb-package-title" style="text-align: center;">
+                <i class="fas fa-file-invoice" style="margin-right: 8px;"></i>
+                <?php esc_html_e( 'Generate Payment Invoice', 'lmb-core' ); ?>
+            </div>
+            <p class="lmb-package-description" style="text-align: center;">
+                <?php esc_html_e( 'Click the button below to generate a PDF invoice with a unique reference number for bank payment.', 'lmb-core' ); ?>
+            </p>
+            <div class="lmb-package-action">
+                <a href="<?php echo esc_url( $invoice_url ); ?>" class="lmb-btn lmb-btn-primary" target="_blank">
+                    <i class="fas fa-download"></i>
+                    <span><?php esc_html_e( 'Generate Invoice', 'lmb-core' ); ?></span>
+                </a>
+            </div>
+        </div>
+        <?php
     }
 }

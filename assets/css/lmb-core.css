@@ -2,50 +2,63 @@
 .lmb-directory-container { 
     max-width: 1140px; 
     margin: 0 auto; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .lmb-filters-form { 
     display: flex; 
     gap: 15px; 
     margin-bottom: 30px; 
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
 
 .lmb-filters-form input, 
 .lmb-filters-form select { 
-    padding: 10px 15px; 
+    padding: 12px 18px; 
     border: 1px solid #ddd; 
-    border-radius: 5px; 
+    border-radius: 8px; 
     flex-grow: 1; 
+    font-size: 15px;
 }
 
 .lmb-filters-form button { 
-    background: #0073aa; 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
     color: #fff; 
     border: none; 
-    padding: 10px 25px; 
-    border-radius: 5px; 
-    cursor: pointer; 
+    padding: 12px 28px; 
+    border-radius: 8px; 
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
 }
 
+.lmb-filters-form button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+
 /* Ads & News Grids */
-.lmb-ads-grid, 
-.lmb-news-grid { 
+.lmb-ads-grid, .lmb-news-grid { 
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
     gap: 30px; 
 }
 
-.lmb-ad-card, 
-.lmb-news-card { 
+.lmb-ad-card, .lmb-news-card { 
     background: #fff; 
-    border-radius: 8px; 
+    border-radius: 12px; 
     box-shadow: 0 5px 25px rgba(0,0,0,0.07); 
     overflow: hidden; 
     transition: all .3s ease; 
+    display: flex;
+    flex-direction: column;
 }
 
-.lmb-ad-card:hover, 
-.lmb-news-card:hover { 
+.lmb-ad-card:hover, .lmb-news-card:hover { 
     transform: translateY(-5px); 
     box-shadow: 0 8px 30px rgba(0,0,0,0.1); 
 }
@@ -62,7 +75,7 @@
 .lmb-ad-type-badge { 
     background: #e7f3ff; 
     color: #005a87; 
-    padding: 4px 10px; 
+    padding: 6px 12px; 
     border-radius: 20px; 
     font-size: 12px; 
     font-weight: 500; 
@@ -74,9 +87,10 @@
 }
 
 .lmb-ad-title { 
-    font-size: 18px; 
+    font-size: 20px; 
     padding: 0 20px; 
-    margin: 15px 0; 
+    margin: 15px 0;
+    font-weight: 600;
 }
 
 .lmb-ad-excerpt { 
@@ -84,30 +98,43 @@
     color: #555; 
     font-size: 15px; 
     margin-bottom: 20px; 
+    flex-grow: 1;
 }
 
-.lmb-ad-card .lmb-btn { 
-    margin: 0 20px 20px; 
+.lmb-ad-card .lmb-ad-actions {
+    padding: 0 20px 20px;
 }
 
 .lmb-news-thumbnail img { 
     display: block; 
     width: 100%; 
-    height: auto; 
+    height: 200px;
+    object-fit: cover;
 }
 
 .lmb-news-content { 
     padding: 20px; 
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .lmb-news-title { 
-    font-size: 18px; 
-    margin-top: 0; 
+    font-size: 20px; 
+    margin-top: 0;
+    font-weight: 600;
 }
 
 .lmb-news-meta { 
     color: #777; 
     margin-bottom: 15px; 
+    font-size: 13px;
+}
+
+.lmb-news-card .lmb-news-actions {
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f1;
 }
 
 /* User Dashboard Ads List */
@@ -117,63 +144,43 @@
     align-items: center; 
     background: #fff; 
     padding: 15px 20px; 
-    border-radius: 5px; 
+    border-radius: 8px; 
     margin-bottom: 10px; 
-    border-left: 4px solid #ccc; 
+    border-left: 5px solid #ccc; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-.lmb-user-ad-item.status-draft { 
-    border-color: #777; 
+.lmb-user-ad-item.status-draft { border-color: #777; }
+.lmb-user-ad-item.status-pending_review { border-color: #ffb900; }
+.lmb-user-ad-item.status-published { border-color: #4ab866; }
+.lmb-user-ad-item.status-denied { border-color: #d63638; background: #fff5f5; }
+.lmb-ad-status { display: block; font-size: 11px; text-transform: uppercase; color: #777; font-weight: 600; margin-bottom: 5px; }
+.lmb-ad-title { font-size: 16px; margin: 0; font-weight: 600; }
+.lmb-ad-meta { font-size: 13px; color: #777; }
+.lmb-ad-reason { font-size: 13px; margin-top: 5px; color: #d63638; }
+.lmb-btn-sm { font-size: 13px; padding: 8px 15px; }
+
+.lmb-pagination { margin-top: 40px; text-align: center; }
+.lmb-pagination .page-numbers {
+    padding: 8px 14px;
+    margin: 0 4px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #50575e;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+.lmb-pagination .page-numbers:hover {
+    background: #f0f0f1;
+    color: #1d2327;
+}
+.lmb-pagination .page-numbers.current {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    font-weight: 600;
 }
 
-.lmb-user-ad-item.status-pending_review { 
-    border-color: #ffb900; 
-}
-
-.lmb-user-ad-item.status-published { 
-    border-color: #4ab866; 
-}
-
-.lmb-user-ad-item.status-denied { 
-    border-color: #d63638; 
-    background: #fff5f5; 
-}
-
-.lmb-ad-status { 
-    display: block; 
-    font-size: 11px; 
-    text-transform: uppercase; 
-    color: #777; 
-    font-weight: 600; 
-    margin-bottom: 5px; 
-}
-
-.lmb-ad-title { 
-    font-size: 16px; 
-    margin: 0; 
-    font-weight: 600; 
-}
-
-.lmb-ad-meta { 
-    font-size: 13px; 
-    color: #777; 
-}
-
-.lmb-ad-reason { 
-    font-size: 13px; 
-    margin-top: 5px; 
-    color: #d63638; 
-}
-
-.lmb-btn-sm { 
-    font-size: 13px; 
-    padding: 8px 15px; 
-}
-
-.lmb-pagination { 
-    margin-top: 40px; 
-    text-align: center; 
-}
 
 /* Enhanced Widget Styles */
 .lmb-admin-actions-widget .lmb-actions-grid { 
@@ -329,10 +336,11 @@
 .lmb-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 10px 16px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-weight: 500;
     text-decoration: none;
     cursor: pointer;
@@ -341,13 +349,30 @@
 }
 
 .lmb-btn-sm {
-    padding: 6px 12px;
+    padding: 8px 14px;
     font-size: 12px;
 }
 
 .lmb-btn-large {
-    padding: 14px 24px;
+    padding: 16px 28px;
     font-size: 16px;
+}
+
+.lmb-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+.lmb-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.lmb-btn-secondary {
+    background: #f0f0f1;
+    color: #1d2327;
+}
+.lmb-btn-secondary:hover {
+    background: #e0e0e0;
 }
 
 .lmb-btn-success {
@@ -456,8 +481,10 @@
     gap: 4px;
 }
 
-/* Upload Newspaper Widget */
-.lmb-upload-newspaper-container {
+
+/* Upload Newspaper & Bank Proof Widgets */
+.lmb-upload-newspaper-container,
+.lmb-upload-form-container {
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
@@ -487,7 +514,7 @@
     font-size: 16px;
 }
 
-.lmb-upload-form {
+.lmb-upload-form, .lmb-form {
     padding: 30px;
 }
 
@@ -512,7 +539,7 @@
     font-size: 14px;
 }
 
-.lmb-input, .lmb-textarea {
+.lmb-input, .lmb-textarea, .lmb-form select {
     width: 100%;
     padding: 12px 16px;
     border: 2px solid #e0e0e0;
@@ -522,7 +549,7 @@
     background: #fafafa;
 }
 
-.lmb-input:focus, .lmb-textarea:focus {
+.lmb-input:focus, .lmb-textarea:focus, .lmb-form select:focus {
     outline: none;
     border-color: #667eea;
     background: white;
@@ -568,6 +595,78 @@
     border-top: 1px solid #f0f0f1;
 }
 
+/* Pricing Table / Packages Widget */
+.lmb-pricing-table {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    align-items: stretch;
+}
+
+.lmb-package-item {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.07);
+    padding: 30px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    transition: all .3s ease;
+    border: 1px solid #f0f0f1;
+}
+.lmb-package-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+
+.lmb-package-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 15px;
+}
+
+.lmb-package-price {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #1d2327;
+}
+.lmb-package-price span {
+    font-size: 20px;
+    font-weight: 500;
+    vertical-align: super;
+    margin-right: 5px;
+}
+
+.lmb-package-description {
+    color: #50575e;
+    margin-bottom: 25px;
+    font-size: 14px;
+}
+
+.lmb-package-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 25px;
+    flex-grow: 1;
+}
+.lmb-package-features li {
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f1;
+    font-size: 15px;
+}
+.lmb-package-features li:last-child {
+    border-bottom: none;
+}
+.lmb-package-features strong {
+    color: #667eea;
+}
+
+.lmb-package-action {
+    margin-top: auto;
+}
+
+
 /* Notifications Widget */
 .lmb-notifications-widget {
     position: relative;
@@ -590,15 +689,8 @@
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
-.lmb-notifications-trigger.no-notifications {
-    background: #333; /* Black for no notifications */
-}
-
-.lmb-notifications-trigger.has-notifications {
-    background: #e53e3e; /* Red for new notifications */
-}
-
 .lmb-notifications-trigger:hover {
+    background: #5a67d8;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
@@ -634,16 +726,13 @@
     transform: translateY(-10px);
     transition: all 0.3s ease;
     z-index: 1000;
-    max-height: 500px;
     overflow: hidden;
-    display: none; /* Hidden by default */
 }
 
 .lmb-notifications-dropdown.lmb-show {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
-    display: block; /* Show when active */
 }
 
 .lmb-notifications-header {
@@ -803,17 +892,19 @@
     display: flex;
     align-items: flex-start;
     gap: 12px;
+    border-left-width: 5px;
+    border-left-style: solid;
 }
 
 .lmb-notice-success {
     background: #edfaef;
-    border-left: 4px solid #00a32a;
+    border-color: #00a32a;
     color: #155724;
 }
 
 .lmb-notice-error {
     background: #fcf0f1;
-    border-left: 4px solid #d63638;
+    border-color: #d63638;
     color: #721c24;
 }
 
@@ -831,12 +922,17 @@
 /* Responsive Design */
 @media (max-width: 768px) {
     .lmb-admin-actions-widget .lmb-actions-grid,
-    .lmb-admin-stats-widget .lmb-stats-grid {
+    .lmb-admin-stats-widget .lmb-stats-grid,
+    .lmb-pricing-table {
         grid-template-columns: 1fr;
     }
     
     .lmb-form-row {
         grid-template-columns: 1fr;
+    }
+    
+    .lmb-filters-form {
+        flex-direction: column;
     }
     
     .lmb-notifications-dropdown {
@@ -854,267 +950,50 @@
         align-self: flex-end;
     }
 }
-/* ============================
-   Ads List Styling
-   ============================ */
-.lmb-user-ads-list {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 20px 0;
-  font-size: 14px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+/* Add this to the END of assets/css/lmb-core.css */
+
+/* User Stats Widget Styles */
+.lmb-user-stats-widget .lmb-stat-card::before {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
 }
 
-.lmb-user-ads-list th,
-.lmb-user-ads-list td {
-  padding: 12px 15px;
-  border: 1px solid #e0e0e0;
-  text-align: left;
+.lmb-user-stats-widget .lmb-stat-points::before {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+}
+.lmb-user-stats-widget .lmb-stat-points .lmb-stat-icon {
+    color: #3fcf8e;
 }
 
-.lmb-user-ads-list th {
-  background-color: #f4f6f9;
-  font-weight: 600;
-  color: #333;
+.lmb-user-stats-widget .lmb-stat-ads::before {
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+}
+.lmb-user-stats-widget .lmb-stat-ads .lmb-stat-icon {
+    color: #2fbaff;
 }
 
-.lmb-user-ads-list tr:nth-child(even) {
-  background-color: #fafafa;
+.lmb-user-stats-widget .lmb-stat-pending::before {
+    background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+}
+.lmb-user-stats-widget .lmb-stat-pending .lmb-stat-icon {
+    color: #f274b1;
 }
 
-.lmb-user-ads-list tr:hover {
-  background-color: #f1f1f1;
-  transition: 0.2s ease-in-out;
+.lmb-user-stats-widget .lmb-stat-published::before {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+.lmb-user-stats-widget .lmb-stat-published .lmb-stat-icon {
+    color: #6e6af8;
 }
 
-/* ============================
-   Notifications Widget
-   ============================ */
-.lmb-notifications {
-  position: relative;
-  display: inline-block;
-}
-
-.lmb-notifications .bell {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 22px;
-  position: relative;
-  color: black;
-}
-
-.lmb-notifications .notif-count {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background: red;
-  color: white;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 50%;
-  display: none;
-}
-
-.lmb-notifications .notif-dropdown {
-  display: none;
-  position: absolute;
-  right: 0;
-  top: 35px;
-  width: 250px;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  z-index: 99;
-}
-
-.lmb-notifications .notif-dropdown ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.lmb-notifications .notif-dropdown li {
-  padding: 10px;
-  border-bottom: 1px solid #f1f1f1;
-  font-size: 14px;
-}
-
-.lmb-notifications .notif-dropdown li:last-child {
-  border-bottom: none;
-}
-
-.lmb-notifications .notif-dropdown li.unread {
-  background: #f9f9ff;
-  font-weight: 600;
-}
-/* ===========================
-   Notifications Widget Styles
-   =========================== */
-
-.lmb-notifications-widget {
-    position: relative;
-    display: inline-block;
-    margin-left: 15px;
-    font-family: inherit;
-    z-index: 9999;
-}
-
-/* Notification bell */
-.lmb-notifications-trigger {
-    cursor: pointer;
-    font-size: 20px;
-    color: #222;
-    position: relative;
-    transition: color 0.3s ease;
-}
-.lmb-notifications-trigger.has-notifications {
-    color: #d93025; /* red when there are notifications */
-}
-.lmb-notifications-trigger.no-notifications {
-    color: #444; /* black/grey when empty */
-}
-
-/* Badge */
-.lmb-notification-badge {
-    position: absolute;
-    top: -6px;
-    right: -8px;
-    background: #d93025;
-    color: #fff;
-    font-size: 11px;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 50%;
-    line-height: 1;
-}
-
-/* Dropdown */
-.lmb-notifications-dropdown {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 35px;
-    width: 320px;
+.lmb-chart-container {
     background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    overflow: hidden;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
 }
-.lmb-notifications-dropdown.lmb-show {
-    display: block;
-}
-
-/* Header */
-.lmb-notifications-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 12px;
-    border-bottom: 1px solid #eee;
-    background: #f9f9f9;
-}
-.lmb-notifications-header h3 {
-    font-size: 14px;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.lmb-mark-all-read {
-    background: none;
-    border: none;
-    font-size: 12px;
-    cursor: pointer;
-    color: #0073aa;
-    transition: color 0.3s;
-}
-.lmb-mark-all-read:hover {
-    color: #005177;
-}
-
-/* List */
-.lmb-notifications-list {
-    max-height: 300px;
-    overflow-y: auto;
-}
-.lmb-notification-item {
-    display: flex;
-    align-items: flex-start;
-    padding: 10px;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background 0.2s;
-    cursor: pointer;
-}
-.lmb-notification-item:hover {
-    background: #f7f7f7;
-}
-.lmb-notification-unread {
-    background: #fef6f6; /* highlight unread */
-}
-.lmb-notification-unread-dot {
-    width: 8px;
-    height: 8px;
-    background: #d93025;
-    border-radius: 50%;
-    margin-left: auto;
-    align-self: center;
-}
-
-/* Icon */
-.lmb-notification-icon {
-    margin-right: 10px;
-    font-size: 16px;
-    color: #666;
-}
-
-/* Content */
-.lmb-notification-content {
-    flex: 1;
-    font-size: 13px;
-}
-.lmb-notification-title {
+.lmb-chart-container h4 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 18px;
     font-weight: 600;
-    margin-bottom: 2px;
-}
-.lmb-notification-message {
-    font-size: 12px;
-    color: #555;
-    margin-bottom: 4px;
-}
-.lmb-notification-time {
-    font-size: 11px;
-    color: #999;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-/* Empty state */
-.lmb-notifications-empty {
-    text-align: center;
-    padding: 20px;
-    color: #999;
-}
-.lmb-notifications-empty i {
-    font-size: 20px;
-    margin-bottom: 5px;
-}
-
-/* Footer */
-.lmb-notifications-footer {
-    padding: 10px;
-    text-align: center;
-    background: #f9f9f9;
-    border-top: 1px solid #eee;
-}
-.lmb-view-all-notifications {
-    font-size: 12px;
-    color: #0073aa;
-    text-decoration: none;
-}
-.lmb-view-all-notifications:hover {
-    text-decoration: underline;
 }

@@ -15,7 +15,6 @@ class LMB_Upload_Newspaper_Widget extends Widget_Base {
             return;
         }
 
-        // Handle form submission
         if (isset($_POST['lmb_upload_newspaper']) && wp_verify_nonce($_POST['_wpnonce'], 'lmb_upload_newspaper')) {
             $result = self::handle_upload();
             if ($result['success']) {
@@ -60,16 +59,6 @@ class LMB_Upload_Newspaper_Widget extends Widget_Base {
                     </div>
                 </div>
 
-                <div class="lmb-form-group">
-                    <label for="newspaper_description">
-                        <i class="fas fa-align-left"></i>
-                        <?php esc_html_e('Description','lmb-core'); ?>
-                    </label>
-                    <textarea name="newspaper_description" id="newspaper_description" 
-                              rows="4" placeholder="<?php esc_attr_e('Brief description of this newspaper edition...','lmb-core'); ?>" 
-                              class="lmb-textarea"></textarea>
-                </div>
-                
                 <div class="lmb-form-row">
                     <div class="lmb-form-group">
                         <label for="newspaper_pdf">
@@ -126,7 +115,7 @@ class LMB_Upload_Newspaper_Widget extends Widget_Base {
 
         $title = sanitize_text_field($_POST['newspaper_title']);
         $date = sanitize_text_field($_POST['newspaper_date']);
-        $description = sanitize_textarea_field($_POST['newspaper_description']);
+        $description = sanitize_textarea_field($_POST['newspaper_description'] ?? '');
 
         // Validate PDF file
         $pdf_file = $_FILES['newspaper_pdf'];

@@ -12,94 +12,76 @@ class LMB_Newspaper_Directory_Widget extends Widget_Base {
 
     protected function render() {
         $search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
-        $paged = max(1, (int)($_GET['paged'] ?? 1));
+        $paged = max(1, (int)(get_query_var('paged') ? get_query_var('paged') : 1));
         
-        echo '<div class="lmb-directory-header">';
-        echo '<h2>' . esc_html__('Newspaper Directory', 'lmb-core') . '</h2>';
-        echo '<form method="get" class="lmb-filter-form">';
-        echo '<div class="lmb-filter-row">';
-        echo '<input type="text" name="s" value="'.esc_attr($search).'" placeholder="'.esc_attr__('Search newspapers...','lmb-core').'" class="lmb-search-input" />';
-        echo '<button type="submit" class="lmb-search-btn">'.esc_html__('Search','lmb-core').'</button>';
-        echo '</div>';
-        echo '</form>';
-        echo '</div>';
+        ?>
+        <div class="lmb-directory-container">
+            <form method="get" class="lmb-filters-form">
+                <input type="text" name="s" value="<?php echo esc_attr($search); ?>" placeholder="<?php esc_attr_e('Search newspapers...','lmb-core'); ?>" />
+                <button type="submit"><?php esc_html_e('Search','lmb-core'); ?></button>
+            </form>
 
-        $q = new WP_Query([
-            'post_type' => 'lmb_newspaper',
-            'post_status' => 'publish',
-            's' => $search,
-            'posts_per_page' => 12,
-            'paged' => $paged,
-            'orderby' => 'date',
-            'order' => 'DESC'
-        ]);
+            <?php
+            $q = new WP_Query([
+                'post_type' => 'lmb_newspaper',
+                'post_status' => 'publish',
+                's' => $search,
+                'posts_per_page' => 12,
+                'paged' => $paged,
+                'orderby' => 'date',
+                'order' => 'DESC'
+            ]);
 
-        if ($q->have_posts()){
-            echo '<div class="lmb-results-info">';
-            echo '<p>' . sprintf(
-                esc_html__('Showing %d-%d of %d newspapers', 'lmb-core'),
-                (($paged - 1) * 12) + 1,
-                min($paged * 12, $q->found_posts),
-                $q->found_posts
-            ) . '</p>';
-            echo '</div>';
-            
-            echo '<div class="lmb-news-grid">';
-            while($q->have_posts()){ $q->the_post();
-                $pdf_field = get_post_meta(get_the_ID(), 'newspaper_pdf', true);
-                $pdf_url = wp_get_attachment_url($pdf_field);
-                
-                echo '<article class="lmb-news">';
-                echo '<div class="lmb-news-header">';
-                echo '<h3 class="lmb-news-title">'.esc_html(get_the_title()).'</h3>';
-                echo '<span class="lmb-news-date">'.esc_html(get_the_date()).'</span>';
+            if ($q->have_posts()){
+                echo '<div class="lmb-news-grid">';
+                while($q->have_posts()){ $q->the_post();
+                    $pdf_field = get_post_meta(get_the_ID(), 'newspaper_pdf', true);
+                    $pdf_url = wp_get_attachment_url($pdf_field);
+                    
+                    echo '<article class="lmb-news-card">';
+                    if (has_post_thumbnail()) {
+                        echo '<div class="lmb-news-thumbnail">';
+                        the_post_thumbnail('medium_large');
+                        echo '</div>';
+                    }
+                    echo '<div class="lmb-news-content">';
+                    echo '<h3 class="lmb-news-title">'.esc_html(get_the_title()).'</h3>';
+                    echo '<div class="lmb-news-meta">'.esc_html(get_the_date()).'</div>';
+                    
+                    if (get_the_excerpt()) {
+                        echo '<div class="lmb-news-excerpt"><p>'.esc_html(get_the_excerpt()).'</p></div>';
+                    }
+                    
+                    echo '<div class="lmb-news-actions">';
+                    if ($pdf_url) {
+                        echo '<a target="_blank" href="'.esc_url($pdf_url).'" class="lmb-btn lmb-btn-primary">'.esc_html__('Download PDF','lmb-core').'</a>';
+                    }
+                    echo '</div>';
+                    echo '</div>';
+                    echo '</article>';
+                }
                 echo '</div>';
                 
-                if (has_post_thumbnail()) {
-                    echo '<div class="lmb-news-thumbnail">';
-                    echo get_the_post_thumbnail(get_the_ID(), 'medium');
+                if ($q->max_num_pages > 1) {
+                    echo '<div class="lmb-pagination">';
+                    $big = 999999999;
+                    echo paginate_links([
+                        'base' => str_replace($big, '%#%', esc_url(get_pagenum_link($big))),
+                        'format' => '?paged=%#%',
+                        'current' => $paged,
+                        'total' => $q->max_num_pages,
+                        'prev_text' => '&laquo; ' . esc_html__('Previous', 'lmb-core'),
+                        'next_text' => esc_html__('Next', 'lmb-core') . ' &raquo;'
+                    ]);
                     echo '</div>';
                 }
                 
-                if (get_the_excerpt()) {
-                    echo '<div class="lmb-news-excerpt">';
-                    echo '<p>'.esc_html(get_the_excerpt()).'</p>';
-                    echo '</div>';
-                }
-                
-                echo '<div class="lmb-news-actions">';
-                if ($pdf_url) {
-                    echo '<a target="_blank" href="'.esc_url($pdf_url).'" class="lmb-download-btn">'.esc_html__('Download PDF','lmb-core').'</a>';
-                }
-                echo '<a href="'.esc_url(get_permalink()).'" class="lmb-view-btn">'.esc_html__('View Details','lmb-core').'</a>';
-                echo '</div>';
-                echo '</article>';
+                wp_reset_postdata();
+            } else {
+                echo '<div class="lmb-notice"><p>'.esc_html__('No newspapers found matching your criteria.','lmb-core').'</p></div>';
             }
-            echo '</div>';
-            
-            // Pagination
-            if ($q->max_num_pages > 1) {
-                echo '<div class="lmb-pagination">';
-                $big = 999999999;
-                echo paginate_links([
-                    'base' => str_replace($big, '%#%', esc_url(get_pagenum_link($big))),
-                    'format' => '?paged=%#%',
-                    'current' => $paged,
-                    'total' => $q->max_num_pages,
-                    'prev_text' => '&laquo; ' . esc_html__('Previous', 'lmb-core'),
-                    'next_text' => esc_html__('Next', 'lmb-core') . ' &raquo;'
-                ]);
-                echo '</div>';
-            }
-            
-            wp_reset_postdata();
-        } else {
-            echo '<div class="lmb-no-results">';
-            echo '<p>'.esc_html__('No newspapers found matching your criteria.','lmb-core').'</p>';
-            if ($search) {
-                echo '<p><a href="?" class="lmb-clear-filters">'.esc_html__('Clear search','lmb-core').'</a></p>';
-            }
-            echo '</div>';
-        }
+        ?>
+        </div>
+        <?php
     }
 }
