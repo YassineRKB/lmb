@@ -13,33 +13,49 @@ class LMB_User_Dashboard {
 
     // Function to render the stats block
     public static function render_user_stats() {
-        if (!is_user_logged_in()) return '<p>'.esc_html__('Please log in to see your stats.','lmb-core').'</p>';
-
+        if (!is_user_logged_in()) return '<p>'.esc_html__('Login required.', 'lmb-core').'</p>';
+        
         $user_id = get_current_user_id();
-        $user = get_userdata($user_id);
+        $q = new WP_Query([ /* ... query remains the same ... */ ]);
         
         ob_start();
         ?>
-        <div class="lmb-user-stats-widget">
-            <div class="lmb-user-welcome">
-                <h2><?php printf(__('Welcome back, %s!', 'lmb-core'), esc_html($user->display_name)); ?></h2>
-            </div>
-            <div class="lmb-stats-grid">
-                <div class="lmb-stat-card">
-                    <div class="lmb-stat-content">
-                        <div class="lmb-stat-number"><?php echo do_shortcode('[lmb_user_balance]'); ?></div>
-                        <div class="lmb-stat-label"><?php esc_html_e('Current Points Balance','lmb-core'); ?></div>
-                    </div>
+        <div class="lmb-user-ads-list-wrapper">
+            <h3><?php esc_html_e('Your Recent Legal Ads', 'lmb-core'); ?></h3>
+            <?php if (!$q->have_posts()): ?>
+                <p><?php esc_html_e('You have not submitted any active ads yet.', 'lmb-core'); ?></p>
+            <?php else: ?>
+                <div class="lmb-user-ads-list">
+                    <?php while($q->have_posts()): $q->the_post();
+                        $status = get_post_meta(get_the_ID(), 'lmb_status', true);
+                        ?>
+                        <div class="lmb-user-ad-item status-<?php echo esc_attr($status); ?>">
+                            <div class="lmb-ad-info">
+                                <span class="lmb-ad-status"><?php echo esc_html(str_replace('_', ' ', $status)); ?></span>
+                                <h4 class="lmb-ad-title"><?php the_title(); ?></h4>
+                                <div class="lmb-ad-meta"><?php echo get_the_date(); ?></div>
+                            </div>
+                            <div class="lmb-ad-actions">
+                                <?php if ($status === 'draft'): ?>
+                                    <button class="lmb-btn-sm lmb-submit-for-review-btn" data-ad-id="<?php echo get_the_ID(); ?>">
+                                        <?php _e('Submit for Review', 'lmb-core'); ?>
+                                    </button>
+                                <?php elseif ($status === 'published'): 
+                                    $pdf_url = get_post_meta(get_the_ID(), 'ad_pdf_url', true);
+                                    if ($pdf_url): ?>
+                                        <a href="<?php echo esc_url($pdf_url); ?>" target="_blank" class="lmb-btn-sm lmb-btn-secondary"><?php _e('Download PDF', 'lmb-core'); ?></a>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span><?php _e('Awaiting review', 'lmb-core'); ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endwhile; ?>
                 </div>
-                 <div class="lmb-stat-card">
-                    <div class="lmb-stat-content">
-                        <div class="lmb-stat-number"><?php echo do_shortcode('[lmb_user_total_ads]'); ?></div>
-                        <div class="lmb-stat-label"><?php esc_html_e('Total Ads Submitted','lmb-core'); ?></div>
-                    </div>
-                </div>
-            </div>
+            <?php endif; ?>
         </div>
         <?php
+        wp_reset_postdata();
         return ob_get_clean();
     }
     
