@@ -18,9 +18,10 @@ class LMB_Notifications_Widget extends Widget_Base {
         $user_id = get_current_user_id();
         $notifications = $this->get_user_notifications($user_id);
         $unread_count = count(array_filter($notifications, function($n) { return !$n['read']; }));
+        $trigger_class = $unread_count > 0 ? 'has-notifications' : 'no-notifications';
         ?>
         <div class="lmb-notifications-widget">
-            <div class="lmb-notifications-trigger" id="lmb-notifications-trigger">
+            <div class="lmb-notifications-trigger <?php echo $trigger_class; ?>" id="lmb-notifications-trigger">
                 <i class="fas fa-bell"></i>
                 <?php if ($unread_count > 0): ?>
                     <span class="lmb-notification-badge"><?php echo $unread_count; ?></span>
@@ -42,7 +43,9 @@ class LMB_Notifications_Widget extends Widget_Base {
                 
                 <div class="lmb-notifications-list">
                     <?php if (!empty($notifications)): ?>
+                        <?php $counter = 0; ?>
                         <?php foreach($notifications as $notification): ?>
+                            <?php if ($counter >= 5) break; ?>
                             <div class="lmb-notification-item <?php echo !$notification['read'] ? 'lmb-notification-unread' : ''; ?>" 
                                  data-id="<?php echo esc_attr($notification['id']); ?>">
                                 <div class="lmb-notification-icon">
@@ -64,6 +67,7 @@ class LMB_Notifications_Widget extends Widget_Base {
                                     <div class="lmb-notification-unread-dot"></div>
                                 <?php endif; ?>
                             </div>
+                            <?php $counter++; ?>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <div class="lmb-notifications-empty">
@@ -73,7 +77,7 @@ class LMB_Notifications_Widget extends Widget_Base {
                     <?php endif; ?>
                 </div>
                 
-                <?php if (!empty($notifications)): ?>
+                <?php if (count($notifications) > 5): ?>
                     <div class="lmb-notifications-footer">
                         <a href="#" class="lmb-view-all-notifications">
                             <?php esc_html_e('View all notifications', 'lmb-core'); ?>
@@ -121,6 +125,7 @@ class LMB_Notifications_Widget extends Widget_Base {
                         if (newCount === 0) {
                             $badge.remove();
                             $('#lmb-mark-all-read').remove();
+                            $('#lmb-notifications-trigger').removeClass('has-notifications').addClass('no-notifications');
                         } else {
                             $badge.text(newCount);
                         }
@@ -140,6 +145,7 @@ class LMB_Notifications_Widget extends Widget_Base {
                     $('.lmb-notification-unread-dot').remove();
                     $('.lmb-notification-badge').remove();
                     $('#lmb-mark-all-read').remove();
+                    $('#lmb-notifications-trigger').removeClass('has-notifications').addClass('no-notifications');
                 });
             });
         });
@@ -148,7 +154,6 @@ class LMB_Notifications_Widget extends Widget_Base {
     }
     
     private function get_user_notifications($user_id) {
-        // Get notifications from user meta or custom table
         $notifications = get_user_meta($user_id, 'lmb_notifications', true);
         if (!is_array($notifications)) {
             $notifications = [];
@@ -186,6 +191,36 @@ class LMB_Notifications_Widget extends Widget_Base {
                     'time_ago' => '1 day ago',
                     'read' => true,
                     'type' => 'info'
+                ],
+                [
+                    'id' => 4,
+                    'title' => __('Ad Denied', 'lmb-core'),
+                    'message' => __('Your ad "Ad for a new car" has been denied.', 'lmb-core'),
+                    'icon' => 'fas fa-times-circle',
+                    'time' => time() - 172800,
+                    'time_ago' => '2 days ago',
+                    'read' => true,
+                    'type' => 'error'
+                ],
+                [
+                    'id' => 5,
+                    'title' => __('Welcome!', 'lmb-core'),
+                    'message' => __('Welcome to the platform! We are glad to have you.', 'lmb-core'),
+                    'icon' => 'fas fa-door-open',
+                    'time' => time() - 259200,
+                    'time_ago' => '3 days ago',
+                    'read' => true,
+                    'type' => 'info'
+                ],
+                [
+                    'id' => 6,
+                    'title' => __('Your subscription is expiring soon', 'lmb-core'),
+                    'message' => __('Your subscription is expiring soon. Please renew to continue enjoying our services.', 'lmb-core'),
+                    'icon' => 'fas fa-exclamation-triangle',
+                    'time' => time() - 345600,
+                    'time_ago' => '4 days ago',
+                    'read' => true,
+                    'type' => 'warning'
                 ]
             ];
         }

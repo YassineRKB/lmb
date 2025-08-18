@@ -64,3 +64,33 @@
     });
 
 })(jQuery);
+document.addEventListener("DOMContentLoaded", function() {
+  const bell = document.getElementById("lmb-bell");
+  const dropdown = document.querySelector(".notif-dropdown");
+  const notifCount = document.querySelector(".notif-count");
+  const unread = document.querySelectorAll(".notif-dropdown li.unread");
+
+  if (bell && dropdown) {
+    // Show count + bell color if unread exist
+    if (unread.length > 0) {
+      notifCount.style.display = "inline-block";
+      bell.style.color = "red";
+    } else {
+      notifCount.style.display = "none";
+      bell.style.color = "black";
+    }
+
+    // Toggle dropdown
+    bell.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener("click", function(e) {
+      if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = "none";
+      }
+    });
+  }
+});
