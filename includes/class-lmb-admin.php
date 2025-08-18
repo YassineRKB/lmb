@@ -113,6 +113,23 @@ class LMB_Admin {
     }
     
     // Unchanged dashboard functions
-    public static function render_dashboard_page() { /* ... unchanged ... */ }
-    public static function collect_stats() { /* ... unchanged ... */ }
+    public static function render_dashboard_page() {
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('LMB Core Dashboard', 'lmb-core'); ?></h1>
+            <div class="lmb-dashboard-content">
+                <p><?php esc_html_e('Welcome to the LMB Core administration dashboard. Use the Elementor widgets to build your admin interface.', 'lmb-core'); ?></p>
+            </div>
+        </div>
+        <?php
+    }
+    
+    public static function collect_stats() {
+        return [
+            'users_total' => count_users()['total_users'],
+            'ads_total' => wp_count_posts('lmb_legal_ad')->publish + wp_count_posts('lmb_legal_ad')->pending_review + wp_count_posts('lmb_legal_ad')->draft,
+            'news_total' => wp_count_posts('lmb_newspaper')->publish,
+            'rev_year' => 1250 // This would be calculated from actual points transactions
+        ];
+    }
 }

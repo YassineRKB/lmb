@@ -30,6 +30,8 @@ add_action('elementor/elements/categories_registered', function($elements_manage
 add_action('elementor/widgets/register', function($widgets_manager){
     require_once __DIR__.'/widgets/class-lmb-admin-stats-widget.php';
     require_once __DIR__.'/widgets/class-lmb-admin-actions-widget.php';
+    require_once __DIR__.'/widgets/class-lmb-upload-newspaper-widget.php';
+    require_once __DIR__.'/widgets/class-lmb-notifications-widget.php';
     require_once __DIR__.'/widgets/class-lmb-user-stats-widget.php';
     require_once __DIR__.'/widgets/class-lmb-subscribe-package-widget.php';
     require_once __DIR__.'/widgets/class-lmb-upload-bank-proof-widget.php';
@@ -38,6 +40,8 @@ add_action('elementor/widgets/register', function($widgets_manager){
 
     $widgets_manager->register(new \LMB_Admin_Stats_Widget());
     $widgets_manager->register(new \LMB_Admin_Actions_Widget());
+    $widgets_manager->register(new \LMB_Upload_Newspaper_Widget());
+    $widgets_manager->register(new \LMB_Notifications_Widget());
     $widgets_manager->register(new \LMB_User_Stats_Widget());
     $widgets_manager->register(new \LMB_Subscribe_Package_Widget());
     $widgets_manager->register(new \LMB_Upload_Bank_Proof_Widget());

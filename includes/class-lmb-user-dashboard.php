@@ -9,6 +9,54 @@ class LMB_User_Dashboard {
         add_shortcode('lmb_user_ads_list', [__CLASS__, 'render_user_ads_list']);
         add_shortcode('lmb_user_total_ads', [__CLASS__, 'get_total_ads_count']);
         add_shortcode('lmb_user_balance', [__CLASS__, 'get_user_balance']);
+        
+        // Add AJAX handlers for notifications
+        add_action('wp_ajax_lmb_mark_notification_read', [__CLASS__, 'ajax_mark_notification_read']);
+        add_action('wp_ajax_lmb_mark_all_notifications_read', [__CLASS__, 'ajax_mark_all_notifications_read']);
+    }
+    
+    public static function ajax_mark_notification_read() {
+        check_ajax_referer('lmb_frontend_ajax_nonce', 'nonce');
+        
+        if (!is_user_logged_in() || !isset($_POST['notification_id'])) {
+            wp_send_json_error();
+        }
+        
+        $user_id = get_current_user_id();
+        $notification_id = sanitize_text_field($_POST['notification_id']);
+        
+        $notifications = get_user_meta($user_id, 'lmb_notifications', true);
+        if (is_array($notifications)) {
+            foreach ($notifications as &$notification) {
+                if ($notification['id'] == $notification_id) {
+                    $notification['read'] = true;
+                    break;
+                }
+            }
+            update_user_meta($user_id, 'lmb_notifications', $notifications);
+        }
+        
+        wp_send_json_success();
+    }
+    
+    public static function ajax_mark_all_notifications_read() {
+        check_ajax_referer('lmb_frontend_ajax_nonce', 'nonce');
+        
+        if (!is_user_logged_in()) {
+            wp_send_json_error();
+        }
+        
+        $user_id = get_current_user_id();
+        $notifications = get_user_meta($user_id, 'lmb_notifications', true);
+        
+        if (is_array($notifications)) {
+            foreach ($notifications as &$notification) {
+                $notification['read'] = true;
+            }
+            update_user_meta($user_id, 'lmb_notifications', $notifications);
+        }
+        
+        wp_send_json_success();
     }
 
     // Function to render the stats block
