@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core (auth, CPTs, points, invoices, payments, PDFs, directories, dashboards).
- * Version: 2.1.9
+ * Version: 2.1.11
  * Author: Yassine Rakibi
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('LMB_CORE_VERSION', '2.1.9');
+define('LMB_CORE_VERSION', '2.1.11');
 define('LMB_CORE_FILE', __FILE__);
 define('LMB_CORE_PATH', plugin_dir_path(__FILE__));
 define('LMB_CORE_URL', plugin_dir_url(__FILE__));
@@ -70,6 +70,9 @@ add_action('plugins_loaded', function() {
         'elementor_pro_active' => class_exists('\ElementorPro\Plugin'),
         'elementor_active' => class_exists('\Elementor\Plugin')
     ]);
+    
+    // --- ADD THIS LINE: Initialize the access control ---
+    LMB_Access_Control::init();
     
     // Initialize other components
     LMB_CPT::init();
