@@ -208,26 +208,23 @@ class LMB_Admin {
     /**
      * Stats for the dashboard cards.
      */
-    private static function collect_stats() {
-        $users_total = 0;
-        $users = function_exists('count_users') ? count_users() : null;
-        if ($users && isset($users['total_users'])) {
-            $users_total = (int) $users['total_users'];
-        }
+    public static function collect_stats() {
+        $ad_counts = (array) wp_count_posts('lmb_legal_ad');
+        $news_counts = (array) wp_count_posts('lmb_newspaper');
+        $user_counts = count_users();
 
-        $counts = function_exists('wp_count_posts') ? wp_count_posts('lmb_legal_ad') : null;
-        $ads_published   = $counts && isset($counts->publish) ? (int) $counts->publish : 0;
-        $ads_draft       = $counts && isset($counts->draft) ? (int) $counts->draft : 0;
-        $ads_pending     = $counts && isset($counts->pending) ? (int) $counts->pending : 0;
-
-        $news_counts = function_exists('wp_count_posts') ? wp_count_posts('lmb_newspaper') : null;
-        $news_total  = $news_counts && isset($news_counts->publish) ? (int) $news_counts->publish : 0;
-
+        $ads_published = isset($ad_counts['publish']) ? (int) $ad_counts['publish'] : 0;
+        $ads_draft = isset($ad_counts['draft']) ? (int) $ad_counts['draft'] : 0;
+        // Note: The status is 'pending_review', not 'pending'
+        $ads_pending = isset($ad_counts['pending_review']) ? (int) $ad_counts['pending_review'] : 0;
+        
         return [
-            'users_total'     => $users_total,
+            'users_total'     => isset($user_counts['total_users']) ? (int) $user_counts['total_users'] : 0,
             'ads_published'   => $ads_published,
             'ads_unpublished' => $ads_draft + $ads_pending,
-            'news_total'      => $news_total,
+            'ads_total'       => $ads_published + $ads_draft + $ads_pending,
+            'news_total'      => isset($news_counts['publish']) ? (int) $news_counts['publish'] : 0,
+            'rev_year'        => 1250, // Placeholder value
         ];
     }
 }
