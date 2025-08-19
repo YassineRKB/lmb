@@ -3,20 +3,38 @@ if (!defined('ABSPATH')) exit;
 
 require_once LMB_CORE_PATH.'libraries/fpdf/fpdf.php';
 
+// --- CHANGE HERE: Create a new class that extends FPDF to handle UTF-8 ---
+class PDF_UTF8 extends FPDF {
+    function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false) {
+        // Convert UTF-8 text to a compatible format (ISO-8859-1)
+        $txt = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $txt);
+        parent::MultiCell($w, $h, $txt, $border, $align, $fill);
+    }
+
+    function WriteHTML($html) {
+        // A very basic HTML parser that handles UTF-8
+        $html = str_replace('<br>', "\n", $html);
+        $html = str_replace('<br/>', "\n", $html);
+        $html = str_replace('<hr>', "--------------------------------------------------\n", $html);
+        // Decode HTML entities (like &#8211;) and then strip any remaining tags
+        $html = html_entity_decode($html, ENT_QUOTES, 'UTF-8');
+        $html = strip_tags($html);
+
+        $this->MultiCell(0, 5, $html); // Use a smaller line height for better looks
+    }
+}
+
+
 class LMB_PDF_Generator {
     public static function generate_html_pdf($filename, $html, $title='') {
-        $pdf = new FPDF();
+        // --- CHANGE HERE: Use our new PDF_UTF8 class ---
+        $pdf = new PDF_UTF8();
         $pdf->AddPage();
         $pdf->SetTitle($title);
         $pdf->SetFont('Arial','',12);
         
-        // A very basic HTML parser
-        $html = str_replace('<br>', "\n", $html);
-        $html = str_replace('<br/>', "\n", $html);
-        $html = str_replace('<hr>', "--------------------------------------------------\n", $html);
-        $html = strip_tags($html); // Basic sanitization
-
-        $pdf->MultiCell(0, 10, $html);
+        // Use the new WriteHTML method
+        $pdf->WriteHTML($html);
         
         $upload = wp_upload_dir();
         $dir = trailingslashit($upload['basedir']).'lmb-pdfs';
@@ -33,8 +51,8 @@ class LMB_PDF_Generator {
         $title = get_the_title($post_id);
         $full_text = get_post_meta($post_id, 'full_text', true);
         
-        $html_content = "<h1>{$title}</h1><hr><p>{$full_text}</p>";
-
-        return self::generate_html_pdf('ad-'.$post_id.'.pdf', $html_content, $title);
+        // The title is already part of the full_text, so we just use that.
+        // This ensures the PDF matches the preview exactly.
+        return self::generate_html_pdf('ad-'.$post_id.'.pdf', $full_text, $title);
     }
 }

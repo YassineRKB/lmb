@@ -180,7 +180,7 @@ class LMB_User_Dashboard {
             'post_type' => 'lmb_legal_ad',
             'author' => $user_id,
             'post_status' => ['draft', 'pending_review', 'publish', 'denied'],
-            'posts_per_page' => 10,
+            'posts_per_page' => 4,
             'paged' => $paged,
         ]);
         

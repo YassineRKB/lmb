@@ -66,7 +66,9 @@ class LMB_Form_Handler {
         $user_id = get_current_user_id();
         if (!$user_id) {
             LMB_Error_Handler::log_error('User not logged in when trying to create legal ad');
-            throw new Exception(__('You must be logged in to submit an ad.', 'lmb-core'));
+            $login_url = wp_login_url(get_permalink());
+            $message = sprintf(__('You must be <a href="%s">logged in</a> to submit an ad.', 'lmb-core'), esc_url($login_url));
+            throw new Exception($message);
         }
 
         $ad_title = !empty($form_data['title']) ? sanitize_text_field($form_data['title']) : sanitize_text_field($form_data['ad_type']) . ' - ' . wp_date('Y-m-d');
@@ -77,7 +79,7 @@ class LMB_Form_Handler {
             'post_status'  => 'draft',
             'post_author'  => $user_id,
             // --- CHANGE HERE: Removed wp_kses_post to preserve HTML formatting ---
-            'post_content' => $form_data['full_text'] ?? ''
+            'post_content' => $form_data['full_text'] ?? '',
         ];
 
         LMB_Error_Handler::log_error('About to insert post', ['post_data' => $post_data]);
