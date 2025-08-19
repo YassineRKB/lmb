@@ -1,4 +1,7 @@
 <?php
+// FILE: includes/class-lmb-cpt.php
+// I've added 'editor' to the 'supports' array for your legal ad post type.
+
 if (!defined('ABSPATH')) exit;
 
 class LMB_CPT {
@@ -17,7 +20,8 @@ class LMB_CPT {
             'show_in_menu' => 'lmb-core',
             'has_archive' => 'announces',
             'rewrite' => ['slug' => 'announces', 'with_front' => false],
-            'supports' => ['title', 'author'],
+            // --- CHANGE HERE: Added 'editor' to the supports array ---
+            'supports' => ['title', 'author', 'editor'],
             'menu_icon' => 'dashicons-media-text',
             'publicly_queryable' => true,
             'exclude_from_search' => false,

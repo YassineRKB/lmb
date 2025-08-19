@@ -90,9 +90,9 @@ class LMB_Error_Handler {
      * Render logs page
      */
     public static function render_logs_page() {
-        if (!current_user_can('manage_options')) {
+        /* if (!current_user_can(apply_filters('lmb_admin_capability', 'manage_options'))) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
-        }
+        } */
         
         // Handle log clearing
         if (isset($_POST['clear_logs']) && wp_verify_nonce($_POST['_wpnonce'], 'clear_logs')) {

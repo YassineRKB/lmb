@@ -6,50 +6,160 @@ class LMB_Admin {
 
     public static function init() {
         self::$settings_tabs = [
-            'general' => __('General', 'lmb-core'),
-            'templates' => __('Templates', 'lmb-core'),
-            'notifications' => __('Notifications', 'lmb-core'),
-            'roles' => __('Roles & Users', 'lmb-core'),
+            'general'        => __('General', 'lmb-core'),
+            'templates'      => __('Templates', 'lmb-core'),
+            'notifications'  => __('Notifications', 'lmb-core'),
+            'roles'          => __('Roles & Users', 'lmb-core'),
         ];
+
         add_action('admin_menu', [__CLASS__, 'add_admin_menu']);
         add_action('admin_init', [__CLASS__, 'register_settings']);
     }
 
+    /**
+     * Top-level: LMB Core
+     * Submenus: Dashboard, Settings, Error Logs (and CPTs via show_in_menu)
+     */
     public static function add_admin_menu() {
-        add_menu_page('LMB Core', 'LMB Core', 'manage_options', 'lmb-core', [__CLASS__, 'render_dashboard_page'], 'dashicons-analytics', 25);
-        add_submenu_page('lmb-core', __('Dashboard', 'lmb-core'), __('Dashboard', 'lmb-core'), 'manage_options', 'lmb-core', [__CLASS__, 'render_dashboard_page']);
-        add_submenu_page('lmb-core', __('Settings', 'lmb-core'), __('Settings', 'lmb-core'), 'manage_options', 'lmb-settings', [__CLASS__, 'render_settings_page']);
+        // Top-level
+        add_menu_page(
+            __('LMB Core', 'lmb-core'),
+            __('LMB Core', 'lmb-core'),
+            apply_filters('lmb_admin_capability', 'manage_options'),
+            'lmb-core',
+            [__CLASS__, 'render_dashboard_page'],
+            'dashicons-analytics',
+            25
+        );
+
+        // Dashboard (points to the same slug as top-level so it highlights correctly)
+        add_submenu_page(
+            'lmb-core',
+            __('Dashboard', 'lmb-core'),
+            __('Dashboard', 'lmb-core'),
+            apply_filters('lmb_admin_capability', 'manage_options'),
+            'lmb-core',
+            [__CLASS__, 'render_dashboard_page']
+        );
+
+        // Settings
+        add_submenu_page(
+            'lmb-core',
+            __('Settings', 'lmb-core'),
+            __('Settings', 'lmb-core'),
+            apply_filters('lmb_admin_capability', 'manage_options'),
+            'lmb-settings',
+            [__CLASS__, 'render_settings_page']
+        );
+
+        // Error Logs (ensure the slug matches the one you click in admin)
+        // Use the renderer from LMB_Error_Handler to avoid 404s.
+        add_submenu_page(
+            'lmb-core',
+            __('Error Logs', 'lmb-core'),
+            __('Error Logs', 'lmb-core'),
+            apply_filters('lmb_admin_capability', 'manage_options'),
+            'lmb-error-logs',
+            ['LMB_Error_Handler', 'render_logs_page']
+        );
     }
-    
+
+    /**
+     * Register settings used in the tabs.
+     */
     public static function register_settings() {
+        // General
         register_setting('lmb_general_settings', 'lmb_bank_name');
         register_setting('lmb_general_settings', 'lmb_bank_iban');
         register_setting('lmb_general_settings', 'lmb_default_cost_per_ad');
-        
+
+        // Templates
         register_setting('lmb_templates_settings', 'lmb_invoice_template_html');
-        
+
+        // Notifications
         register_setting('lmb_notifications_settings', 'lmb_enable_email_notifications');
     }
 
-    public static function render_settings_page() {
-        $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
+    /**
+     * Dashboard page
+     */
+    public static function render_dashboard_page() {
+        if (!current_user_can(apply_filters('lmb_admin_capability', 'manage_options'))) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
+        }
+
+        $stats = self::collect_stats();
         ?>
-        <div class="wrap lmb-settings-wrap">
+        <div class="wrap">
+            <h1><?php esc_html_e('LMB Core Dashboard', 'lmb-core'); ?></h1>
+
+            <div class="lmb-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:16px;">
+                <div class="card" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+                    <h2 style="margin-top:0;"><?php esc_html_e('Total Users', 'lmb-core'); ?></h2>
+                    <p style="font-size:20px;margin:0;"><?php echo esc_html($stats['users_total']); ?></p>
+                </div>
+                <div class="card" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+                    <h2 style="margin-top:0;"><?php esc_html_e('Legal Ads (published)', 'lmb-core'); ?></h2>
+                    <p style="font-size:20px;margin:0;"><?php echo esc_html($stats['ads_published']); ?></p>
+                </div>
+                <div class="card" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+                    <h2 style="margin-top:0;"><?php esc_html_e('Legal Ads (draft/pending)', 'lmb-core'); ?></h2>
+                    <p style="font-size:20px;margin:0;"><?php echo esc_html($stats['ads_unpublished']); ?></p>
+                </div>
+                <div class="card" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+                    <h2 style="margin-top:0;"><?php esc_html_e('Newspapers', 'lmb-core'); ?></h2>
+                    <p style="font-size:20px;margin:0;"><?php echo esc_html($stats['news_total']); ?></p>
+                </div>
+            </div>
+
+            <div style="margin-top:24px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+                <h2 style="margin-top:0;"><?php esc_html_e('Quick Links', 'lmb-core'); ?></h2>
+                <ul>
+                    <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=lmb_legal_ad')); ?>"><?php esc_html_e('Manage Legal Ads', 'lmb-core'); ?></a></li>
+                    <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=lmb_newspaper')); ?>"><?php esc_html_e('Manage Newspapers', 'lmb-core'); ?></a></li>
+                    <li><a href="<?php echo esc_url(admin_url('admin.php?page=lmb-error-logs')); ?>"><?php esc_html_e('View Error Logs', 'lmb-core'); ?></a></li>
+                    <li><a href="<?php echo esc_url(admin_url('admin.php?page=lmb-settings')); ?>"><?php esc_html_e('Settings', 'lmb-core'); ?></a></li>
+                </ul>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Settings page with tabs
+     */
+    public static function render_settings_page() {
+        if (!current_user_can(apply_filters('lmb_admin_capability', 'manage_options'))) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
+        }
+
+        $current_tab = isset($_GET['tab']) && isset(self::$settings_tabs[$_GET['tab']])
+            ? sanitize_key($_GET['tab'])
+            : 'general';
+        ?>
+        <div class="wrap">
             <h1><?php esc_html_e('LMB Core Settings', 'lmb-core'); ?></h1>
+
             <nav class="nav-tab-wrapper">
-                <?php
-                foreach (self::$settings_tabs as $tab_id => $tab_name) {
-                    $tab_url = add_query_arg(['page' => 'lmb-settings', 'tab' => $tab_id]);
-                    $active = $current_tab == $tab_id ? ' nav-tab-active' : '';
-                    echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . $active . '">' . esc_html($tab_name) . '</a>';
-                }
-                ?>
+                <?php foreach (self::$settings_tabs as $tab_id => $tab_name): ?>
+                    <?php
+                        $tab_url = add_query_arg(['page' => 'lmb-settings', 'tab' => $tab_id], admin_url('admin.php'));
+                        $active  = $current_tab === $tab_id ? ' nav-tab-active' : '';
+                    ?>
+                    <a href="<?php echo esc_url($tab_url); ?>" class="nav-tab<?php echo esc_attr($active); ?>">
+                        <?php echo esc_html($tab_name); ?>
+                    </a>
+                <?php endforeach; ?>
             </nav>
-            <div class="tab-content">
+
+            <div class="tab-content" style="background:#fff;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 12px 12px;padding:16px;">
                 <form method="post" action="options.php">
                     <?php
                     settings_fields('lmb_' . $current_tab . '_settings');
-                    self::{'render_' . $current_tab . '_tab'}();
+                    $method = 'render_' . $current_tab . '_tab';
+                    if (method_exists(__CLASS__, $method)) {
+                        call_user_func([__CLASS__, $method]);
+                    }
                     submit_button();
                     ?>
                 </form>
@@ -58,78 +168,66 @@ class LMB_Admin {
         <?php
     }
 
-    public static function render_general_tab() {
-        ?>
-        <table class="form-table">
-            <tr valign="top">
-                <th scope="row"><?php esc_html_e('Bank Name','lmb-core'); ?></th>
-                <td><input type="text" name="lmb_bank_name" value="<?php echo esc_attr(get_option('lmb_bank_name')); ?>" class="regular-text">
-                <p class="description"><?php _e('The bank name to display on invoices for bank transfers.', 'lmb-core'); ?></p></td>
-            </tr>
-            <tr valign="top">
-                <th scope="row"><?php esc_html_e('Bank IBAN/RIB','lmb-core'); ?></th>
-                <td><input type="text" name="lmb_bank_iban" value="<?php echo esc_attr(get_option('lmb_bank_iban')); ?>" class="regular-text">
-                 <p class="description"><?php _e('Your bank account number for receiving payments.', 'lmb-core'); ?></p></td>
-            </tr>
-            <tr valign="top">
-                <th scope="row"><?php esc_html_e('Default Cost per Ad (Points)','lmb-core'); ?></th>
-                <td><input type="number" name="lmb_default_cost_per_ad" value="<?php echo (int) get_option('lmb_default_cost_per_ad', 1); ?>" min="0">
-                 <p class="description"><?php _e('The fallback cost for an ad if a user does not have a package-specific price.', 'lmb-core'); ?></p></td>
-            </tr>
-        </table>
-        <?php
-    }
-    
-    public static function render_templates_tab() {
-        ?>
-        <h3><?php _e('Invoice Template', 'lmb-core'); ?></h3>
-        <p><?php _e('Customize the HTML template for all generated PDF invoices.', 'lmb-core'); ?></p>
-        <textarea name="lmb_invoice_template_html" rows="20" class="large-text"><?php echo esc_textarea(get_option('lmb_invoice_template_html')); ?></textarea>
-        <p class="description">
-            <?php esc_html_e('Available variables:', 'lmb-core'); ?>
-            <code>{{invoice_number}}, {{invoice_date}}, {{user_id}}, {{user_name}}, {{user_email}}, {{package_name}}, {{package_price}}, {{payment_reference}}, {{our_bank_name}}, {{our_iban}}, {{ad_id}}, {{ad_cost_points}}, {{points_after}}</code>
-        </p>
-        <?php
-    }
+    /*** Tabs ***/
 
-    public static function render_notifications_tab() {
-        ?>
-        <table class="form-table">
-            <tr valign="top">
-                <th scope="row"><?php esc_html_e('Email Notifications','lmb-core'); ?></th>
-                <td>
-                    <label><input type="checkbox" name="lmb_enable_email_notifications" value="1" <?php checked(get_option('lmb_enable_email_notifications'), 1); ?>>
-                    <?php _e('Enable all email notifications to users and admins', 'lmb-core'); ?></label>
-                </td>
+    private static function render_general_tab() { ?>
+        <table class="form-table" role="presentation">
+            <tbody>
+            <tr>
+                <th scope="row"><label for="lmb_bank_name"><?php esc_html_e('Bank Name', 'lmb-core'); ?></label></th>
+                <td><input name="lmb_bank_name" id="lmb_bank_name" type="text" class="regular-text" value="<?php echo esc_attr(get_option('lmb_bank_name', '')); ?>"></td>
             </tr>
+            <tr>
+                <th scope="row"><label for="lmb_bank_iban"><?php esc_html_e('IBAN / RIB', 'lmb-core'); ?></label></th>
+                <td><input name="lmb_bank_iban" id="lmb_bank_iban" type="text" class="regular-text" value="<?php echo esc_attr(get_option('lmb_bank_iban', '')); ?>"></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="lmb_default_cost_per_ad"><?php esc_html_e('Default Cost / Ad (points)', 'lmb-core'); ?></label></th>
+                <td><input name="lmb_default_cost_per_ad" id="lmb_default_cost_per_ad" type="number" min="0" step="1" class="small-text" value="<?php echo esc_attr(get_option('lmb_default_cost_per_ad', 0)); ?>"></td>
+            </tr>
+            </tbody>
         </table>
-        <?php
-    }
-    
-    public static function render_roles_tab() {
-        // This is a placeholder for future functionality.
-        echo '<h3>'.__('Manage Roles & Users', 'lmb-core').'</h3>';
-        echo '<p>'.__('This section will allow you to assign packages and manage roles directly. This feature is under development.', 'lmb-core').'</p>';
-    }
-    
-    // Unchanged dashboard functions
-    public static function render_dashboard_page() {
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('LMB Core Dashboard', 'lmb-core'); ?></h1>
-            <div class="lmb-dashboard-content">
-                <p><?php esc_html_e('Welcome to the LMB Core administration dashboard. Use the Elementor widgets to build your admin interface.', 'lmb-core'); ?></p>
-            </div>
-        </div>
-        <?php
-    }
-    
-    public static function collect_stats() {
+    <?php }
+
+    private static function render_templates_tab() { ?>
+        <p class="description"><?php esc_html_e('Invoice template (HTML). You can use placeholders like {{invoice_number}}, {{amount}}, etc.', 'lmb-core'); ?></p>
+        <textarea name="lmb_invoice_template_html" rows="12" style="width:100%;"><?php echo esc_textarea(get_option('lmb_invoice_template_html', '')); ?></textarea>
+    <?php }
+
+    private static function render_notifications_tab() { ?>
+        <label>
+            <input type="checkbox" name="lmb_enable_email_notifications" value="1" <?php checked(get_option('lmb_enable_email_notifications', 0), 1); ?>>
+            <?php esc_html_e('Enable email notifications', 'lmb-core'); ?>
+        </label>
+    <?php }
+
+    private static function render_roles_tab() { ?>
+        <p><?php esc_html_e('Roles management is handled elsewhere in the plugin.', 'lmb-core'); ?></p>
+    <?php }
+
+    /**
+     * Stats for the dashboard cards.
+     */
+    private static function collect_stats() {
+        $users_total = 0;
+        $users = function_exists('count_users') ? count_users() : null;
+        if ($users && isset($users['total_users'])) {
+            $users_total = (int) $users['total_users'];
+        }
+
+        $counts = function_exists('wp_count_posts') ? wp_count_posts('lmb_legal_ad') : null;
+        $ads_published   = $counts && isset($counts->publish) ? (int) $counts->publish : 0;
+        $ads_draft       = $counts && isset($counts->draft) ? (int) $counts->draft : 0;
+        $ads_pending     = $counts && isset($counts->pending) ? (int) $counts->pending : 0;
+
+        $news_counts = function_exists('wp_count_posts') ? wp_count_posts('lmb_newspaper') : null;
+        $news_total  = $news_counts && isset($news_counts->publish) ? (int) $news_counts->publish : 0;
+
         return [
-            'users_total' => count_users()['total_users'],
-            'ads_total' => wp_count_posts('lmb_legal_ad')->publish + wp_count_posts('lmb_legal_ad')->pending_review + wp_count_posts('lmb_legal_ad')->draft,
-            'news_total' => wp_count_posts('lmb_newspaper')->publish,
-            'rev_year' => 1250 // This would be calculated from actual points transactions
+            'users_total'     => $users_total,
+            'ads_published'   => $ads_published,
+            'ads_unpublished' => $ads_draft + $ads_pending,
+            'news_total'      => $news_total,
         ];
     }
 }

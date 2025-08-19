@@ -76,6 +76,8 @@ class LMB_Form_Handler {
             'post_title'   => $ad_title,
             'post_status'  => 'draft',
             'post_author'  => $user_id,
+            // --- CHANGE HERE: Save the main text to the post_content field ---
+            'post_content' => wp_kses_post($form_data['full_text'] ?? '')
         ];
 
         LMB_Error_Handler::log_error('About to insert post', ['post_data' => $post_data]);
@@ -95,14 +97,14 @@ class LMB_Form_Handler {
         // Save custom fields from the form
         $meta_fields = [
             'ad_type' => sanitize_text_field($form_data['ad_type'] ?? ''),
-            'full_text' => wp_kses_post($form_data['full_text'] ?? ''),
+            // --- CHANGE HERE: Removed 'full_text' as it is now saved in post_content ---
             'lmb_status' => 'draft',
             'lmb_client_id' => $user_id,
         ];
 
-        // Save all form data as meta
+        // Save all other form data as meta
         foreach ($form_data as $key => $value) {
-            if ($key !== 'ad_type' && $key !== 'full_text') {
+            if ($key !== 'ad_type' && $key !== 'full_text' && $key !== 'title') {
                 $meta_fields[$key] = is_array($value) ? $value : sanitize_text_field($value);
             }
         }
