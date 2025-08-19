@@ -31,6 +31,12 @@ spl_autoload_register(function($class){
 // Load Elementor widgets
 require_once LMB_CORE_PATH . 'elementor/class-lmb-elementor-widgets.php';
 
+// Register Elementor form action
+add_action('elementor_pro/forms/actions/register', function($form_actions_registrar) {
+    require_once LMB_CORE_PATH . 'includes/elementor-action-save-ad.php';
+    $form_actions_registrar->register(new LMB_Save_Ad_Action());
+});
+
 // Activation Hook
 register_activation_hook(__FILE__, function () {
     LMB_CPT::init();

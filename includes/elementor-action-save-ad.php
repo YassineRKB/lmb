@@ -14,83 +14,164 @@ class LMB_Save_Ad_Action extends \ElementorPro\Modules\Forms\Classes\Action_Base
     public function run($record, $ajax_handler) {
         $data = $record->get_formatted_data();
 
-        // --- SERVER-SIDE VALIDATION ---
-        if (empty($data['ad_type'])) {
-            $ajax_handler->add_error_message('A required field is missing: Ad Type.');
-            $ajax_handler->add_error_to_field('ad_type', 'This field is required.');
+        // Check if user is logged in
+        if (!is_user_logged_in()) {
+            $ajax_handler->add_error_message(__('You must be logged in to submit an ad.', 'lmb-core'));
             return;
         }
 
-        // --- BUILD THE LEGAL TEXT ON THE SERVER ---
-        $full_text = "AVIS DE CONSTITUTION DE SOCIETE\n\n";
-        $full_text .= strtoupper($data['companyName'] ?? '') . "\n";
-        $full_text .= "SOCIETE A RESPONSABILITE LIMITEE\n\n";
-        $full_text .= "AU CAPITAL DE : " . number_format((float)($data['companyCapital'] ?? 0), 2, ',', ' ') . " DHS\n";
-        $full_text .= "SIEGE SOCIAL : " . ($data['addrCompanyHQ'] ?? '') . "\n";
-        $full_text .= ($data['city'] ?? '') . "\n";
-        $full_text .= "R.C : " . ($data['companyRC'] ?? '') . "\n\n";
-        $full_text .= "Aux termes d’un acte S.S.P à " . ($data['city'] ?? '') . " en date du " . ($data['actDate'] ?? '') . " a été établi les statuts d’une société à Responsabilité limitée SARL dont les caractéristiques sont les suivantes ;\n";
-        $full_text .= "FORME : SARL\n";
-        $full_text .= "DENOMINATION: " . ($data['companyName'] ?? '') . "\n";
-        $full_text .= "OBJET : " . ($data['companyObjects'] ?? '') . "\n";
-        $full_text .= "SIEGE SOCIAL: " . ($data['addrCompanyHQ'] ?? '') . "\n";
-        $full_text .= "DURÉE : " . ($data['actDuration'] ?? '99') . " ans\n";
-        $full_text .= "CAPITAL SOCIAL: " . number_format((float)($data['companyCapital'] ?? 0), 2, ',', ' ') . " DHS\n\n";
-
-        // Handle Repeater Fields for Associates
-        if (!empty($data['repAssocEnd'])) {
-            $full_text .= "ASSOCIES :\n";
-            $associates = explode("\n", trim($data['repAssocEnd']));
-            $total_parts = 0;
-            foreach ($associates as $assoc_line) {
-                // Example line: "Associer Name: xawdawda, Nombre de Parts: 10000, Address d' Associer: dwkodkwok"
-                $parts = explode(', ', $assoc_line);
-                $name = str_replace('Associer Name: ', '', $parts[0] ?? '');
-                $shares_str = str_replace('Nombre de Parts: ', '', $parts[1] ?? '0');
-                $shares = (int)$shares_str;
-                $address = str_replace("Address d' Associer: ", '', $parts[2] ?? '');
-                $full_text .= "- " . trim($name) . " (Adresse: " . trim($address) . ") " . number_format($shares) . " Parts sociales\n";
-                $total_parts += $shares;
-            }
-            $full_text .= "Soit au total : " . number_format($total_parts) . " parts\n\n";
-        }
-        
-        // Handle Repeater Fields for Managers
-        if (!empty($data['repGerantEnd'])) {
-            $full_text .= "GÉRANCE:\n";
-            $managers = explode("\n", trim($data['repGerantEnd']));
-            foreach ($managers as $manager_line) {
-                 // Example line: "Nom complete: dwokoko, ADDRESS: dw5313"
-                $parts = explode(', ', $manager_line);
-                $name = str_replace('Nom complete: ', '', $parts[0] ?? '');
-                $address = str_replace('ADDRESS: ', '', $parts[1] ?? '');
-                $full_text .= "- " . trim($name) . ", address " . trim($address) . "\n";
-            }
-            $full_text .= "est désigner comme de gérant unique de la société et cette dernière sera engagée par sa signature unique\n\n";
+        // Validate required fields
+        if (empty($data['ad_type'])) {
+            $ajax_handler->add_error_message(__('Ad type is required.', 'lmb-core'));
+            return;
         }
 
-        $full_text .= "Le dépôt légal a été effectué au " . ($data['court'] ?? '') . " de la ville " . ($data['courtCity'] ?? '') . ", le " . ($data['courtDate'] ?? '') . " sous le N° " . ($data['courtNum'] ?? '') . ".\n";
-        $full_text .= "Pour extrait et mention\n\nLE GERANT";
+        // Get the full_text field directly from the form data
+        $full_text = '';
+        if (!empty($data['full_text'])) {
+            $full_text = sanitize_textarea_field($data['full_text']);
+        } else {
+            // If no full_text field, try to build it from other fields
+            $full_text = $this->build_legal_text_from_form_data($data);
+        }
 
-        // --- Prepare data for the form handler ---
+        if (empty($full_text)) {
+            $ajax_handler->add_error_message(__('Legal ad content cannot be empty.', 'lmb-core'));
+            return;
+        }
+
+        // Prepare data for creating the legal ad
         $ad_data = [
-            'ad_type'   => $data['ad_type'],
+            'ad_type'   => sanitize_text_field($data['ad_type']),
             'full_text' => $full_text,
-            'title'     => !empty($data['title']) ? $data['title'] : $data['companyName'] // Use Company Name as title if 'title' field is absent
+            'title'     => !empty($data['title']) ? sanitize_text_field($data['title']) : 
+                          (!empty($data['companyName']) ? sanitize_text_field($data['companyName']) : 
+                          sanitize_text_field($data['ad_type']) . ' - ' . date('Y-m-d'))
         ];
 
         try {
-            LMB_Form_Handler::create_legal_ad($ad_data);
+            $post_id = $this->create_legal_ad($ad_data);
+            
+            // Store additional form data as meta if needed
+            $this->store_additional_form_data($post_id, $data);
+            
+            // Log the activity
+            if (class_exists('LMB_Ad_Manager')) {
+                LMB_Ad_Manager::log_activity(sprintf('Legal ad #%d created via Elementor form by %s', $post_id, wp_get_current_user()->display_name));
+            }
+            
         } catch (Exception $e) {
-            $ajax_handler->add_error_message('Error: ' . $e->getMessage());
+            $ajax_handler->add_error_message(__('Error: ', 'lmb-core') . $e->getMessage());
         }
     }
 
-    public function register_settings_section($widget) {
-        // No settings needed for this action
+    /**
+     * Create the legal ad post
+     */
+    private function create_legal_ad($ad_data) {
+        $user_id = get_current_user_id();
+        
+        $post_data = [
+            'post_type'    => 'lmb_legal_ad',
+            'post_title'   => $ad_data['title'],
+            'post_status'  => 'draft',
+            'post_author'  => $user_id,
+        ];
+
+        $post_id = wp_insert_post($post_data, true);
+        
+        if (is_wp_error($post_id)) {
+            throw new Exception($post_id->get_error_message());
+        }
+
+        // Save the meta data
+        update_post_meta($post_id, 'ad_type', $ad_data['ad_type']);
+        update_post_meta($post_id, 'full_text', $ad_data['full_text']);
+        update_post_meta($post_id, 'lmb_status', 'draft');
+        update_post_meta($post_id, 'lmb_client_id', $user_id);
+        
+        return $post_id;
     }
 
+    /**
+     * Store additional form data as post meta
+     */
+    private function store_additional_form_data($post_id, $form_data) {
+        // Store all form fields as meta data for future reference
+        $excluded_fields = ['ad_type', 'full_text', 'title'];
+        
+        foreach ($form_data as $field_name => $field_value) {
+            if (!in_array($field_name, $excluded_fields) && !empty($field_value)) {
+                update_post_meta($post_id, 'form_' . $field_name, sanitize_text_field($field_value));
+            }
+        }
+    }
+
+    /**
+     * Build legal text from form data if full_text is not provided
+     */
+    private function build_legal_text_from_form_data($data) {
+        // This is a fallback method to build legal text from individual form fields
+        // You can customize this based on your form structure
+        
+        $text = '';
+        
+        if (!empty($data['companyName'])) {
+            $text .= "AVIS DE CONSTITUTION DE SOCIETE\n\n";
+            $text .= strtoupper($data['companyName']) . "\n";
+            $text .= "SOCIETE A RESPONSABILITE LIMITEE\n\n";
+            
+            if (!empty($data['companyCapital'])) {
+                $text .= "AU CAPITAL DE : " . number_format((float)$data['companyCapital'], 2, ',', ' ') . " DHS\n";
+            }
+            
+            if (!empty($data['addrCompanyHQ'])) {
+                $text .= "SIEGE SOCIAL : " . $data['addrCompanyHQ'] . "\n";
+            }
+            
+            if (!empty($data['city'])) {
+                $text .= $data['city'] . "\n";
+            }
+            
+            if (!empty($data['companyRC'])) {
+                $text .= "R.C : " . $data['companyRC'] . "\n\n";
+            }
+        } else {
+            // Generic fallback
+            $text = "Legal Ad Content\n\n";
+            foreach ($data as $key => $value) {
+                if (!empty($value) && $key !== 'ad_type') {
+                    $text .= ucfirst(str_replace('_', ' ', $key)) . ": " . $value . "\n";
+                }
+            }
+        }
+        
+        return $text;
+    }
+
+    public function register_settings_section($widget) {
+        $widget->start_controls_section(
+            'lmb_save_ad_section',
+            [
+                'label' => __('Save as Legal Ad Settings', 'lmb-core'),
+                'condition' => [
+                    'submit_actions' => $this->get_name(),
+                ],
+            ]
+        );
+
+        $widget->add_control(
+            'lmb_save_ad_note',
+            [
+                'type' => \Elementor\Controls_Manager::RAW_HTML,
+                'raw' => __('This action will save the form submission as a legal ad draft. Make sure your form includes an "ad_type" field and optionally a "full_text" field for the complete legal text.', 'lmb-core'),
+                'content_classes' => 'elementor-panel-alert elementor-panel-alert-info',
+            ]
+        );
+    }
+
+        $widget->end_controls_section();
     public function on_export($element) {
-        // No export handling needed
+        return $element;
     }
 }
