@@ -2,22 +2,29 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core (auth, CPTs, points, invoices, payments, PDFs, directories, dashboards).
- * Version: 2.1.8
+ * Version: 2.1.9
  * Author: Yassine Rakibi
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Text Domain: lmb-core
  */
 
-if (!defined('ABSPATH')) exit;
+if (!defined('ABSPATH')) {
+    exit;
+}
 
-define('LMB_CORE_VERSION', '2.1.0');
+define('LMB_CORE_VERSION', '2.1.9');
 define('LMB_CORE_FILE', __FILE__);
 define('LMB_CORE_PATH', plugin_dir_path(__FILE__));
-define('LMB_CORE_URL',  plugin_dir_url(__FILE__));
+define('LMB_CORE_URL', plugin_dir_url(__FILE__));
+
+// Load translations
+add_action('init', function() {
+    load_plugin_textdomain('lmb-core', false, dirname(plugin_basename(__FILE__)) . '/languages');
+});
 
 // Autoloader for all classes in the /includes directory
-spl_autoload_register(function($class){
+spl_autoload_register(function($class) {
     if (strpos($class, 'LMB_') !== 0) {
         return;
     }
@@ -30,12 +37,6 @@ spl_autoload_register(function($class){
 
 // Load Elementor widgets
 require_once LMB_CORE_PATH . 'elementor/class-lmb-elementor-widgets.php';
-
-// Register Elementor form action
-add_action('elementor_pro/forms/actions/register', function($form_actions_registrar) {
-    require_once LMB_CORE_PATH . 'includes/elementor-action-save-ad.php';
-    $form_actions_registrar->register(new LMB_Save_Ad_Action());
-});
 
 // Activation Hook
 register_activation_hook(__FILE__, function () {
@@ -59,7 +60,18 @@ register_deactivation_hook(__FILE__, function () {
 });
 
 // Initialize all plugin components on plugins_loaded hook
-add_action('plugins_loaded', function(){
+add_action('plugins_loaded', function() {
+    // Initialize error handler first for logging
+    LMB_Error_Handler::init();
+    
+    // Log plugin initialization
+    LMB_Error_Handler::log_error('LMB Core plugin initializing', [
+        'version' => LMB_CORE_VERSION,
+        'elementor_pro_active' => class_exists('\ElementorPro\Plugin'),
+        'elementor_active' => class_exists('\Elementor\Plugin')
+    ]);
+    
+    // Initialize other components
     LMB_CPT::init();
     LMB_Form_Handler::init();
     LMB_Ad_Manager::init();
@@ -67,15 +79,15 @@ add_action('plugins_loaded', function(){
     LMB_Admin::init();
     LMB_User_Dashboard::init();
     LMB_Database_Manager::init();
-    LMB_Error_Handler::init();
-    LMB_Invoice_Handler::init(); // Initialize the invoice handler for AJAX
+    LMB_Invoice_Handler::init();
     new LMB_User();
+    
 });
 
 // Enqueue Frontend Scripts & Styles
-add_action('wp_enqueue_scripts', function(){
-    wp_enqueue_style('lmb-core', LMB_CORE_URL.'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
-    wp_enqueue_script('lmb-core', LMB_CORE_URL.'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
+add_action('wp_enqueue_scripts', function() {
+    wp_enqueue_style('lmb-core', LMB_CORE_URL . 'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
+    wp_enqueue_script('lmb-core', LMB_CORE_URL . 'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
 
     // Pass data to our script
     wp_localize_script('lmb-core', 'lmbAjax', [
@@ -92,10 +104,10 @@ add_action('wp_enqueue_scripts', function(){
 
 // Enqueue Admin Scripts & Styles
 add_action('admin_enqueue_scripts', function($hook) {
-    wp_enqueue_style('lmb-admin-styles', LMB_CORE_URL.'assets/css/admin.css', [], LMB_CORE_VERSION);
+    wp_enqueue_style('lmb-admin-styles', LMB_CORE_URL . 'assets/css/admin.css', [], LMB_CORE_VERSION);
     wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
 
-    wp_enqueue_script('lmb-admin-scripts', LMB_CORE_URL.'assets/js/admin.js', ['jquery'], LMB_CORE_VERSION, true);
+    wp_enqueue_script('lmb-admin-scripts', LMB_CORE_URL . 'assets/js/admin.js', ['jquery'], LMB_CORE_VERSION, true);
     wp_localize_script('lmb-admin-scripts', 'lmbAdmin', [
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce'   => wp_create_nonce('lmb_admin_ajax_nonce'),

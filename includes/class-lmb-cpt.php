@@ -19,6 +19,8 @@ class LMB_CPT {
             'rewrite' => ['slug' => 'announces', 'with_front' => false],
             'supports' => ['title', 'author'],
             'menu_icon' => 'dashicons-media-text',
+            'publicly_queryable' => true,
+            'exclude_from_search' => false,
         ]);
 
         register_post_type('lmb_newspaper', [
