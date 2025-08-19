@@ -1,6 +1,6 @@
 <?php
+use Elementor\Widget_Base;
 if (!defined('ABSPATH')) exit;
-
 class LMB_Form_Modification_Siege_Widget extends LMB_Form_Widget_Base {
 
     protected function get_form_name() {

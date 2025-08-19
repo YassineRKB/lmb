@@ -1,4 +1,5 @@
 <?php
+use Elementor\Widget_Base;
 if (!defined('ABSPATH')) exit;
 
 class LMB_Form_Modification_Capital_Widget extends LMB_Form_Widget_Base {

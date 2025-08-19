@@ -1,4 +1,5 @@
 <?php
+use Elementor\Widget_Base;
 if (!defined('ABSPATH')) exit;
 
 class LMB_Form_Dissolution_Anticipee_Widget extends LMB_Form_Widget_Base {
