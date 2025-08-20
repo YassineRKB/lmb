@@ -17,6 +17,15 @@ class LMB_Access_Control {
             wp_redirect(wp_login_url(get_permalink()));
             exit;
         }
+        if (is_page('constitision-sarl') && !is_user_logged_in()) {
+            wp_redirect(wp_login_url(get_permalink()));
+            exit;
+        }
+        if (is_page('constitision-sarl-au') && !is_user_logged_in()) {
+            wp_redirect(wp_login_url(get_permalink()));
+            exit;
+        }
+        
 
         // Protect the /administration page for anyone who is not an administrator
         if (is_page('administration') && !current_user_can('manage_options')) {
