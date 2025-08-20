@@ -83,6 +83,7 @@ add_action('plugins_loaded', function() {
     LMB_User_Dashboard::init();
     LMB_Database_Manager::init();
     LMB_Invoice_Handler::init();
+    LMB_Ajax_Handlers::init();
     new LMB_User();
     
 });

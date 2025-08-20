@@ -997,3 +997,185 @@
     font-size: 18px;
     font-weight: 600;
 }
+
+/* LMB-2 Widgets Additional Styles */
+.lmb-filter-input, .lmb-filter-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.lmb-filter-input:focus, .lmb-filter-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.lmb-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.lmb-users-table, .lmb-ads-table, .lmb-invoices-table, .lmb-receipts-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.lmb-users-table th, .lmb-ads-table th, .lmb-invoices-table th, .lmb-receipts-table th,
+.lmb-users-table td, .lmb-ads-table td, .lmb-invoices-table td, .lmb-receipts-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.lmb-users-table th, .lmb-ads-table th, .lmb-invoices-table th, .lmb-receipts-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.lmb-users-table tbody tr:hover, .lmb-ads-table tbody tr:hover, 
+.lmb-invoices-table tbody tr:hover, .lmb-receipts-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.lmb-no-results {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 40px 20px;
+}
+
+.lmb-loading {
+    text-align: center;
+    color: #6c757d;
+    padding: 20px;
+}
+
+.lmb-loading i {
+    margin-right: 8px;
+}
+
+/* Enhanced form styles for LMB-2 widgets */
+.lmb-input, .lmb-select, .lmb-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: #fff;
+}
+
+.lmb-input:focus, .lmb-select:focus, .lmb-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.lmb-form-group {
+    margin-bottom: 20px;
+}
+
+.lmb-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+}
+
+.lmb-form-row {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.lmb-form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Status badges for tables */
+.lmb-status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.lmb-status-pending, .lmb-status-pending_review {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.lmb-status-approved, .lmb-status-published {
+    background: #d1edff;
+    color: #0c5460;
+}
+
+.lmb-status-rejected, .lmb-status-denied {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Empty state styles */
+.lmb-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.lmb-empty-state i {
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.lmb-empty-state h4 {
+    color: #495057;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.lmb-empty-state p {
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Responsive improvements for LMB-2 widgets */
+@media (max-width: 768px) {
+    .lmb-filter-row {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+    
+    .lmb-form-row {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .lmb-form-actions {
+        flex-direction: column;
+    }
+    
+    .lmb-table-container {
+        font-size: 14px;
+    }
+    
+    .lmb-users-table th, .lmb-ads-table th, .lmb-invoices-table th, .lmb-receipts-table th,
+    .lmb-users-table td, .lmb-ads-table td, .lmb-invoices-table td, .lmb-receipts-table td {
+        padding: 8px 10px;
+    }
+}
