@@ -37,6 +37,8 @@ class LMB_Invoices_Widget extends Widget_Base {
         ]);
 
         $payments = $payments_query->posts;
+
+        wp_enqueue_script('jquery');
         ?>
         <div class="lmb-invoices-widget">
             <div class="lmb-widget-header">
@@ -259,13 +261,17 @@ add_action('wp_ajax_lmb_generate_invoice_pdf', function() {
     
     // Generate invoice PDF
     try {
-        $pdf_url = LMB_Invoice_Handler::create_package_invoice(
-            $user_id,
-            $package_id,
-            $package_price,
-            $package ? $package->post_content : '',
-            $payment_reference ?: 'INV-' . $payment_id
-        );
+        if (class_exists('LMB_Invoice_Handler')) {
+            $pdf_url = LMB_Invoice_Handler::create_package_invoice(
+                $user_id,
+                $package_id,
+                $package_price,
+                $package ? $package->post_content : '',
+                $payment_reference ?: 'INV-' . $payment_id
+            );
+        } else {
+            wp_send_json_error(['message' => 'Invoice handler not available']);
+        }
         
         if ($pdf_url) {
             wp_send_json_success(['pdf_url' => $pdf_url]);
