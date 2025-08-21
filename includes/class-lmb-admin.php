@@ -33,14 +33,15 @@ class LMB_Admin {
             25
         );
 
-        // Dashboard (points to the same slug as top-level so it highlights correctly)
+        // Dashboard
         add_submenu_page(
             'lmb-core',
             __('Dashboard', 'lmb-core'),
             __('Dashboard', 'lmb-core'),
             apply_filters('lmb_admin_capability', 'manage_options'),
             'lmb-core',
-            [__CLASS__, 'render_dashboard_page']
+            [__CLASS__, 'render_dashboard_page'],
+            1
         );
 
         // Settings
@@ -50,18 +51,19 @@ class LMB_Admin {
             __('Settings', 'lmb-core'),
             apply_filters('lmb_admin_capability', 'manage_options'),
             'lmb-settings',
-            [__CLASS__, 'render_settings_page']
+            [__CLASS__, 'render_settings_page'],
+            90
         );
 
-        // Error Logs (ensure the slug matches the one you click in admin)
-        // Use the renderer from LMB_Error_Handler to avoid 404s.
+        // Error Logs
         add_submenu_page(
             'lmb-core',
             __('Error Logs', 'lmb-core'),
             __('Error Logs', 'lmb-core'),
             apply_filters('lmb_admin_capability', 'manage_options'),
             'lmb-error-logs',
-            ['LMB_Error_Handler', 'render_logs_page']
+            ['LMB_Error_Handler', 'render_logs_page'],
+            95
         );
     }
 
