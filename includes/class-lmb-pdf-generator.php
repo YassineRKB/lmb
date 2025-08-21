@@ -1,70 +1,58 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-class LMB_Points {
-    const BALANCE_META_KEY = 'lmb_points_balance';
-    const COST_META_KEY = 'lmb_cost_per_ad';
-    
-    public static function get_balance($user_id) {
-        return (int) get_user_meta($user_id, self::BALANCE_META_KEY, true);
-    }
-    
-    public static function set_balance($user_id, $points, $reason = 'Manual balance adjustment') {
-        $old_balance = self::get_balance($user_id);
-        $new_balance = max(0, (int) $points);
-        
-        update_user_meta($user_id, self::BALANCE_META_KEY, $new_balance);
-        
-        self::log_transaction($user_id, $new_balance - $old_balance, $new_balance, $reason);
-        do_action('lmb_points_changed', $user_id, $new_balance, $new_balance - $old_balance, $reason);
-        
-        return $new_balance;
-    }
-    
-    public static function add($user_id, $points, $reason = 'Points added') {
-        $current = self::get_balance($user_id);
-        return self::set_balance($user_id, $current + (int) $points, $reason);
-    }
-    
-    public static function deduct($user_id, $points, $reason = 'Points deducted') {
-        $current = self::get_balance($user_id);
-        $points_to_deduct = (int) $points;
-        
-        if ($current < $points_to_deduct) {
-            return false; // Insufficient balance
-        }
-        
-        return self::set_balance($user_id, $current - $points_to_deduct, $reason);
+require_once LMB_CORE_PATH.'libraries/fpdf/fpdf.php';
+
+// --- CHANGE HERE: Create a new class that extends FPDF to handle UTF-8 ---
+class PDF_UTF8 extends FPDF {
+    function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false) {
+        // Convert UTF-8 text to a compatible format (ISO-8859-1)
+        $txt = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $txt);
+        parent::MultiCell($w, $h, $txt, $border, $align, $fill);
     }
 
-    public static function set_cost_per_ad($user_id, $cost) {
-        update_user_meta($user_id, self::COST_META_KEY, (int)$cost);
+    function WriteHTML($html) {
+        // A very basic HTML parser that handles UTF-8
+        $html = str_replace('<br>', "\n", $html);
+        $html = str_replace('<br/>', "\n", $html);
+        $html = str_replace('<hr>', "--------------------------------------------------\n", $html);
+        // Decode HTML entities (like &#8211;) and then strip any remaining tags
+        $html = html_entity_decode($html, ENT_QUOTES, 'UTF-8');
+        $html = strip_tags($html);
+
+        $this->MultiCell(0, 5, $html); // Use a smaller line height for better looks
     }
-    
-    public static function get_cost_per_ad($user_id) {
-        $cost = get_user_meta($user_id, self::COST_META_KEY, true);
-        return $cost !== '' ? (int)$cost : (int)get_option('lmb_default_cost_per_ad', 1);
+}
+
+
+class LMB_PDF_Generator {
+    public static function generate_html_pdf($filename, $html, $title='') {
+        // --- CHANGE HERE: Use our new PDF_UTF8 class ---
+        $pdf = new PDF_UTF8();
+        $pdf->AddPage();
+        $pdf->SetTitle($title);
+        $pdf->SetFont('Arial','',12);
+        
+        // Use the new WriteHTML method
+        $pdf->WriteHTML($html);
+        
+        $upload = wp_upload_dir();
+        $dir = trailingslashit($upload['basedir']).'lmb-pdfs';
+        if (!file_exists($dir)) {
+            wp_mkdir_p($dir);
+        }
+        $path = $dir.'/'.$filename;
+        $pdf->Output('F', $path);
+        
+        return trailingslashit($upload['baseurl']).'lmb-pdfs/'.$filename;
     }
-    
-    private static function log_transaction($user_id, $amount, $balance_after, $reason) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'lmb_points_transactions';
-        $wpdb->insert($table, [
-            'user_id' => $user_id,
-            'amount' => $amount,
-            'balance_after' => $balance_after,
-            'reason' => $reason,
-            'transaction_type' => $amount >= 0 ? 'credit' : 'debit',
-            'created_at' => current_time('mysql')
-        ]);
-    }
-    
-    public static function get_transactions($user_id, $limit = 10) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'lmb_points_transactions';
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$table} WHERE user_id = %d ORDER BY created_at DESC LIMIT %d",
-            $user_id, $limit
-        ));
+
+    public static function create_ad_pdf_from_fulltext($post_id) {
+        $title = get_the_title($post_id);
+        $full_text = get_post_meta($post_id, 'full_text', true);
+        
+        // The title is already part of the full_text, so we just use that.
+        // This ensures the PDF matches the preview exactly.
+        return self::generate_html_pdf('ad-'.$post_id.'.pdf', $full_text, $title);
     }
 }
