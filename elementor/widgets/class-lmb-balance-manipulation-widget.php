@@ -10,12 +10,6 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
     public function get_icon() { return 'eicon-coins'; }
     public function get_categories() { return ['lmb-2']; }
 
-    public function __construct($data = [], $args = null) {
-        parent::__construct($data, $args);
-        add_action('wp_ajax_lmb_search_user', [$this, 'ajax_search_user']);
-        add_action('wp_ajax_lmb_update_balance', [$this, 'ajax_update_balance']);
-    }
-
     protected function render() {
         if (!current_user_can('manage_options')) {
             echo '<div class="lmb-notice lmb-notice-error"><p>' . esc_html__('Access denied. Administrator privileges required.', 'lmb-core') . '</p></div>';
@@ -328,79 +322,86 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
         </script>
         <?php
     }
+}
 
-    public function ajax_search_user() {
-        check_ajax_referer('lmb_balance_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Access denied']);
-        }
-
-        $search_term = sanitize_text_field($_POST['search_term']);
-        
-        // Try to find user by ID first
-        if (is_numeric($search_term)) {
-            $user = get_user_by('ID', intval($search_term));
-        } else {
-            // Try by email
-            $user = get_user_by('email', $search_term);
-        }
-
-        if (!$user) {
-            wp_send_json_error(['message' => __('User not found', 'lmb-core')]);
-        }
-
-        $balance = LMB_Points::get_balance($user->ID);
-
-        wp_send_json_success([
-            'user' => [
-                'ID' => $user->ID,
-                'display_name' => $user->display_name,
-                'user_email' => $user->user_email,
-                'balance' => $balance
-            ]
-        ]);
+// Add AJAX handlers
+add_action('wp_ajax_lmb_search_user', function() {
+    check_ajax_referer('lmb_balance_nonce', 'nonce');
+    
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(['message' => 'Access denied']);
     }
 
-    public function ajax_update_balance() {
-        check_ajax_referer('lmb_balance_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Access denied']);
-        }
+    $search_term = sanitize_text_field($_POST['search_term']);
+    
+    // Try to find user by ID first
+    if (is_numeric($search_term)) {
+        $user = get_user_by('ID', intval($search_term));
+    } else {
+        // Try by email
+        $user = get_user_by('email', $search_term);
+    }
 
-        $user_id = intval($_POST['user_id']);
-        $action = sanitize_text_field($_POST['balance_action']);
-        $amount = intval($_POST['amount']);
-        $reason = sanitize_text_field($_POST['reason']);
+    if (!$user) {
+        wp_send_json_error(['message' => __('User not found', 'lmb-core')]);
+    }
 
-        if (!$user_id || !$amount) {
-            wp_send_json_error(['message' => __('Invalid parameters', 'lmb-core')]);
-        }
+    $balance = class_exists('LMB_Points') ? LMB_Points::get_balance($user->ID) : 0;
 
-        $admin_user = wp_get_current_user();
-        $reason = $reason ?: sprintf(__('Balance %s by admin %s', 'lmb-core'), $action, $admin_user->display_name);
+    wp_send_json_success([
+        'user' => [
+            'ID' => $user->ID,
+            'display_name' => $user->display_name,
+            'user_email' => $user->user_email,
+            'balance' => $balance
+        ]
+    ]);
+});
 
-        $current_balance = LMB_Points::get_balance($user_id);
-        
-        switch ($action) {
-            case 'add':
-                $new_balance = LMB_Points::add($user_id, $amount, $reason);
-                break;
-            case 'subtract':
-                $new_balance = LMB_Points::deduct($user_id, $amount, $reason);
-                if ($new_balance === false) {
-                    wp_send_json_error(['message' => __('Insufficient balance', 'lmb-core')]);
-                }
-                break;
-            case 'set':
-                $new_balance = LMB_Points::set_balance($user_id, $amount, $reason);
-                break;
-            default:
-                wp_send_json_error(['message' => __('Invalid action', 'lmb-core')]);
-        }
+add_action('wp_ajax_lmb_update_balance', function() {
+    check_ajax_referer('lmb_balance_nonce', 'nonce');
+    
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(['message' => 'Access denied']);
+    }
 
-        // Log the change
+    $user_id = intval($_POST['user_id']);
+    $action = sanitize_text_field($_POST['balance_action']);
+    $amount = intval($_POST['amount']);
+    $reason = sanitize_text_field($_POST['reason']);
+
+    if (!$user_id || !$amount) {
+        wp_send_json_error(['message' => __('Invalid parameters', 'lmb-core')]);
+    }
+
+    if (!class_exists('LMB_Points')) {
+        wp_send_json_error(['message' => __('Points system not available', 'lmb-core')]);
+    }
+
+    $admin_user = wp_get_current_user();
+    $reason = $reason ?: sprintf(__('Balance %s by admin %s', 'lmb-core'), $action, $admin_user->display_name);
+
+    $current_balance = LMB_Points::get_balance($user_id);
+    
+    switch ($action) {
+        case 'add':
+            $new_balance = LMB_Points::add($user_id, $amount, $reason);
+            break;
+        case 'subtract':
+            $new_balance = LMB_Points::deduct($user_id, $amount, $reason);
+            if ($new_balance === false) {
+                wp_send_json_error(['message' => __('Insufficient balance', 'lmb-core')]);
+            }
+            break;
+        case 'set':
+            $new_balance = LMB_Points::set_balance($user_id, $amount, $reason);
+            break;
+        default:
+            wp_send_json_error(['message' => __('Invalid action', 'lmb-core')]);
+    }
+
+    // Log the change
+    if (class_exists('LMB_Ad_Manager')) {
         LMB_Ad_Manager::log_activity(sprintf(
             'Admin %s (%d) %s %d points for user %d. New balance: %d',
             $admin_user->display_name,
@@ -410,7 +411,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
             $user_id,
             $new_balance
         ));
-
-        wp_send_json_success(['new_balance' => $new_balance]);
     }
-}
+
+    wp_send_json_success(['new_balance' => $new_balance]);
+});
