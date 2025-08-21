@@ -41,7 +41,7 @@ class LMB_Admin {
             apply_filters('lmb_admin_capability', 'manage_options'),
             'lmb-core',
             [__CLASS__, 'render_dashboard_page'],
-            1
+            0
         );
 
         // Settings
