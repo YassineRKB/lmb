@@ -42,156 +42,156 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
         </div>
 
         <style>
-        .lmb-admin-actions-widget {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            overflow: hidden;
-        }
-        .lmb-tabs-nav {
-            display: flex;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-bottom: 1px solid #e9ecef;
-        }
-        .lmb-tab-btn {
-            flex: 1;
-            padding: 15px 20px;
-            border: none;
-            background: transparent;
-            color: rgba(255,255,255,0.8);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-weight: 500;
-            position: relative;
-        }
-        .lmb-tab-btn:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-        .lmb-tab-btn.active {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border-bottom: 3px solid white;
-        }
-        .lmb-tab-badge {
-            background: #e53e3e;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 600;
-            margin-left: 5px;
-        }
-        .lmb-tab-content {
-            padding: 20px;
-            min-height: 400px;
-        }
-        .lmb-loading {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-        }
-        .lmb-actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        .lmb-action-card {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        .lmb-action-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .lmb-action-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            justify-content: center;
-        }
-        .lmb-action-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .lmb-feed-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding: 15px 0;
-            border-bottom: 1px solid #f5f5f5;
-            gap: 15px;
-        }
-        .lmb-feed-item:last-child {
-            border-bottom: none;
-        }
-        .lmb-feed-content {
-            flex: 1;
-        }
-        .lmb-feed-title {
-            text-decoration: none;
-            font-weight: 600;
-            color: #2271b1;
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        .lmb-feed-title:hover {
-            color: #135e96;
-        }
-        .lmb-feed-meta {
-            font-size: 12px;
-            color: #787c82;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .lmb-feed-actions {
-            display: flex;
-            gap: 5px;
-        }
-        .lmb-feed-empty {
-            text-align: center;
-            padding: 40px 20px;
-            color: #50575e;
-        }
-        .lmb-feed-empty i {
-            color: #4ab866;
-            font-size: 24px;
-            margin-bottom: 10px;
-            display: block;
-        }
-        @media (max-width: 768px) {
+            .lmb-admin-actions-widget {
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                overflow: hidden;
+            }
             .lmb-tabs-nav {
-                flex-wrap: wrap;
+                display: flex;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-bottom: 1px solid #e9ecef;
             }
             .lmb-tab-btn {
-                flex: 1 1 50%;
-                min-width: 120px;
+                flex: 1;
+                padding: 15px 20px;
+                border: none;
+                background: transparent;
+                color: rgba(255,255,255,0.8);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                font-weight: 500;
+                position: relative;
             }
-        }
+            .lmb-tab-btn:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+            }
+            .lmb-tab-btn.active {
+                background: rgba(255,255,255,0.2);
+                color: white;
+                border-bottom: 3px solid white;
+            }
+            .lmb-tab-badge {
+                background: #e53e3e;
+                color: white;
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: 600;
+                margin-left: 5px;
+            }
+            .lmb-tab-content {
+                padding: 20px;
+                min-height: 400px;
+            }
+            .lmb-loading {
+                text-align: center;
+                padding: 40px;
+                color: #6c757d;
+            }
+            .lmb-actions-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+            }
+            .lmb-action-card {
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                padding: 20px;
+                text-align: center;
+                transition: all 0.3s ease;
+            }
+            .lmb-action-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+            .lmb-action-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                border: none;
+                cursor: pointer;
+                width: 100%;
+                justify-content: center;
+            }
+            .lmb-action-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            }
+            .lmb-feed-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                padding: 15px 0;
+                border-bottom: 1px solid #f5f5f5;
+                gap: 15px;
+            }
+            .lmb-feed-item:last-child {
+                border-bottom: none;
+            }
+            .lmb-feed-content {
+                flex: 1;
+            }
+            .lmb-feed-title {
+                text-decoration: none;
+                font-weight: 600;
+                color: #2271b1;
+                display: block;
+                margin-bottom: 5px;
+                font-size: 14px;
+            }
+            .lmb-feed-title:hover {
+                color: #135e96;
+            }
+            .lmb-feed-meta {
+                font-size: 12px;
+                color: #787c82;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .lmb-feed-actions {
+                display: flex;
+                gap: 5px;
+            }
+            .lmb-feed-empty {
+                text-align: center;
+                padding: 40px 20px;
+                color: #50575e;
+            }
+            .lmb-feed-empty i {
+                color: #4ab866;
+                font-size: 24px;
+                margin-bottom: 10px;
+                display: block;
+            }
+            @media (max-width: 768px) {
+                .lmb-tabs-nav {
+                    flex-wrap: wrap;
+                }
+                .lmb-tab-btn {
+                    flex: 1 1 50%;
+                    min-width: 120px;
+                }
+            }
         </style>
 
         <script>
