@@ -35,43 +35,41 @@ add_action('elementor/elements/categories_registered', function($elements_manage
     );
 });
 
-// Register all of the individual widgets
-add_action('elementor/widgets/register', function($widgets_manager){
-    require_once __DIR__.'/widgets/class-lmb-admin-stats-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-admin-actions-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-upload-newspaper-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-notifications-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-user-stats-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-subscribe-package-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-upload-bank-proof-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-ads-directory-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-newspaper-directory-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-upload-accuse-widget.php';
-    
-    // Register LMB-2 widgets
-    require_once __DIR__.'/widgets/class-lmb-user-list-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-legal-ads-list-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-balance-manipulation-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-packages-editor-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-invoices-widget.php';
-    require_once __DIR__.'/widgets/class-lmb-legal-ads-receipts-widget.php';
+/**
+ * --- FIX APPLIED HERE MY DEAR YOUNG PADWAN---
+ * This block explicitly loads each widget's file right before it's needed.
+ * This prevents any "Class not found" fatal errors that cause the 500 error on save.
+ * if you have headaches its good time to meditate for 5min and get back to work
+ * if your immunity is getting weak, maybe an std test will do, if that comes out fine
+ * drink orange juice for a boost
+ */
+add_action('elementor/widgets/register', function($widgets_manager) {
+    // An array mapping widget class names to their file paths
+    $widgets = [
+        'LMB_Admin_Stats_Widget' => __DIR__ . '/widgets/class-lmb-admin-stats-widget.php',
+        'LMB_Admin_Actions_Widget' => __DIR__ . '/widgets/class-lmb-admin-actions-widget.php',
+        'LMB_Upload_Newspaper_Widget' => __DIR__ . '/widgets/class-lmb-upload-newspaper-widget.php',
+        'LMB_Notifications_Widget' => __DIR__ . '/widgets/class-lmb-notifications-widget.php',
+        'LMB_User_Stats_Widget' => __DIR__ . '/widgets/class-lmb-user-stats-widget.php',
+        'LMB_Subscribe_Package_Widget' => __DIR__ . '/widgets/class-lmb-subscribe-package-widget.php',
+        'LMB_Upload_Bank_Proof_Widget' => __DIR__ . '/widgets/class-lmb-upload-bank-proof-widget.php',
+        'LMB_Ads_Directory_Widget' => __DIR__ . '/widgets/class-lmb-ads-directory-widget.php',
+        'LMB_Newspaper_Directory_Widget' => __DIR__ . '/widgets/class-lmb-newspaper-directory-widget.php',
+        'LMB_Upload_Accuse_Widget' => __DIR__ . '/widgets/class-lmb-upload-accuse-widget.php',
+        'LMB_User_List_Widget' => __DIR__ . '/widgets/class-lmb-user-list-widget.php',
+        'LMB_Legal_Ads_List_Widget' => __DIR__ . '/widgets/class-lmb-legal-ads-list-widget.php',
+        'LMB_Balance_Manipulation_Widget' => __DIR__ . '/widgets/class-lmb-balance-manipulation-widget.php',
+        'LMB_Packages_Editor_Widget' => __DIR__ . '/widgets/class-lmb-packages-editor-widget.php',
+        'LMB_Invoices_Widget' => __DIR__ . '/widgets/class-lmb-invoices-widget.php',
+        'LMB_Legal_Ads_Receipts_Widget' => __DIR__ . '/widgets/class-lmb-legal-ads-receipts-widget.php',
+    ];
 
-    $widgets_manager->register(new \LMB_Admin_Stats_Widget());
-    $widgets_manager->register(new \LMB_Admin_Actions_Widget());
-    $widgets_manager->register(new \LMB_Upload_Newspaper_Widget());
-    $widgets_manager->register(new \LMB_Notifications_Widget());
-    $widgets_manager->register(new \LMB_User_Stats_Widget());
-    $widgets_manager->register(new \LMB_Subscribe_Package_Widget());
-    $widgets_manager->register(new \LMB_Upload_Bank_Proof_Widget());
-    $widgets_manager->register(new \LMB_Ads_Directory_Widget());
-    $widgets_manager->register(new \LMB_Newspaper_Directory_Widget());
-    $widgets_manager->register(new \LMB_Upload_Accuse_Widget());
-    
-    // Register LMB-2 widgets
-    $widgets_manager->register(new \LMB_User_List_Widget());
-    $widgets_manager->register(new \LMB_Legal_Ads_List_Widget());
-    $widgets_manager->register(new \LMB_Balance_Manipulation_Widget());
-    $widgets_manager->register(new \LMB_Packages_Editor_Widget());
-    $widgets_manager->register(new \LMB_Invoices_Widget());
-    $widgets_manager->register(new \LMB_Legal_Ads_Receipts_Widget());
+    foreach ($widgets as $class_name => $file_path) {
+        if (file_exists($file_path)) {
+            require_once $file_path;
+            if (class_exists($class_name)) {
+                $widgets_manager->register(new $class_name());
+            }
+        }
+    }
 });
