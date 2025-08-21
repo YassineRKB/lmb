@@ -104,17 +104,12 @@ add_action('wp_enqueue_scripts', function() {
     wp_enqueue_style('lmb-core', LMB_CORE_URL . 'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
     wp_enqueue_script('lmb-core', LMB_CORE_URL . 'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
 
-    // Pass FRONTEND data to our script
-    wp_localize_script('lmb-core', 'lmbAjax', [
+    wp_localize_script('jquery', 'lmbAjax', [
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce'   => wp_create_nonce('lmb_frontend_ajax_nonce'),
     ]);
 
-    // --- FIX APPLIED HERE ---
-    // Also pass ADMIN data to the same script handle. This makes the `lmbAdmin` object
-    // available on the front-end, fixing the "lmbAdmin is not defined" error when admin
-    // widgets like 'Admin Actions & Feed' are used on front-end pages.
-    wp_localize_script('lmb-core', 'lmbAdmin', [
+    wp_localize_script('jquery', 'lmbAdmin', [
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce'   => wp_create_nonce('lmb_admin_ajax_nonce'),
     ]);
