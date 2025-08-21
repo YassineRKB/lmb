@@ -208,7 +208,7 @@ class LMB_Invoices_Widget extends Widget_Base {
                 button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> <?php esc_js_e('Generating...', 'lmb-core'); ?>');
                 
                 // Generate and download invoice PDF
-                $.post(ajaxurl, {
+                $.post(lmbAjax.lmbAjax.ajaxurl, {
                     action: 'lmb_generate_invoice_pdf',
                     nonce: '<?php echo wp_create_nonce('lmb_invoice_nonce'); ?>',
                     payment_id: paymentId

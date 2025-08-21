@@ -213,7 +213,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
 
                 $('#lmb-search-results').html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> <?php esc_js_e('Searching...', 'lmb-core'); ?></div>');
 
-                $.post(ajaxurl, {
+                $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_search_user',
                     nonce: '<?php echo wp_create_nonce('lmb_balance_nonce'); ?>',
                     search_term: searchTerm
@@ -264,7 +264,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
 
                 $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> <?php esc_js_e('Updating...', 'lmb-core'); ?>');
 
-                $.post(ajaxurl, {
+                $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_update_balance',
                     nonce: '<?php echo wp_create_nonce('lmb_balance_nonce'); ?>',
                     user_id: selectedUserId,
@@ -289,7 +289,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
             function loadBalanceHistory(userId) {
                 $('#lmb-balance-history').html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> <?php esc_js_e('Loading history...', 'lmb-core'); ?></div>');
                 
-                $.post(ajaxurl, {
+                $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_get_balance_history',
                     nonce: '<?php echo wp_create_nonce('lmb_balance_nonce'); ?>',
                     user_id: userId

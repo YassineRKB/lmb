@@ -196,7 +196,7 @@ class LMB_Legal_Ads_Receipts_Widget extends Widget_Base {
                 button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> <?php esc_js_e('Generating...', 'lmb-core'); ?>');
                 
                 // Generate and download receipt PDF
-                $.post(ajaxurl, {
+                $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_generate_receipt_pdf',
                     nonce: '<?php echo wp_create_nonce('lmb_receipt_nonce'); ?>',
                     ad_id: adId,

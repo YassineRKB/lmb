@@ -214,7 +214,7 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
             function loadTabContent(tab) {
                 $('#lmb-tab-content-area').html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
                 
-                $.post(ajaxurl, {
+                $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_load_admin_tab',
                     nonce: lmbAdmin.nonce,
                     tab: tab
@@ -250,7 +250,7 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
 
                 button.closest('.lmb-feed-actions').html('Processing...');
 
-                $.post(ajaxurl, {
+                $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_ad_status_change',
                     nonce: '<?php echo wp_create_nonce('lmb_admin_ajax_nonce'); ?>',
                     ad_id: adId,
@@ -290,7 +290,7 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
                 
                 button.closest('.lmb-feed-actions').html('Processing...');
 
-                $.post(ajaxurl, {
+                $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_payment_action',
                     nonce: '<?php echo wp_create_nonce('lmb_admin_ajax_nonce'); ?>',
                     payment_id: paymentId,
