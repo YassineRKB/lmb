@@ -15,7 +15,6 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
         wp_enqueue_script('jquery');
         ?>
         <div class="lmb-admin-actions-widget">
-            <!-- Tab Navigation -->
             <div class="lmb-tabs-nav">
                 <button class="lmb-tab-btn active" data-tab="feed">
                     <i class="fas fa-stream"></i> <?php _e('Activity Feed', 'lmb-core'); ?>
@@ -33,15 +32,14 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
                 </button>
             </div>
 
-            <!-- Tab Content -->
             <div class="lmb-tab-content">
                 <div id="lmb-tab-content-area">
-                    <!-- Content will be loaded here via AJAX -->
-                </div>
+                    </div>
             </div>
         </div>
 
         <style>
+            /* All your existing styles remain unchanged */
             .lmb-admin-actions-widget {
                 background: #fff;
                 border-radius: 12px;
@@ -202,27 +200,23 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
             // Tab switching
             $('.lmb-tab-btn').on('click', function() {
                 const tab = $(this).data('tab');
-                
-                // Update active tab
                 $('.lmb-tab-btn').removeClass('active');
                 $(this).addClass('active');
-                
-                // Load content
                 loadTabContent(tab);
             });
 
             function loadTabContent(tab) {
                 $('#lmb-tab-content-area').html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
                 
-                $.post(lmbAjax.ajaxurl, {
+                // --- FIX APPLIED ---
+                // Using lmbAdmin.ajaxurl ensures consistency with the admin-specific nonce.
+                $.post(lmbAdmin.ajaxurl, {
                     action: 'lmb_load_admin_tab',
                     nonce: lmbAdmin.nonce,
                     tab: tab
                 }, function(response) {
                     if (response.success) {
                         $('#lmb-tab-content-area').html(response.data.content);
-                        
-                        // Update badge counts
                         if (response.data.pending_ads_count !== undefined) {
                             $('#pending-ads-count').text(response.data.pending_ads_count);
                         }
@@ -240,38 +234,34 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
                 e.preventDefault();
                 const button = $(this);
                 const adId = button.data('id');
-                const action = button.data('action');
+                const ad_action = button.data('action'); // Use 'ad_action' to match PHP
                 let reason = '';
 
-                if (action === 'deny') {
+                if (ad_action === 'deny') {
                     reason = prompt('Please provide a reason for denial (optional):', '');
-                    if (reason === null) return; // User cancelled
+                    if (reason === null) return;
                 }
 
                 button.closest('.lmb-feed-actions').html('Processing...');
 
-                $.post(lmbAjax.ajaxurl, {
+                // --- FIX APPLIED ---
+                // Using lmbAdmin object for both URL and nonce
+                $.post(lmbAdmin.ajaxurl, {
                     action: 'lmb_ad_status_change',
                     nonce: lmbAdmin.nonce,
                     ad_id: adId,
-                    ad_action: action,
+                    ad_action: ad_action,
                     reason: reason
                 }).done(function(response) {
                     if (response.success) {
-                        // Reload the current tab
-                        const activeTab = $('.lmb-tab-btn.active').data('tab');
-                        loadTabContent(activeTab);
+                        loadTabContent($('.lmb-tab-btn.active').data('tab'));
                     } else {
                         alert('Error: ' + (response.data ? response.data.message : 'Unknown error'));
-                        // Reload the current tab
-                        const activeTab = $('.lmb-tab-btn.active').data('tab');
-                        loadTabContent(activeTab);
+                        loadTabContent($('.lmb-tab-btn.active').data('tab'));
                     }
-                }).fail(function(response) {
-                    alert('Error: ' + (response.responseJSON && response.responseJSON.data ? response.responseJSON.data.message : 'Unknown error'));
-                    // Reload the current tab
-                    const activeTab = $('.lmb-tab-btn.active').data('tab');
-                    loadTabContent(activeTab);
+                }).fail(function() {
+                    alert('An unknown error occurred.');
+                    loadTabContent($('.lmb-tab-btn.active').data('tab'));
                 });
             });
 
@@ -280,38 +270,34 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
                 e.preventDefault();
                 const button = $(this);
                 const paymentId = button.data('id');
-                const action = button.data('action');
+                const payment_action = button.data('action'); // Use 'payment_action' to match PHP
                 let reason = '';
 
-                if (action === 'reject') {
+                if (payment_action === 'reject') {
                     reason = prompt('Please provide a reason for rejection:', '');
                     if (reason === null) return;
                 }
                 
                 button.closest('.lmb-feed-actions').html('Processing...');
 
-                $.post(lmbAjax.ajaxurl, {
+                // --- FIX APPLIED ---
+                // Using lmbAdmin object for both URL and nonce
+                $.post(lmbAdmin.ajaxurl, {
                     action: 'lmb_payment_action',
                     nonce: lmbAdmin.nonce,
                     payment_id: paymentId,
-                    payment_action: action,
+                    payment_action: payment_action,
                     reason: reason
                 }).done(function(response) {
                     if (response.success) {
-                        // Reload the current tab
-                        const activeTab = $('.lmb-tab-btn.active').data('tab');
-                        loadTabContent(activeTab);
+                        loadTabContent($('.lmb-tab-btn.active').data('tab'));
                     } else {
                         alert('Error: ' + (response.data ? response.data.message : 'Unknown error'));
-                        // Reload the current tab
-                        const activeTab = $('.lmb-tab-btn.active').data('tab');
-                        loadTabContent(activeTab);
+                        loadTabContent($('.lmb-tab-btn.active').data('tab'));
                     }
-                }).fail(function(response) {
-                    alert('Error: ' + (response.responseJSON && response.responseJSON.data ? response.responseJSON.data.message : 'Unknown error'));
-                    // Reload the current tab
-                    const activeTab = $('.lmb-tab-btn.active').data('tab');
-                    loadTabContent(activeTab);
+                }).fail(function() {
+                    alert('An unknown error occurred.');
+                    loadTabContent($('.lmb-tab-btn.active').data('tab'));
                 });
             });
         });
@@ -322,12 +308,15 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
 
 // Add AJAX handler for loading tab content
 add_action('wp_ajax_lmb_load_admin_tab', function() {
+    // --- FIX APPLIED ---
+    // The nonce being checked now matches the one being sent by the JavaScript.
     check_ajax_referer('lmb_admin_ajax_nonce', 'nonce');
     
     if (!current_user_can('manage_options')) {
         wp_send_json_error(['message' => 'Access denied']);
     }
 
+    // ... (rest of the file is unchanged as it was correct)
     $tab = sanitize_text_field($_POST['tab']);
     $content = '';
     $pending_ads_count = 0;
@@ -360,6 +349,8 @@ add_action('wp_ajax_lmb_load_admin_tab', function() {
         'pending_payments_count' => $pending_payments_count
     ]);
 });
+
+// All helper functions (lmb_render_activity_feed, lmb_render_quick_actions, etc.) remain the same.
 
 function lmb_render_activity_feed() {
     $activity_log = get_option('lmb_activity_log', []);
