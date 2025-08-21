@@ -9,6 +9,7 @@ class LMB_Admin {
             'general'        => __('General', 'lmb-core'),
             'templates'      => __('Templates', 'lmb-core'),
             'notifications'  => __('Notifications', 'lmb-core'),
+            'security'       => __('Security', 'lmb-core'),
             'roles'          => __('Roles & Users', 'lmb-core'),
         ];
 
@@ -75,9 +76,14 @@ class LMB_Admin {
 
         // Templates
         register_setting('lmb_templates_settings', 'lmb_invoice_template_html');
+        register_setting('lmb_templates_settings', 'lmb_newspaper_template_html');
+        register_setting('lmb_templates_settings', 'lmb_receipt_template_html');
 
         // Notifications
         register_setting('lmb_notifications_settings', 'lmb_enable_email_notifications');
+        
+        // Security
+        register_setting('lmb_security_settings', 'lmb_protected_pages');
     }
 
     /**
@@ -190,8 +196,17 @@ class LMB_Admin {
     <?php }
 
     private static function render_templates_tab() { ?>
-        <p class="description"><?php esc_html_e('Invoice template (HTML). You can use placeholders like {{invoice_number}}, {{amount}}, etc.', 'lmb-core'); ?></p>
-        <textarea name="lmb_invoice_template_html" rows="12" style="width:100%;"><?php echo esc_textarea(get_option('lmb_invoice_template_html', '')); ?></textarea>
+        <h3><?php esc_html_e('Invoice Template', 'lmb-core'); ?></h3>
+        <p class="description"><?php esc_html_e('Invoice template (HTML). You can use placeholders like {{invoice_number}}, {{user_name}}, {{package_name}}, {{package_price}}, {{payment_reference}}, {{our_bank_name}}, {{our_iban}}, etc.', 'lmb-core'); ?></p>
+        <textarea name="lmb_invoice_template_html" rows="12" style="width:100%;"><?php echo esc_textarea(get_option('lmb_invoice_template_html', self::get_default_invoice_template())); ?></textarea>
+        
+        <h3><?php esc_html_e('Newspaper Template', 'lmb-core'); ?></h3>
+        <p class="description"><?php esc_html_e('Newspaper template (HTML). You can use placeholders like {{newspaper_title}}, {{publication_date}}, {{ads_content}}, etc.', 'lmb-core'); ?></p>
+        <textarea name="lmb_newspaper_template_html" rows="12" style="width:100%;"><?php echo esc_textarea(get_option('lmb_newspaper_template_html', self::get_default_newspaper_template())); ?></textarea>
+        
+        <h3><?php esc_html_e('Receipt Template', 'lmb-core'); ?></h3>
+        <p class="description"><?php esc_html_e('Receipt template (HTML). You can use placeholders like {{ad_id}}, {{company_name}}, {{ad_type}}, {{publication_date}}, etc.', 'lmb-core'); ?></p>
+        <textarea name="lmb_receipt_template_html" rows="12" style="width:100%;"><?php echo esc_textarea(get_option('lmb_receipt_template_html', self::get_default_receipt_template())); ?></textarea>
     <?php }
 
     private static function render_notifications_tab() { ?>
@@ -199,6 +214,41 @@ class LMB_Admin {
             <input type="checkbox" name="lmb_enable_email_notifications" value="1" <?php checked(get_option('lmb_enable_email_notifications', 0), 1); ?>>
             <?php esc_html_e('Enable email notifications', 'lmb-core'); ?>
         </label>
+    <?php }
+
+    private static function render_security_tab() { 
+        $protected_pages = get_option('lmb_protected_pages', []);
+        $pages = get_pages();
+        ?>
+        <h3><?php esc_html_e('Page Access Control', 'lmb-core'); ?></h3>
+        <p class="description"><?php esc_html_e('Configure access control for specific pages based on user roles.', 'lmb-core'); ?></p>
+        
+        <table class="form-table" role="presentation">
+            <thead>
+                <tr>
+                    <th><?php esc_html_e('Page', 'lmb-core'); ?></th>
+                    <th><?php esc_html_e('Access Level', 'lmb-core'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($pages as $page): ?>
+                    <?php $page_protection = isset($protected_pages[$page->ID]) ? $protected_pages[$page->ID] : 'public'; ?>
+                    <tr>
+                        <td>
+                            <strong><?php echo esc_html($page->post_title); ?></strong>
+                            <br><small><?php echo esc_html($page->post_name); ?></small>
+                        </td>
+                        <td>
+                            <select name="lmb_protected_pages[<?php echo $page->ID; ?>]">
+                                <option value="public" <?php selected($page_protection, 'public'); ?>><?php esc_html_e('Public Access', 'lmb-core'); ?></option>
+                                <option value="logged_in" <?php selected($page_protection, 'logged_in'); ?>><?php esc_html_e('Logged-in Users Only', 'lmb-core'); ?></option>
+                                <option value="admin_only" <?php selected($page_protection, 'admin_only'); ?>><?php esc_html_e('Administrators Only', 'lmb-core'); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     <?php }
 
     private static function render_roles_tab() { ?>
@@ -226,5 +276,44 @@ class LMB_Admin {
             'news_total'      => isset($news_counts['publish']) ? (int) $news_counts['publish'] : 0,
             'rev_year'        => 1250, // Placeholder value
         ];
+    }
+    
+    private static function get_default_invoice_template() {
+        return '<h1>Invoice {{invoice_number}}</h1>
+<p>Date: {{invoice_date}}</p>
+<hr>
+<h3>Client Details</h3>
+<p>Name: {{user_name}}<br>Email: {{user_email}}</p>
+<hr>
+<h3>Item Details</h3>
+<p><strong>Package:</strong> {{package_name}}<br><strong>Price:</strong> {{package_price}} MAD</p>
+<p><strong>Payment Reference:</strong> {{payment_reference}}</p>
+<hr>
+<h3>Payment Instructions</h3>
+<p>Please make a bank transfer to:<br><strong>Bank:</strong> {{our_bank_name}}<br><strong>IBAN/RIB:</strong> {{our_iban}}</p>';
+    }
+    
+    private static function get_default_newspaper_template() {
+        return '<div style="text-align: center; margin-bottom: 30px;">
+    <h1>{{newspaper_title}}</h1>
+    <p>Publication Date: {{publication_date}}</p>
+</div>
+<hr>
+<div>
+    {{ads_content}}
+</div>';
+    }
+    
+    private static function get_default_receipt_template() {
+        return '<div style="text-align: center; margin-bottom: 30px;">
+    <h1>ACCUSE DE PUBLICATION</h1>
+    <p>Legal Ad Receipt #{{ad_id}}</p>
+</div>
+<hr>
+<h3>{{company_name}}</h3>
+<p><strong>Ad Type:</strong> {{ad_type}}</p>
+<p><strong>Publication Date:</strong> {{publication_date}}</p>
+<hr>
+<p>This document serves as proof of publication for the above legal advertisement.</p>';
     }
 }
