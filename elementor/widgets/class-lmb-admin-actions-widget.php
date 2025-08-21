@@ -252,7 +252,7 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
 
                 $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_ad_status_change',
-                    nonce: '<?php echo wp_create_nonce('lmb_admin_ajax_nonce'); ?>',
+                    nonce: lmbAdmin.nonce,
                     ad_id: adId,
                     ad_action: action,
                     reason: reason
@@ -292,7 +292,7 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
 
                 $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_payment_action',
-                    nonce: '<?php echo wp_create_nonce('lmb_admin_ajax_nonce'); ?>',
+                    nonce: lmbAdmin.nonce,
                     payment_id: paymentId,
                     payment_action: action,
                     reason: reason
@@ -322,7 +322,7 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
 
 // Add AJAX handler for loading tab content
 add_action('wp_ajax_lmb_load_admin_tab', function() {
-    check_ajax_referer('lmb_admin_nonce', 'nonce');
+    check_ajax_referer('lmb_admin_ajax_nonce', 'nonce');
     
     if (!current_user_can('manage_options')) {
         wp_send_json_error(['message' => 'Access denied']);
