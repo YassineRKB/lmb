@@ -46,6 +46,7 @@ add_action('elementor/widgets/register', function($widgets_manager){
     require_once __DIR__.'/widgets/class-lmb-upload-bank-proof-widget.php';
     require_once __DIR__.'/widgets/class-lmb-ads-directory-widget.php';
     require_once __DIR__.'/widgets/class-lmb-newspaper-directory-widget.php';
+    require_once __DIR__.'/widgets/class-lmb-upload-accuse-widget.php';
     
     // Register LMB-2 widgets
     require_once __DIR__.'/widgets/class-lmb-user-list-widget.php';
@@ -64,6 +65,7 @@ add_action('elementor/widgets/register', function($widgets_manager){
     $widgets_manager->register(new \LMB_Upload_Bank_Proof_Widget());
     $widgets_manager->register(new \LMB_Ads_Directory_Widget());
     $widgets_manager->register(new \LMB_Newspaper_Directory_Widget());
+    $widgets_manager->register(new \LMB_Upload_Accuse_Widget());
     
     // Register LMB-2 widgets
     $widgets_manager->register(new \LMB_User_List_Widget());

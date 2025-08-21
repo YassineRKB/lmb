@@ -123,29 +123,41 @@ class LMB_Ad_Manager {
             return ['success' => false, 'message' => 'Client ID not found for this ad.'];
         }
         
-        $cost = (int) (get_user_meta($client_id, 'lmb_cost_per_ad', true) ?: get_option('lmb_default_cost_per_ad', 1));
+        $cost = class_exists('LMB_Points') ? LMB_Points::get_cost_per_ad($client_id) : 1;
         
-        if (LMB_Points::get_balance($client_id) < $cost) {
+        if (class_exists('LMB_Points') && LMB_Points::get_balance($client_id) < $cost) {
             self::deny_ad($ad_id, 'Insufficient points balance.');
             return ['success' => false, 'message' => 'Client has insufficient points. Ad has been automatically denied.'];
         }
         
-        $new_balance = LMB_Points::deduct($client_id, $cost, sprintf('Publication of legal ad #%d', $ad_id));
+        $new_balance = class_exists('LMB_Points') ? LMB_Points::deduct($client_id, $cost, sprintf('Publication of legal ad #%d', $ad_id)) : true;
         if ($new_balance === false) {
             return ['success' => false, 'message' => 'Failed to deduct points. Ad not approved.'];
         }
         
         wp_update_post(['ID' => $ad_id, 'post_status' => 'publish']);
         update_post_meta($ad_id, 'lmb_status', 'published');
+        update_post_meta($ad_id, 'approved_by', get_current_user_id());
+        update_post_meta($ad_id, 'approved_date', current_time('mysql'));
         
-        $pdf_url = LMB_PDF_Generator::create_ad_pdf_from_fulltext($ad_id);
-        update_post_meta($ad_id, 'ad_pdf_url', $pdf_url);
+        // Generate PDF only if PDF generator is available
+        if (class_exists('LMB_PDF_Generator')) {
+            $pdf_url = LMB_PDF_Generator::create_ad_pdf_from_fulltext($ad_id);
+            update_post_meta($ad_id, 'ad_pdf_url', $pdf_url);
+        }
         
-        $invoice_url = LMB_Invoice_Handler::create_ad_publication_invoice($client_id, $ad_id, $cost, $new_balance);
-        update_post_meta($ad_id, 'ad_invoice_pdf_url', $invoice_url);
+        // Generate invoice only if invoice handler is available
+        if (class_exists('LMB_Invoice_Handler')) {
+            $invoice_url = LMB_Invoice_Handler::create_ad_publication_invoice($client_id, $ad_id, $cost, $new_balance);
+            update_post_meta($ad_id, 'ad_invoice_pdf_url', $invoice_url);
+        }
         
         self::log_activity(sprintf('Ad #%d approved by %s. Cost: %d points.', $ad_id, wp_get_current_user()->display_name, $cost));
-        LMB_Notification_Manager::notify_ad_approved($client_id, $ad_id);
+        
+        // Send notification if notification manager is available
+        if (class_exists('LMB_Notification_Manager')) {
+            LMB_Notification_Manager::notify_ad_approved($client_id, $ad_id);
+        }
 
         return ['success' => true, 'message' => 'Ad approved and published successfully.'];
     }
@@ -157,7 +169,9 @@ class LMB_Ad_Manager {
 
         $client_id = get_post_meta($ad_id, 'lmb_client_id', true);
         if ($client_id) {
-            LMB_Notification_Manager::notify_ad_denied($client_id, $ad_id, $reason);
+            if (class_exists('LMB_Notification_Manager')) {
+                LMB_Notification_Manager::notify_ad_denied($client_id, $ad_id, $reason);
+            }
         }
         self::log_activity(sprintf('Ad #%d denied by %s. Reason: %s', $ad_id, wp_get_current_user()->display_name, $reason));
     }
