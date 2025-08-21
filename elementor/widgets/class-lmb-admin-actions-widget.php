@@ -216,7 +216,7 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
                 
                 $.post(ajaxurl, {
                     action: 'lmb_load_admin_tab',
-                    nonce: '<?php echo wp_create_nonce('lmb_admin_nonce'); ?>',
+                    nonce: lmbAdmin.nonce,
                     tab: tab
                 }, function(response) {
                     if (response.success) {
