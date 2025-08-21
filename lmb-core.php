@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core (auth, CPTs, points, invoices, payments, PDFs, directories, dashboards).
- * Version: 2.2.0
+ * Version: 2.2.1
  * Author: Yassine Rakibi
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -28,10 +28,22 @@ spl_autoload_register(function($class) {
     if (strpos($class, 'LMB_') !== 0) {
         return;
     }
+    // Define the possible directories for your classes otherwise, you will lose too much hair trying to fix the simple problem
+    // who ever is continuing this project after me, if u start losing hair here a tip: eggs for breakfast, eggs for lunch, eggs for dinner
+    // as for eyesight, i can not correct what god made u into, you are remaining shortsighted
+    $directories = [
+        'includes/',
+        'elementor/widgets/'
+    ];
+
     $file = 'class-' . str_replace('_', '-', strtolower($class)) . '.php';
-    $path = LMB_CORE_PATH . 'includes/' . $file;
-    if (file_exists($path)) {
-        require_once $path;
+
+    foreach ($directories as $dir) {
+        $path = LMB_CORE_PATH . $dir . $file;
+        if (file_exists($path)) {
+            require_once $path;
+            return;
+        }
     }
 });
 
@@ -117,3 +129,5 @@ add_action('admin_enqueue_scripts', function($hook) {
         'nonce'   => wp_create_nonce('lmb_admin_ajax_nonce'),
     ]);
 });
+// documentation is hard dont u agree.
+// suffer the same pain as i, my younge padwan
