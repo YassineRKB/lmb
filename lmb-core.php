@@ -113,7 +113,8 @@ add_action('wp_enqueue_scripts', function() {
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce'   => wp_create_nonce('lmb_admin_ajax_nonce'),
     ]);
-    
+    // hoho i forgot this pesky admin styles to also load on the frontend for admin dashboard
+    wp_enqueue_style('lmb-admin-styles', LMB_CORE_URL . 'assets/css/admin.css', [], LMB_CORE_VERSION);
     // Load Chart.js only when the chart shortcode is present
     global $post;
     if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'lmb_user_charts')) {
