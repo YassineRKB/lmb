@@ -228,7 +228,7 @@ class LMB_Ajax_Handlers {
             'posts_per_page' => 10,
             'meta_query'     => [
                 [
-                    'key'     => 'status',
+                    'key'     => 'payment_status',
                     'value'   => 'pending',
                     'compare' => '=',
                 ],
