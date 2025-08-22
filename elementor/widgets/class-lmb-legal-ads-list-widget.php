@@ -30,7 +30,7 @@ class LMB_Legal_Ads_List_Widget extends Widget_Base {
         $args = [
             'post_type' => 'lmb_legal_ad',
             'post_status' => ['draft', 'pending_review', 'publish'],
-            'posts_per_page' => 20,
+            'posts_per_page' => 5,
             'paged' => $paged,
             'orderby' => $orderby === 'ref' ? 'ID' : $orderby,
             'order' => $order,
