@@ -1,6 +1,5 @@
 <?php
 use Elementor\Widget_Base;
-use Elementor\Controls_Manager;
 
 if (!defined('ABSPATH')) exit;
 
@@ -215,7 +214,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
 
                 $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_search_user',
-                    nonce: '<?php echo wp_create_nonce('lmb_balance_nonce'); ?>',
+                    nonce: lmbAdmin.nonce,
                     search_term: searchTerm
                 }, function(response) {
                     if (response.success) {
@@ -266,7 +265,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
 
                 $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_update_balance',
-                    nonce: '<?php echo wp_create_nonce('lmb_balance_nonce'); ?>',
+                    nonce: lmbAdmin.nonce,
                     user_id: selectedUserId,
                     balance_action: action,
                     amount: amount,
@@ -291,7 +290,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
                 
                 $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_get_balance_history',
-                    nonce: '<?php echo wp_create_nonce('lmb_balance_nonce'); ?>',
+                    nonce: lmbAdmin.nonce,
                     user_id: userId
                 }, function(response) {
                     if (response.success) {
@@ -324,94 +323,3 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
     }
 }
 
-// Add AJAX handlers
-add_action('wp_ajax_lmb_search_user', function() {
-    check_ajax_referer('lmb_balance_nonce', 'nonce');
-    
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(['message' => 'Access denied']);
-    }
-
-    $search_term = sanitize_text_field($_POST['search_term']);
-    
-    // Try to find user by ID first
-    if (is_numeric($search_term)) {
-        $user = get_user_by('ID', intval($search_term));
-    } else {
-        // Try by email
-        $user = get_user_by('email', $search_term);
-    }
-
-    if (!$user) {
-        wp_send_json_error(['message' => __('User not found', 'lmb-core')]);
-    }
-
-    $balance = class_exists('LMB_Points') ? LMB_Points::get_balance($user->ID) : 0;
-
-    wp_send_json_success([
-        'user' => [
-            'ID' => $user->ID,
-            'display_name' => $user->display_name,
-            'user_email' => $user->user_email,
-            'balance' => $balance
-        ]
-    ]);
-});
-
-add_action('wp_ajax_lmb_update_balance', function() {
-    check_ajax_referer('lmb_balance_nonce', 'nonce');
-    
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(['message' => 'Access denied']);
-    }
-
-    $user_id = intval($_POST['user_id']);
-    $action = sanitize_text_field($_POST['balance_action']);
-    $amount = intval($_POST['amount']);
-    $reason = sanitize_text_field($_POST['reason']);
-
-    if (!$user_id || !$amount) {
-        wp_send_json_error(['message' => __('Invalid parameters', 'lmb-core')]);
-    }
-
-    if (!class_exists('LMB_Points')) {
-        wp_send_json_error(['message' => __('Points system not available', 'lmb-core')]);
-    }
-
-    $admin_user = wp_get_current_user();
-    $reason = $reason ?: sprintf(__('Balance %s by admin %s', 'lmb-core'), $action, $admin_user->display_name);
-
-    $current_balance = LMB_Points::get_balance($user_id);
-    
-    switch ($action) {
-        case 'add':
-            $new_balance = LMB_Points::add($user_id, $amount, $reason);
-            break;
-        case 'subtract':
-            $new_balance = LMB_Points::deduct($user_id, $amount, $reason);
-            if ($new_balance === false) {
-                wp_send_json_error(['message' => __('Insufficient balance', 'lmb-core')]);
-            }
-            break;
-        case 'set':
-            $new_balance = LMB_Points::set_balance($user_id, $amount, $reason);
-            break;
-        default:
-            wp_send_json_error(['message' => __('Invalid action', 'lmb-core')]);
-    }
-
-    // Log the change
-    if (class_exists('LMB_Ad_Manager')) {
-        LMB_Ad_Manager::log_activity(sprintf(
-            'Admin %s (%d) %s %d points for user %d. New balance: %d',
-            $admin_user->display_name,
-            $admin_user->ID,
-            $action === 'set' ? 'set balance to' : $action . 'ed',
-            $amount,
-            $user_id,
-            $new_balance
-        ));
-    }
-
-    wp_send_json_success(['new_balance' => $new_balance]);
-});

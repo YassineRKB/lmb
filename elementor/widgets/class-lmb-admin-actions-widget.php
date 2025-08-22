@@ -306,49 +306,7 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
     }
 }
 
-// Add AJAX handler for loading tab content
-add_action('wp_ajax_lmb_load_admin_tab', function() {
-    // --- FIX APPLIED ---
-    // The nonce being checked now matches the one being sent by the JavaScript.
-    check_ajax_referer('lmb_admin_ajax_nonce', 'nonce');
-    
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(['message' => 'Access denied']);
-    }
 
-    // ... (rest of the file is unchanged as it was correct)
-    $tab = sanitize_text_field($_POST['tab']);
-    $content = '';
-    $pending_ads_count = 0;
-    $pending_payments_count = 0;
-
-    switch ($tab) {
-        case 'feed':
-            $content = lmb_render_activity_feed();
-            break;
-        case 'actions':
-            $content = lmb_render_quick_actions();
-            break;
-        case 'pending-ads':
-            $result = lmb_render_pending_ads();
-            $content = $result['content'];
-            $pending_ads_count = $result['count'];
-            break;
-        case 'pending-payments':
-            $result = lmb_render_pending_payments();
-            $content = $result['content'];
-            $pending_payments_count = $result['count'];
-            break;
-        default:
-            $content = '<p>Invalid tab</p>';
-    }
-
-    wp_send_json_success([
-        'content' => $content,
-        'pending_ads_count' => $pending_ads_count,
-        'pending_payments_count' => $pending_payments_count
-    ]);
-});
 
 // All helper functions (lmb_render_activity_feed, lmb_render_quick_actions, etc.) remain the same.
 
@@ -496,7 +454,7 @@ function lmb_render_pending_payments() {
     
     if (empty($pending_payments)) {
         return [
-            'content' => '<div class="lmb-feed-empty"><i class="fas fa-check-circle"></i><p>' . __('No payments are pending verification.', 'lmb-core') . '</p></div>',
+            'content' => '<div class="lmb-feed-empty"><i class="fas fa-check-circle"></i><p>' . __('No x payments are pending verification.', 'lmb-core') . '</p></div>',
             'count' => 0
         ];
     }
