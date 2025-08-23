@@ -1,0 +1,80 @@
+.lmb-upload-accuse-widget {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.lmb-upload-accuse-widget label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.lmb-upload-accuse-widget select,
+.lmb-upload-accuse-widget input[type="date"],
+.lmb-upload-accuse-widget textarea,
+.lmb-upload-accuse-widget input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.lmb-upload-accuse-widget textarea {
+    height: 100px;
+}
+
+.lmb-upload-accuse-widget button {
+    background: #0073aa;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.lmb-upload-accuse-widget button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.lmb-success {
+    background: #dff0d8;
+    color: #3c763d;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.lmb-error {
+    background: #f2dede;
+    color: #a94442;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.accuse-item {
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+}
+
+.accuse-item:last-child {
+    border-bottom: none;
+}
+
+.accuse-header h5 {
+    margin: 0 0 5px;
+}
+
+.accuse-content a {
+    color: #0073aa;
+    text-decoration: none;
+}
+
+.accuse-content a:hover {
+    text-decoration: underline;
+}

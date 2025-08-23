@@ -14,10 +14,49 @@ class LMB_Ajax_Handlers {
         add_action('wp_ajax_lmb_search_user', [__CLASS__, 'search_user']);
         add_action('wp_ajax_lmb_update_balance', [__CLASS__, 'update_balance']);
     }
+    public function handle_upload_accuse() {
+        check_ajax_referer('lmb_upload_accuse_nonce', '_wpnonce');
 
-    /* -------------------------------
-     * Balance history (already existed)
-     * ------------------------------- */
+        if (!current_user_can('manage_options') || !isset($_POST['legal_ad_id']) || empty($_FILES['accuse_file']['name'])) {
+            wp_send_json_error(['message' => __('Missing required information.', 'lmb-core')]);
+        }
+
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        $legal_ad_id = intval($_POST['legal_ad_id']);
+        $accuse_date = sanitize_text_field($_POST['accuse_date']);
+        $notes = sanitize_textarea_field($_POST['accuse_notes']);
+        $file = $_FILES['accuse_file'];
+
+        $legal_ad = get_post($legal_ad_id);
+        if (!$legal_ad || $legal_ad->post_type !== 'lmb_legal_ad') {
+            wp_send_json_error(['message' => __('Invalid legal ad selected.', 'lmb-core')]);
+        }
+
+        $filetype = wp_check_filetype($file['name']);
+        if (!in_array($filetype['ext'], ['pdf', 'jpg', 'jpeg', 'png'])) {
+            wp_send_json_error(['message' => __('Invalid file type. Please upload a PDF, JPG, or PNG file.', 'lmb-core')]);
+        }
+
+        if ($file['size'] > 10 * 1024 * 1024) { // 10MB limit
+            wp_send_json_error(['message' => __('File too large. Maximum size is 10MB.', 'lmb-core')]);
+        }
+
+        // Upload the file
+        $attachment_id = media_handle_upload('accuse_file', 0);
+        if (is_wp_error($attachment_id)) {
+            wp_send_json_error(['message' => $attachment_id->get_error_message()]);
+        }
+
+        // Save metadata
+        update_post_meta($attachment_id, 'lmb_accuse_for_ad', $legal_ad_id);
+        update_post_meta($attachment_id, 'lmb_accuse_date', $accuse_date);
+        update_post_meta($attachment_id, 'lmb_accuse_notes', $notes);
+
+        wp_send_json_success(['message' => __('Accuse uploaded and saved successfully.', 'lmb-core')]);
+    }
     public static function get_balance_history() {
         check_ajax_referer('lmb_balance_nonce', 'nonce');
 
@@ -49,10 +88,6 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['history' => $history]);
     }
 
-    /* -----------------------------------------
-     * Admin tabs: feed / actions / pending views
-     * (moved out of class-lmb-admin-actions-widget.php)
-     * ----------------------------------------- */
     public static function load_admin_tab() {
         check_ajax_referer('lmb_admin_ajax_nonce', 'nonce');
 
@@ -272,9 +307,6 @@ class LMB_Ajax_Handlers {
         return ['content' => $out, 'count' => $count];
     }
 
-    /* ------------------------------------------------
-     * Balance: search & update (moved out of widget)
-     * ------------------------------------------------ */
     public static function search_user() {
         check_ajax_referer('lmb_balance_nonce', 'nonce');
 
