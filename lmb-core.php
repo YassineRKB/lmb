@@ -95,6 +95,7 @@ add_action('plugins_loaded', function() {
     LMB_Database_Manager::init();
     LMB_Invoice_Handler::init();
     LMB_Ajax_Handlers::init();
+    LMB_Notification_Manager::init();
     new LMB_User();
     
 });

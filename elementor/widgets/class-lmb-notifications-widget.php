@@ -1,6 +1,5 @@
 <?php
 use Elementor\Widget_Base;
-
 if (!defined('ABSPATH')) exit;
 
 class LMB_Notifications_Widget extends Widget_Base {
@@ -11,220 +10,134 @@ class LMB_Notifications_Widget extends Widget_Base {
 
     protected function render() {
         if (!is_user_logged_in()) {
-            echo '<div class="lmb-notice lmb-notice-error"><p>'.esc_html__('You must be logged in to view notifications.', 'lmb-core').'</p></div>';
+            echo '<div class="lmb-notice lmb-notice-error"><p>' . esc_html__('You must be logged in to view notifications.', 'lmb-core') . '</p></div>';
             return;
         }
 
-        $user_id = get_current_user_id();
-        $notifications = $this->get_user_notifications($user_id);
-        $unread_count = count(array_filter($notifications, function($n) { return !$n['read']; }));
-        $trigger_class = $unread_count > 0 ? 'has-notifications' : 'no-notifications';
+        // Ensure manager is available
+        if (!class_exists('LMB_Notification_Manager')) {
+            require_once LMB_CORE_PATH . 'includes/class-lmb-notification-manager.php';
+        }
+
+        $uid   = get_current_user_id();
+        $nonce = wp_create_nonce(LMB_Notification_Manager::NONCE);
+        $unread = method_exists('LMB_Notification_Manager','get_unread_count') ? LMB_Notification_Manager::get_unread_count($uid) : 0;
+        $wid = esc_attr($this->get_id());
         ?>
-        <div class="lmb-notifications-widget">
-            <div class="lmb-notifications-trigger <?php echo $trigger_class; ?>" id="lmb-notifications-trigger">
-                <i class="fas fa-bell"></i>
-                <?php if ($unread_count > 0): ?>
-                    <span class="lmb-notification-badge"><?php echo $unread_count; ?></span>
-                <?php endif; ?>
-            </div>
-            
-            <div class="lmb-notifications-dropdown" id="lmb-notifications-dropdown">
-                <div class="lmb-notifications-header">
-                    <h3>
-                        <i class="fas fa-bell"></i>
-                        <?php esc_html_e('Notifications', 'lmb-core'); ?>
-                    </h3>
-                    <?php if ($unread_count > 0): ?>
-                        <button class="lmb-mark-all-read" id="lmb-mark-all-read">
-                            <?php esc_html_e('Mark all as read', 'lmb-core'); ?>
-                        </button>
-                    <?php endif; ?>
+        <div class="lmb-notifications" id="lmb-notifications-<?php echo $wid; ?>">
+            <button type="button" class="lmb-bell" aria-haspopup="true" aria-expanded="false" aria-controls="lmb-dropdown-<?php echo $wid; ?>">
+                <i class="fas fa-bell" aria-hidden="true"></i>
+                <span class="lmb-badge" data-count="<?php echo (int)$unread; ?>"><?php echo (int)$unread; ?></span>
+                <span class="screen-reader-text"><?php esc_html_e('Toggle notifications', 'lmb-core'); ?></span>
+            </button>
+            <div class="lmb-dropdown" id="lmb-dropdown-<?php echo $wid; ?>" role="menu" aria-label="<?php esc_attr_e('Notifications', 'lmb-core'); ?>" style="display:none">
+                <div class="lmb-dropdown-header">
+                    <strong><?php esc_html_e('Notifications', 'lmb-core'); ?></strong>
+                    <button type="button" class="lmb-mark-all" <?php disabled($unread === 0); ?>><?php esc_html_e('Mark all as read', 'lmb-core'); ?></button>
                 </div>
-                
-                <div class="lmb-notifications-list">
-                    <?php if (!empty($notifications)): ?>
-                        <?php $counter = 0; ?>
-                        <?php foreach($notifications as $notification): ?>
-                            <?php if ($counter >= 5) break; ?>
-                            <div class="lmb-notification-item <?php echo !$notification['read'] ? 'lmb-notification-unread' : ''; ?>" 
-                                 data-id="<?php echo esc_attr($notification['id']); ?>">
-                                <div class="lmb-notification-icon">
-                                    <i class="<?php echo esc_attr($notification['icon']); ?>"></i>
-                                </div>
-                                <div class="lmb-notification-content">
-                                    <div class="lmb-notification-title">
-                                        <?php echo esc_html($notification['title']); ?>
-                                    </div>
-                                    <div class="lmb-notification-message">
-                                        <?php echo esc_html($notification['message']); ?>
-                                    </div>
-                                    <div class="lmb-notification-time">
-                                        <i class="fas fa-clock"></i>
-                                        <?php echo esc_html($notification['time_ago']); ?>
-                                    </div>
-                                </div>
-                                <?php if (!$notification['read']): ?>
-                                    <div class="lmb-notification-unread-dot"></div>
-                                <?php endif; ?>
-                            </div>
-                            <?php $counter++; ?>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="lmb-notifications-empty">
-                            <i class="fas fa-bell-slash"></i>
-                            <p><?php esc_html_e('No notifications yet.', 'lmb-core'); ?></p>
-                        </div>
-                    <?php endif; ?>
-                </div>
-                
-                <?php if (count($notifications) > 5): ?>
-                    <div class="lmb-notifications-footer">
-                        <a href="#" class="lmb-view-all-notifications">
-                            <?php esc_html_e('View all notifications', 'lmb-core'); ?>
-                        </a>
-                    </div>
-                <?php endif; ?>
+                <div class="lmb-list" aria-live="polite"></div>
+                <div class="lmb-empty" style="display:none;"><em><?php esc_html_e('No notifications yet.', 'lmb-core'); ?></em></div>
             </div>
         </div>
-        
+        <style>
+        .lmb-notifications{position:relative;display:inline-block}
+        .lmb-bell{display:flex;align-items:center;gap:.5rem;background:transparent;border:0;cursor:pointer}
+        .lmb-badge{min-width:18px;height:18px;line-height:18px;text-align:center;border-radius:9px;padding:0 6px;font-size:12px;display:inline-block;background:#d33;color:#fff}
+        .lmb-dropdown{position:absolute;right:0;top:125%;width:360px;max-width:95vw;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08);z-index:9999}
+        .lmb-dropdown-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #f0f2f4}
+        .lmb-list{max-height:360px;overflow:auto}
+        .lmb-item{display:flex;gap:10px;padding:12px;border-bottom:1px solid #f7f7f8;cursor:pointer}
+        .lmb-item[aria-current="false"]{background:#fff}
+        .lmb-item[aria-current="true"]{background:#f9fafb}
+        .lmb-item:hover{background:#f5f7fb}
+        .lmb-item .meta{font-size:12px;color:#6b7280}
+        .lmb-empty{padding:20px;text-align:center;color:#6b7280}
+        .lmb-mark-all{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;cursor:pointer}
+        </style>
         <script>
-        jQuery(document).ready(function($) {
-            // Toggle notifications dropdown
-            $('#lmb-notifications-trigger').on('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                $('#lmb-notifications-dropdown').toggleClass('lmb-show');
-            });
-            
-            // Close dropdown when clicking outside
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('.lmb-notifications-widget').length) {
-                    $('#lmb-notifications-dropdown').removeClass('lmb-show');
-                }
-            });
-            
-            // Mark notification as read when clicked
-            $('.lmb-notification-item').on('click', function() {
-                var $item = $(this);
-                var notificationId = $item.data('id');
-                
-                if ($item.hasClass('lmb-notification-unread')) {
-                    $.post(lmbAjax.ajaxurl, {
-                        action: 'lmb_mark_notification_read',
-                        nonce: lmbAjax.nonce,
-                        notification_id: notificationId
-                    }).done(function() {
-                        $item.removeClass('lmb-notification-unread');
-                        $item.find('.lmb-notification-unread-dot').remove();
-                        
-                        // Update badge count
-                        var $badge = $('.lmb-notification-badge');
-                        var currentCount = parseInt($badge.text()) || 0;
-                        var newCount = Math.max(0, currentCount - 1);
-                        
-                        if (newCount === 0) {
-                            $badge.remove();
-                            $('#lmb-mark-all-read').remove();
-                            $('#lmb-notifications-trigger').removeClass('has-notifications').addClass('no-notifications');
-                        } else {
-                            $badge.text(newCount);
-                        }
-                    });
-                }
-            });
-            
-            // Mark all as read
-            $('#lmb-mark-all-read').on('click', function(e) {
-                e.preventDefault();
-                
-                $.post(lmbAjax.ajaxurl, {
-                    action: 'lmb_mark_all_notifications_read',
-                    nonce: lmbAjax.nonce
-                }).done(function() {
-                    $('.lmb-notification-item').removeClass('lmb-notification-unread');
-                    $('.lmb-notification-unread-dot').remove();
-                    $('.lmb-notification-badge').remove();
-                    $('#lmb-mark-all-read').remove();
-                    $('#lmb-notifications-trigger').removeClass('has-notifications').addClass('no-notifications');
+        (function(){
+            const wrap   = document.getElementById('lmb-notifications-<?php echo $wid; ?>');
+            const bell   = wrap.querySelector('.lmb-bell');
+            const badge  = wrap.querySelector('.lmb-badge');
+            const menu   = document.getElementById('lmb-dropdown-<?php echo $wid; ?>');
+            const listEl = menu.querySelector('.lmb-list');
+            const emptyEl= menu.querySelector('.lmb-empty');
+            const markAllBtn = menu.querySelector('.lmb-mark-all');
+            const ajaxurl = '<?php echo esc_js(admin_url('admin-ajax.php')); ?>';
+            const nonce   = '<?php echo esc_js($nonce); ?>';
+
+            let open = false;
+
+            function setBadge(n){
+                n = parseInt(n||0,10);
+                badge.textContent = n; badge.setAttribute('data-count', n);
+                markAllBtn.disabled = (n === 0);
+            }
+            function closeMenu(){
+                if(!open) return; open = false; menu.style.display='none'; bell.setAttribute('aria-expanded','false');
+                document.removeEventListener('click', outside);
+                window.removeEventListener('keydown', esc);
+            }
+            function outside(e){ if(!wrap.contains(e.target)) closeMenu(); }
+            function esc(e){ if(e.key==='Escape') closeMenu(); }
+
+            function render(items){
+                listEl.innerHTML='';
+                if(!items || !items.length){ emptyEl.style.display='block'; return; }
+                emptyEl.style.display='none';
+                items.forEach(function(it){
+                    const row = document.createElement('div');
+                    row.className='lmb-item';
+                    row.setAttribute('role','menuitem');
+                    row.setAttribute('data-id', it.id);
+                    row.setAttribute('aria-current', it.is_read ? 'true' : 'false');
+                    row.innerHTML = '<div class="icon"><i class="fas fa-bell"></i></div>'+
+                                      '<div class="body"><div class="title"><strong>'+it.title+'</strong></div>'+
+                                      '<div class="msg">'+it.message+'</div>'+
+                                      '<div class="meta">'+it.time_ago+'</div></div>';
+                    row.addEventListener('click', function(){ markRead(it.id); });
+                    listEl.appendChild(row);
                 });
+            }
+
+            function fetchList(){
+                const fd = new FormData();
+                fd.append('action','lmb_get_notifications');
+                fd.append('nonce', nonce);
+                fetch(ajaxurl, { method:'POST', credentials:'same-origin', body: fd })
+                    .then(r=>r.json()).then(function(res){
+                        if(res && res.success){ render(res.data.items); setBadge(res.data.unread); }
+                    }).catch(()=>{});
+            }
+
+            function markRead(id){
+                const fd = new FormData();
+                fd.append('action','lmb_mark_notification_read');
+                fd.append('id', id);
+                fd.append('nonce', nonce);
+                fetch(ajaxurl, { method:'POST', credentials:'same-origin', body: fd })
+                    .then(r=>r.json()).then(function(){ fetchList(); });
+            }
+
+            markAllBtn.addEventListener('click', function(){
+                const fd = new FormData();
+                fd.append('action','lmb_mark_all_notifications_read');
+                fd.append('nonce', nonce);
+                fetch(ajaxurl, { method:'POST', credentials:'same-origin', body: fd })
+                    .then(r=>r.json()).then(function(){ fetchList(); });
             });
-        });
+
+            bell.addEventListener('click', function(e){
+                e.stopPropagation();
+                open = !open; menu.style.display = open ? 'block' : 'none';
+                bell.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if(open){ fetchList(); document.addEventListener('click', outside); window.addEventListener('keydown', esc); }
+            });
+
+            // Lightweight polling to keep counts fresh (30s)
+            setInterval(function(){ if(!open){ fetchList(); } }, 30000);
+        })();
         </script>
         <?php
-    }
-    
-    private function get_user_notifications($user_id) {
-        $notifications = get_user_meta($user_id, 'lmb_notifications', true);
-        if (!is_array($notifications)) {
-            $notifications = [];
-        }
-        
-        // Add some sample notifications for demonstration
-        if (empty($notifications)) {
-            $notifications = [
-                [
-                    'id' => 1,
-                    'title' => __('Ad Approved', 'lmb-core'),
-                    'message' => __('Your legal ad "Company Formation" has been approved and published.', 'lmb-core'),
-                    'icon' => 'fas fa-check-circle',
-                    'time' => time() - 3600,
-                    'time_ago' => '1 hour ago',
-                    'read' => false,
-                    'type' => 'success'
-                ],
-                [
-                    'id' => 2,
-                    'title' => __('Payment Verified', 'lmb-core'),
-                    'message' => __('Your payment for Premium Package has been verified. 100 points added.', 'lmb-core'),
-                    'icon' => 'fas fa-credit-card',
-                    'time' => time() - 7200,
-                    'time_ago' => '2 hours ago',
-                    'read' => false,
-                    'type' => 'info'
-                ],
-                [
-                    'id' => 3,
-                    'title' => __('New Newspaper Available', 'lmb-core'),
-                    'message' => __('The latest edition of Legal Gazette is now available for download.', 'lmb-core'),
-                    'icon' => 'fas fa-newspaper',
-                    'time' => time() - 86400,
-                    'time_ago' => '1 day ago',
-                    'read' => true,
-                    'type' => 'info'
-                ],
-                [
-                    'id' => 4,
-                    'title' => __('Ad Denied', 'lmb-core'),
-                    'message' => __('Your ad "Ad for a new car" has been denied.', 'lmb-core'),
-                    'icon' => 'fas fa-times-circle',
-                    'time' => time() - 172800,
-                    'time_ago' => '2 days ago',
-                    'read' => true,
-                    'type' => 'error'
-                ],
-                [
-                    'id' => 5,
-                    'title' => __('Welcome!', 'lmb-core'),
-                    'message' => __('Welcome to the platform! We are glad to have you.', 'lmb-core'),
-                    'icon' => 'fas fa-door-open',
-                    'time' => time() - 259200,
-                    'time_ago' => '3 days ago',
-                    'read' => true,
-                    'type' => 'info'
-                ],
-                [
-                    'id' => 6,
-                    'title' => __('Your subscription is expiring soon', 'lmb-core'),
-                    'message' => __('Your subscription is expiring soon. Please renew to continue enjoying our services.', 'lmb-core'),
-                    'icon' => 'fas fa-exclamation-triangle',
-                    'time' => time() - 345600,
-                    'time_ago' => '4 days ago',
-                    'read' => true,
-                    'type' => 'warning'
-                ]
-            ];
-        }
-        
-        return $notifications;
     }
 }
