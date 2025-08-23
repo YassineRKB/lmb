@@ -13,6 +13,14 @@ class LMB_User_Dashboard {
         // Add AJAX handlers for notifications
         add_action('wp_ajax_lmb_mark_notification_read', [__CLASS__, 'ajax_mark_notification_read']);
         add_action('wp_ajax_lmb_mark_all_notifications_read', [__CLASS__, 'ajax_mark_all_notifications_read']);
+
+        // Register shortcodes for lmb-2 widgets
+        add_shortcode('lmb_legal_ads_receipts', [__CLASS__, 'render_legal_ads_receipts']);
+        add_shortcode('lmb_invoices', [__CLASS__, 'render_invoices']);
+        add_shortcode('lmb_packages_editor', [__CLASS__, 'render_packages_editor']);
+        add_shortcode('lmb_balance_manipulation', [__CLASS__, 'render_balance_manipulation']);
+        add_shortcode('lmb_legal_ads_list', [__CLASS__, 'render_legal_ads_list']);
+        add_shortcode('lmb_user_list', [__CLASS__, 'render_user_list']);
     }
 
     public static function collect_user_stats() {
@@ -238,4 +246,65 @@ class LMB_User_Dashboard {
         wp_reset_postdata();
         return ob_get_clean();
     }
+    // Renders the LMB_Legal_Ads_Receipts_Widget via shortcode.
+    public static function render_legal_ads_receipts() {
+        if (class_exists('LMB_Legal_Ads_Receipts_Widget')) {
+            ob_start();
+            the_widget('LMB_Legal_Ads_Receipts_Widget');
+            return ob_get_clean();
+        }
+        return 'LMB Legal Ads Receipts Widget not found.';
+    }
+
+    // Renders the LMB_Invoices_Widget via shortcode.
+    public static function render_invoices() {
+        if (class_exists('LMB_Invoices_Widget')) {
+            ob_start();
+            the_widget('LMB_Invoices_Widget');
+            return ob_get_clean();
+        }
+        return 'LMB Invoices Widget not found.';
+    }
+
+    // Renders the LMB_Packages_Editor_Widget via shortcode.
+    public static function render_packages_editor() {
+        if (class_exists('LMB_Packages_Editor_Widget')) {
+            ob_start();
+            the_widget('LMB_Packages_Editor_Widget');
+            return ob_get_clean();
+        }
+        return 'LMB Packages Editor Widget not found.';
+    }
+
+    // Renders the LMB_Balance_Manipulation_Widget via shortcode.
+    public static function render_balance_manipulation() {
+        if (class_exists('LMB_Balance_Manipulation_Widget')) {
+            ob_start();
+            the_widget('LMB_Balance_Manipulation_Widget');
+            return ob_get_clean();
+        }
+        return 'LMB Balance Manipulation Widget not found.';
+    }
+
+    
+    // Renders the LMB_Legal_Ads_List_Widget via shortcode.
+    public static function render_legal_ads_list() {
+        if (class_exists('LMB_Legal_Ads_List_Widget')) {
+            ob_start();
+            the_widget('LMB_Legal_Ads_List_Widget');
+            return ob_get_clean();
+        }
+        return 'LMB Legal Ads List Widget not found.';
+    }
+
+    // Renders the LMB_User_List_Widget via shortcode.
+    public static function render_user_list() {
+        if (class_exists('LMB_User_List_Widget')) {
+            ob_start();
+            the_widget('LMB_User_List_Widget');
+            return ob_get_clean();
+        }
+        return 'LMB User List Widget not found.';
+    }
 }
+// i am cooked my young padawan, this project is rushed and messy, but it works, for now.
