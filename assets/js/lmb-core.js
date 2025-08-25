@@ -60,6 +60,46 @@
                 button.text(originalText).prop('disabled', false);
             });
         });
+        // ... keep all existing code in this file above this line
+
+        // Handle Accuse Upload Form
+        $('#lmb-upload-accuse-form').on('submit', function(e) {
+            e.preventDefault();
+
+            var $form = $(this);
+            var $submitButton = $form.find('button[type="submit"]');
+            var $messageContainer = $form.closest('.lmb-upload-accuse-widget').find('.lmb-upload-messages');
+            var formData = new FormData($form[0]);
+            
+            // Add unified nonce and action
+            formData.append('action', 'lmb_upload_accuse');
+            formData.append('nonce', lmb_ajax_params.nonce);
+
+            $messageContainer.html('');
+            $submitButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+
+            $.ajax({
+                url: lmb_ajax_params.ajaxurl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        $messageContainer.html('<div class="lmb-notice lmb-notice-success"><p>' + response.data.message + '</p></div>');
+                        $form[0].reset();
+                    } else {
+                        $messageContainer.html('<div class="lmb-notice lmb-notice-error"><p>Error: ' + response.data.message + '</p></div>');
+                    }
+                },
+                error: function() {
+                    $messageContainer.html('<div class="lmb-notice lmb-notice-error"><p>An unexpected server error occurred. Please try again.</p></div>');
+                },
+                complete: function() {
+                    $submitButton.prop('disabled', false).html('Upload Accuse');
+                }
+            });
+        });
     });
 
 })(jQuery);

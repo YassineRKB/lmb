@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) exit;
 class LMB_Ajax_Handlers {
 
     public static function init() {
+        // Register all AJAX actions to a single handler
         $ajax_actions = [
             'lmb_ad_status_change',
             'lmb_user_submit_for_review',
@@ -17,7 +18,9 @@ class LMB_Ajax_Handlers {
             'lmb_mark_notification_read',
             'lmb_mark_all_notifications_read',
             'lmb_save_package',
-            'lmb_delete_package'
+            'lmb_delete_package',
+            'lmb_generate_receipt_pdf',
+            'lmb_upload_accuse'
         ];
 
         foreach ($ajax_actions as $action) {
@@ -25,13 +28,15 @@ class LMB_Ajax_Handlers {
         }
     }
 
+    /**
+     * Central handler for all AJAX requests.
+     * It verifies the unified nonce and calls the appropriate method.
+     */
     public static function handle_ajax_request() {
-        // Unified Nonce Check
-        check_ajax_referer('lmb_nonce', 'nonce');
+        check_ajax_referer('lmb_nonce', 'nonce'); // Unified nonce check
 
         $action = isset($_POST['action']) ? sanitize_key($_POST['action']) : '';
 
-        // Dynamically call the corresponding method
         if (method_exists(__CLASS__, $action)) {
             self::$action();
         } else {
@@ -40,59 +45,40 @@ class LMB_Ajax_Handlers {
     }
 
     private static function lmb_ad_status_change() {
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Permission denied.']);
-        }
-
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
         $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
         $ad_action = isset($_POST['ad_action']) ? sanitize_key($_POST['ad_action']) : '';
         $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : '';
-
-        if (!$ad_id || !$ad_action) {
-            wp_send_json_error(['message' => 'Missing parameters.'], 400);
-        }
+        if (!$ad_id || !$ad_action) wp_send_json_error(['message' => 'Missing parameters.'], 400);
 
         if ($ad_action === 'approve') {
             $result = LMB_Ad_Manager::approve_ad($ad_id);
-            if ($result['success']) {
-                wp_send_json_success(['message' => $result['message']]);
-            } else {
-                wp_send_json_error(['message' => $result['message']]);
-            }
+            if ($result['success']) wp_send_json_success(['message' => $result['message']]);
+            else wp_send_json_error(['message' => $result['message']]);
         } elseif ($ad_action === 'deny') {
             LMB_Ad_Manager::deny_ad($ad_id, $reason);
             wp_send_json_success(['message' => 'Ad has been denied.']);
-        } else {
-            wp_send_json_error(['message' => 'Invalid action.'], 400);
         }
     }
     
     private static function lmb_user_submit_for_review() {
-        if (!is_user_logged_in() || !isset($_POST['ad_id'])) {
-            wp_send_json_error(['message' => 'Invalid request.']);
-        }
-        
+        if (!is_user_logged_in() || !isset($_POST['ad_id'])) wp_send_json_error(['message' => 'Invalid request.']);
         $ad_id = intval($_POST['ad_id']);
         $ad = get_post($ad_id);
-
-        if (!$ad || $ad->post_type !== 'lmb_legal_ad' || $ad->post_author != get_current_user_id()) {
-            wp_send_json_error(['message' => 'Permission denied.']);
-        }
+        if (!$ad || $ad->post_type !== 'lmb_legal_ad' || $ad->post_author != get_current_user_id()) wp_send_json_error(['message' => 'Permission denied.']);
 
         update_post_meta($ad_id, 'lmb_status', 'pending_review');
-        LMB_Ad_Manager::log_activity(sprintf('Ad #%d submitted for review by %s via AJAX.', $ad_id, wp_get_current_user()->display_name));
+        LMB_Ad_Manager::log_activity(sprintf('Ad #%d submitted for review by %s.', $ad->post_title, wp_get_current_user()->display_name));
         LMB_Notification_Manager::notify_admins_ad_pending($ad_id);
-        
         wp_send_json_success(['message' => 'Ad submitted successfully.']);
     }
 
     private static function lmb_payment_action() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
-
         $payment_id = isset($_POST['payment_id']) ? intval($_POST['payment_id']) : 0;
         $action = isset($_POST['payment_action']) ? sanitize_key($_POST['payment_action']) : '';
         $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : 'No reason provided.';
-
+        
         LMB_Payment_Verifier::handle_payment_action($payment_id, $action, $reason);
     }
     
@@ -101,15 +87,13 @@ class LMB_Ajax_Handlers {
         $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
         if (!$user_id) wp_send_json_error(['message' => 'Invalid user ID'], 400);
         
-        $transactions = LMB_Points::get_transactions($user_id, 10);
-        wp_send_json_success(['history' => $transactions]);
+        wp_send_json_success(['history' => LMB_Points::get_transactions($user_id, 10)]);
     }
 
     private static function lmb_load_admin_tab() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
         $tab = isset($_POST['tab']) ? sanitize_text_field($_POST['tab']) : 'feed';
-        $response = LMB_Admin_Actions_Widget::get_tab_content($tab);
-        wp_send_json_success($response);
+        wp_send_json_success(LMB_Admin_Actions_Widget::get_tab_content($tab));
     }
 
     private static function lmb_search_user() {
@@ -134,8 +118,7 @@ class LMB_Ajax_Handlers {
         $amount  = isset($_POST['amount']) ? absint($_POST['amount']) : 0;
         $reason  = isset($_POST['reason']) && !empty($_POST['reason']) ? sanitize_text_field($_POST['reason']) : 'Manual balance adjustment';
         $action  = isset($_POST['balance_action']) ? sanitize_key($_POST['balance_action']) : '';
-        $new_balance = 0;
-
+        
         if (!$user_id || !$action) wp_send_json_error(['message' => 'Missing user ID or action.'], 400);
 
         switch ($action) {
@@ -145,33 +128,21 @@ class LMB_Ajax_Handlers {
             default: wp_send_json_error(['message' => 'Invalid action.'], 400);
         }
 
-        if ($new_balance === false) {
-            wp_send_json_error(['message' => 'Insufficient balance for subtraction.'], 400);
-        }
-
+        if ($new_balance === false) wp_send_json_error(['message' => 'Insufficient balance for subtraction.'], 400);
         wp_send_json_success(['message' => 'Balance updated successfully!', 'new_balance' => $new_balance]);
     }
 
     private static function lmb_generate_package_invoice() {
         if (!is_user_logged_in() || !isset($_POST['pkg_id'])) wp_send_json_error(['message' => 'Invalid request.']);
-        
-        $pkg_id = intval($_POST['pkg_id']);
-        $pdf_url = LMB_Invoice_Handler::generate_package_invoice_pdf_for_user(get_current_user_id(), $pkg_id);
-
-        if ($pdf_url) {
-            wp_send_json_success(['pdf_url' => $pdf_url]);
-        } else {
-            wp_send_json_error(['message' => 'Could not generate PDF invoice.']);
-        }
+        $pdf_url = LMB_Invoice_Handler::generate_package_invoice_pdf_for_user(get_current_user_id(), intval($_POST['pkg_id']));
+        if ($pdf_url) wp_send_json_success(['pdf_url' => $pdf_url]);
+        else wp_send_json_error(['message' => 'Could not generate PDF invoice.']);
     }
 
     private static function lmb_get_notifications() {
         if (!is_user_logged_in()) wp_send_json_error(['message' => 'Unauthorized'], 401);
         $user_id = get_current_user_id();
-        wp_send_json_success([
-            'items' => LMB_Notification_Manager::get_latest($user_id, 10),
-            'unread' => LMB_Notification_Manager::get_unread_count($user_id)
-        ]);
+        wp_send_json_success(['items' => LMB_Notification_Manager::get_latest($user_id, 10), 'unread' => LMB_Notification_Manager::get_unread_count($user_id)]);
     }
 
     private static function lmb_mark_notification_read() {
@@ -187,19 +158,16 @@ class LMB_Ajax_Handlers {
 
     private static function lmb_save_package() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied']);
-
         $pkg_id = isset($_POST['package_id']) ? intval($_POST['package_id']) : 0;
         $name = sanitize_text_field($_POST['name']);
         $price = floatval($_POST['price']);
         $points = intval($_POST['points']);
         $cost = intval($_POST['cost_per_ad']);
         $desc = sanitize_textarea_field($_POST['description']);
-
         if (!$name || !$price || !$points || !$cost) wp_send_json_error(['message' => 'All fields are required']);
 
         $post_data = ['post_title' => $name, 'post_content' => $desc, 'post_type' => 'lmb_package', 'post_status' => 'publish'];
         $result = $pkg_id ? wp_update_post(array_merge(['ID' => $pkg_id], $post_data)) : wp_insert_post($post_data);
-        
         if (is_wp_error($result)) wp_send_json_error(['message' => $result->get_error_message()]);
         
         $new_pkg_id = $pkg_id ?: $result;
@@ -213,16 +181,56 @@ class LMB_Ajax_Handlers {
 
     private static function lmb_delete_package() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied']);
-        
         $pkg_id = isset($_POST['package_id']) ? intval($_POST['package_id']) : 0;
         if (!$pkg_id) wp_send_json_error(['message' => 'Invalid package ID']);
-        
         $package = get_post($pkg_id);
         if (!$package || $package->post_type !== 'lmb_package') wp_send_json_error(['message' => 'Package not found']);
-        
         if (!wp_delete_post($pkg_id, true)) wp_send_json_error(['message' => 'Failed to delete package']);
         
         LMB_Ad_Manager::log_activity(sprintf('Package "%s" deleted', $package->post_title));
         wp_send_json_success(['message' => 'Package deleted.']);
+    }
+    
+    private static function lmb_generate_receipt_pdf() {
+        if (!is_user_logged_in()) wp_send_json_error(['message' => 'Access denied']);
+        $ad_id = intval($_POST['ad_id']);
+        $ad = get_post($ad_id);
+        if (!$ad || $ad->post_type !== 'lmb_legal_ad' || $ad->post_author != get_current_user_id()) wp_send_json_error(['message' => 'Ad not found or access denied']);
+        
+        $pdf_url = LMB_Receipt_Generator::create_receipt_pdf($ad_id, get_post_meta($ad_id, 'ad_type', true));
+        if ($pdf_url) wp_send_json_success(['pdf_url' => $pdf_url]);
+        else wp_send_json_error(['message' => 'Failed to generate PDF']);
+    }
+
+    private static function lmb_upload_accuse() {
+        if (!current_user_can('manage_options') || !isset($_POST['legal_ad_id']) || empty($_FILES['accuse_file']['name'])) {
+            wp_send_json_error(['message' => 'Missing required information.']);
+        }
+
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        $legal_ad_id = intval($_POST['legal_ad_id']);
+        $accuse_date = sanitize_text_field($_POST['accuse_date']);
+        $notes = sanitize_textarea_field($_POST['accuse_notes']);
+        $file = $_FILES['accuse_file'];
+
+        $filetype = wp_check_filetype($file['name']);
+        if (!in_array($filetype['ext'], ['pdf', 'jpg', 'jpeg', 'png'])) {
+            wp_send_json_error(['message' => 'Invalid file type. Please upload a PDF, JPG, or PNG file.']);
+        }
+        
+        $attachment_id = media_handle_upload('accuse_file', 0);
+        if (is_wp_error($attachment_id)) {
+            wp_send_json_error(['message' => $attachment_id->get_error_message()]);
+        }
+
+        update_post_meta($attachment_id, 'lmb_accuse_for_ad', $legal_ad_id);
+        update_post_meta($attachment_id, 'lmb_accuse_date', $accuse_date);
+        update_post_meta($attachment_id, 'lmb_accuse_notes', $notes);
+        
+        LMB_Ad_Manager::log_activity(sprintf('Accuse uploaded for Ad #%d', $legal_ad_id));
+        wp_send_json_success(['message' => 'Accuse uploaded and saved successfully.']);
     }
 }
