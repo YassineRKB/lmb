@@ -22,7 +22,6 @@ class LMB_User_List_Widget extends Widget_Base {
             echo '<div class="lmb-notice lmb-notice-error"><p>' . esc_html__('Access denied.', 'lmb-core') . '</p></div>';
             return;
         }
-        $cities = LMB_Admin::get_unique_user_cities();
         ?>
         <div class="lmb-user-list-widget lmb-admin-widget" id="lmb-user-list-widget">
             <div class="lmb-widget-header">
@@ -35,12 +34,6 @@ class LMB_User_List_Widget extends Widget_Base {
                             <input type="text" name="search_name" placeholder="<?php esc_attr_e('Search by name...', 'lmb-core'); ?>" class="lmb-filter-input">
                             <input type="email" name="search_email" placeholder="<?php esc_attr_e('Search by email...', 'lmb-core'); ?>" class="lmb-filter-input">
                             <input type="number" name="search_id" placeholder="<?php esc_attr_e('User ID', 'lmb-core'); ?>" class="lmb-filter-input">
-                            <select name="filter_city" class="lmb-filter-select">
-                                <option value=""><?php esc_html_e('All Cities', 'lmb-core'); ?></option>
-                                <?php foreach ($cities as $city): ?>
-                                    <option value="<?php echo esc_attr($city); ?>"><?php echo esc_html($city); ?></option>
-                                <?php endforeach; ?>
-                            </select>
                             <button type="submit" class="lmb-btn lmb-btn-primary"><i class="fas fa-search"></i> <?php esc_html_e('Filter', 'lmb-core'); ?></button>
                             <button type="reset" class="lmb-btn lmb-btn-secondary"><i class="fas fa-times"></i> <?php esc_html_e('Clear', 'lmb-core'); ?></button>
                         </div>

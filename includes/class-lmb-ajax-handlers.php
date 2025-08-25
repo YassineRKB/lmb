@@ -20,7 +20,12 @@ class LMB_Ajax_Handlers {
             'lmb_save_package',
             'lmb_delete_package',
             'lmb_generate_receipt_pdf',
-            'lmb_upload_accuse'
+            'lmb_upload_accuse',
+            // Added missing handlers
+            'lmb_upload_newspaper',
+            'lmb_upload_bank_proof',
+            'lmb_fetch_users',
+            'lmb_fetch_ads'
         ];
 
         foreach ($ajax_actions as $action) {
@@ -30,10 +35,9 @@ class LMB_Ajax_Handlers {
 
     /**
      * Central handler for all AJAX requests.
-     * It verifies the unified nonce and calls the appropriate method.
      */
     public static function handle_ajax_request() {
-        check_ajax_referer('lmb_nonce', 'nonce'); // Unified nonce check
+        check_ajax_referer('lmb_nonce', 'nonce'); 
 
         $action = isset($_POST['action']) ? sanitize_key($_POST['action']) : '';
 
@@ -43,6 +47,112 @@ class LMB_Ajax_Handlers {
             wp_send_json_error(['message' => 'Invalid AJAX action.'], 400);
         }
     }
+
+    // --- User List AJAX Handler ---
+    private static function lmb_fetch_users() {
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
+        
+        $paged = isset($_POST['page']) ? absint($_POST['page']) : 1;
+        $args = ['number' => 10, 'paged' => $paged, 'orderby' => 'registered', 'order' => 'DESC'];
+
+        if (!empty($_POST['search_name'])) $args['search'] = '*' . sanitize_text_field($_POST['search_name']) . '*';
+        if (!empty($_POST['search_email'])) $args['search'] = '*' . sanitize_email($_POST['search_email']) . '*';
+        if (!empty($_POST['search_id'])) $args['include'] = [intval($_POST['search_id'])];
+
+        $user_query = new WP_User_Query($args);
+        $users = $user_query->get_results();
+        $total_users = $user_query->get_total();
+
+        ob_start();
+        if (!empty($users)) {
+            echo '<div class="lmb-table-container"><table class="lmb-data-table"><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Registered</th><th>Actions</th></tr></thead><tbody>';
+            foreach ($users as $user) {
+                echo '<tr><td>' . esc_html($user->ID) . '</td><td><strong>' . esc_html($user->display_name) . '</strong><br><small>@' . esc_html($user->user_login) . '</small></td><td>' . esc_html($user->user_email) . '</td><td>' . date_i18n(get_option('date_format'), strtotime($user->user_registered)) . '</td><td><a href="' . esc_url(get_edit_user_link($user->ID)) . '" class="lmb-btn lmb-btn-sm lmb-btn-secondary" target="_blank"><i class="fas fa-user-edit"></i> View</a></td></tr>';
+            }
+            echo '</tbody></table></div>';
+            if ($total_users > 10) {
+                echo '<div class="lmb-pagination">';
+                echo paginate_links(['base' => '#%#%', 'format' => '', 'current' => $paged, 'total' => ceil($total_users / 10), 'prev_text' => '&laquo;', 'next_text' => '&raquo;']);
+                echo '</div>';
+            }
+        } else {
+            echo '<div class="lmb-no-results-container"><div class="lmb-empty-state"><h4>No Users Found</h4><p>No users matched your search criteria.</p></div></div>';
+        }
+        $html = ob_get_clean();
+        wp_send_json_success(['html' => $html]);
+    }
+
+    // --- Ads List AJAX Handler ---
+    private static function lmb_fetch_ads() {
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
+        
+        $paged = isset($_POST['page']) ? absint($_POST['page']) : 1;
+        $args = ['post_type' => 'lmb_legal_ad', 'post_status' => 'any', 'posts_per_page' => 10, 'paged' => $paged, 'orderby' => 'date', 'order' => 'DESC', 'meta_query' => ['relation' => 'AND']];
+
+        if (!empty($_POST['filter_ref'])) $args['s'] = sanitize_text_field($_POST['filter_ref']);
+        if (!empty($_POST['filter_company'])) $args['meta_query'][] = ['key' => 'company_name', 'value' => sanitize_text_field($_POST['filter_company']), 'compare' => 'LIKE'];
+        if (!empty($_POST['filter_ad_type'])) $args['meta_query'][] = ['key' => 'ad_type', 'value' => sanitize_text_field($_POST['filter_ad_type'])];
+        if (!empty($_POST['filter_status'])) $args['meta_query'][] = ['key' => 'lmb_status', 'value' => sanitize_key($_POST['filter_status'])];
+        if (!empty($_POST['filter_user'])) {
+            $user_term = sanitize_text_field($_POST['filter_user']);
+            if (is_numeric($user_term)) $args['author'] = intval($user_term);
+            else {
+                $user = get_user_by('login', $user_term) ?: get_user_by('email', $user_term);
+                if ($user) $args['author'] = $user->ID;
+            }
+        }
+        
+        $query = new WP_Query($args);
+
+        ob_start();
+        if ($query->have_posts()) {
+            echo '<div class="lmb-table-container"><table class="lmb-data-table"><thead><tr><th>ID</th><th>User</th><th>Company</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
+            while ($query->have_posts()) {
+                $query->the_post();
+                $ad_id = get_the_ID();
+                $user = get_userdata(get_the_author_meta('ID'));
+                $status = get_post_meta($ad_id, 'lmb_status', true);
+                echo '<tr>';
+                echo '<td><strong>#' . esc_html($ad_id) . '</strong></td>';
+                echo '<td>' . ($user ? esc_html($user->display_name) : 'N/A') . '</td>';
+                echo '<td>' . esc_html(get_post_meta($ad_id, 'company_name', true) ?: '-') . '</td>';
+                echo '<td>' . esc_html(get_post_meta($ad_id, 'ad_type', true) ?: '-') . '</td>';
+                echo '<td><span class="lmb-status-badge lmb-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td>';
+                echo '<td>' . get_the_date() . '</td>';
+                echo '<td><div class="lmb-table-actions">';
+                echo '<a href="' . get_edit_post_link($ad_id) . '" class="lmb-btn lmb-btn-sm lmb-btn-secondary" target="_blank"><i class="fas fa-edit"></i> Edit</a>';
+                if ($status === 'pending_review') {
+                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-ad-action" data-action="approve" data-id="' . $ad_id . '"><i class="fas fa-check"></i> Approve</button>';
+                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-ad-action" data-action="deny" data-id="' . $ad_id . '"><i class="fas fa-times"></i> Deny</button>';
+                }
+                echo '</div></td></tr>';
+            }
+            echo '</tbody></table></div>';
+            if ($query->max_num_pages > 1) {
+                echo '<div class="lmb-pagination">';
+                echo paginate_links(['base' => '#%#%', 'format' => '', 'current' => $paged, 'total' => $query->max_num_pages, 'prev_text' => '&laquo;', 'next_text' => '&raquo;']);
+                echo '</div>';
+            }
+        } else {
+            echo '<div class="lmb-no-results-container"><div class="lmb-empty-state"><h4>No Ads Found</h4><p>No legal ads matched your search criteria.</p></div></div>';
+        }
+        wp_reset_postdata();
+        $html = ob_get_clean();
+        wp_send_json_success(['html' => $html]);
+    }
+
+    // --- Upload Handlers ---
+    private static function lmb_upload_newspaper() {
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
+        LMB_Upload_Newspaper_Widget::handle_ajax_upload();
+    }
+
+    private static function lmb_upload_bank_proof() {
+        if (!is_user_logged_in()) wp_send_json_error(['message' => 'You must be logged in.']);
+        LMB_Upload_Bank_Proof_Widget::handle_ajax_upload();
+    }
+    
+    // --- All Other Handlers (Copied from your provided file) ---
 
     private static function lmb_ad_status_change() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
