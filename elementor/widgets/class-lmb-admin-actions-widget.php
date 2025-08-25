@@ -7,7 +7,7 @@ class LMB_Admin_Actions_Widget extends Widget_Base {
     public function get_name() { return 'lmb_admin_actions'; }
     public function get_title(){ return __('LMB Admin Actions & Feeds','lmb-core'); }
     public function get_icon() { return 'eicon-dual-button'; }
-    public function get_categories(){ return ['lmb-widgets']; }
+    public function get_categories(){ return ['lmb-cw-admin']; }
 
     protected function render() {
         if (!current_user_can('manage_options')) return;

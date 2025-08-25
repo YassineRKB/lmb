@@ -8,7 +8,7 @@ class LMB_Newspaper_Directory_Widget extends Widget_Base {
     public function get_name() { return 'lmb_newspaper_directory'; }
     public function get_title() { return __('LMB Newspaper Directory','lmb-core'); }
     public function get_icon()  { return 'eicon-library-upload'; }
-    public function get_categories(){ return ['lmb-widgets']; }
+    public function get_categories(){ return ['lmb-cw-admin']; }
 
     protected function render() {
         $search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';

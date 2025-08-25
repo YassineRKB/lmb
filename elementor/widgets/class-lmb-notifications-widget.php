@@ -6,7 +6,7 @@ class LMB_Notifications_Widget extends Widget_Base {
     public function get_name() { return 'lmb_notifications'; }
     public function get_title(){ return __('LMB Notifications','lmb-core'); }
     public function get_icon() { return 'eicon-bell'; }
-    public function get_categories(){ return ['lmb-widgets']; }
+    public function get_categories(){ return ['lmb-cw-admin']; }
 
     protected function render() {
         if (!is_user_logged_in()) {

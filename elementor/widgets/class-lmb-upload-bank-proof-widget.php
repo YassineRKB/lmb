@@ -7,7 +7,7 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
     public function get_name() { return 'lmb_upload_bank_proof'; }
     public function get_title(){ return __('LMB Upload Bank Proof','lmb-core'); }
     public function get_icon() { return 'eicon-upload'; }
-    public function get_categories(){ return ['lmb-widgets']; }
+    public function get_categories(){ return ['lmb-cw-user']; }
 
     protected function render() {
         if (!is_user_logged_in()) {

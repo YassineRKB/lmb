@@ -8,7 +8,7 @@ class LMB_Invoices_Widget extends Widget_Base {
     public function get_name() { return 'lmb_invoices'; }
     public function get_title() { return __('LMB User Invoices', 'lmb-core'); }
     public function get_icon() { return 'eicon-file-download'; }
-    public function get_categories() { return ['lmb-2']; }
+    public function get_categories() { return ['lmb-cw-user']; }
 
     protected function render() {
         if (!is_user_logged_in()) {

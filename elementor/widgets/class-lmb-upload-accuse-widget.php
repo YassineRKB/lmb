@@ -22,7 +22,7 @@ class LMB_Upload_Accuse_Widget extends \Elementor\Widget_Base {
     }
 
     public function get_categories() {
-        return ['lmb-widgets'];
+        return ['lmb-cw-admin'];
     }
 
     public function get_script_depends() {

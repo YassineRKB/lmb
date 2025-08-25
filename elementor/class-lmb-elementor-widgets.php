@@ -18,18 +18,18 @@ final class LMB_Elementor_Widgets_Helper {
 // Register the custom "LMB Core Widgets" category in Elementor
 add_action('elementor/elements/categories_registered', function($elements_manager) {
     $elements_manager->add_category(
-        'lmb-widgets',
+        'lmb-cw-admin',
         [
-            'title' => __('LMB Core Widgets', 'lmb-core'),
+            'title' => __('LMB Core Admin Widgets', 'lmb-core'),
             'icon' => 'eicon-folder',
         ]
     );
     
     // Add new LMB-2 category
     $elements_manager->add_category(
-        'lmb-2',
+        'lmb-cw-user',
         [
-            'title' => __('LMB-2 Widgets', 'lmb-core'),
+            'title' => __('LMB Core User Widgets', 'lmb-core'),
             'icon' => 'eicon-apps',
         ]
     );

@@ -8,7 +8,7 @@ class LMB_User_List_Widget extends Widget_Base {
     public function get_name() { return 'lmb_user_list'; }
     public function get_title() { return __('LMB User List', 'lmb-core'); }
     public function get_icon() { return 'eicon-table'; }
-    public function get_categories() { return ['lmb-2']; }
+    public function get_categories() { return ['lmb-cw-admin']; }
 
     protected function render() {
         if (!current_user_can('manage_options')) {
