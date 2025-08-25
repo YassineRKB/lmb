@@ -18,7 +18,7 @@ class LMB_Legal_Ads_Receipts_Widget extends \Elementor\Widget_Base {
     }
 
     public function get_categories() {
-        return ['lmb-cw-user'];
+        return ['lmb-user-widgets'];
     }
 
     public function get_script_depends() {

@@ -7,7 +7,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
     public function get_name() { return 'lmb_balance_manipulation'; }
     public function get_title() { return __('LMB Balance Manipulation', 'lmb-core'); }
     public function get_icon() { return 'eicon-coins'; }
-    public function get_categories() { return ['lmb-cw-admin']; }
+    public function get_categories() { return ['lmb-admin-widgets']; }
 
     public function get_script_depends() {
         return ['lmb-balance-manipulation'];

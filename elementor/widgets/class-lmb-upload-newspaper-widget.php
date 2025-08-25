@@ -7,7 +7,7 @@ class LMB_Upload_Newspaper_Widget extends Widget_Base {
     public function get_name() { return 'lmb_upload_newspaper'; }
     public function get_title(){ return __('LMB Upload Newspaper','lmb-core'); }
     public function get_icon() { return 'eicon-upload'; }
-    public function get_categories(){ return ['lmb-cw-admin']; }
+    public function get_categories(){ return ['lmb-admin-widgets']; }
 
     protected function render() {
         if (!current_user_can('manage_options')) {

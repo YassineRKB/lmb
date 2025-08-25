@@ -7,7 +7,7 @@ class LMB_User_Stats_Widget extends Widget_Base {
     public function get_name() { return 'lmb_user_stats'; }
     public function get_title(){ return __('LMB User Stats','lmb-core'); }
     public function get_icon() { return 'eicon-person'; }
-    public function get_categories(){ return ['lmb-cw-user']; }
+    public function get_categories(){ return ['lmb-user-widgets']; }
 
     protected function render() {
         if (!is_user_logged_in()) {

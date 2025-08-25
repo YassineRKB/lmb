@@ -7,7 +7,7 @@ class LMB_Admin_Stats_Widget extends Widget_Base {
     public function get_name() { return 'lmb_admin_stats'; }
     public function get_title(){ return __('LMB Admin Stats & Overview','lmb-core'); }
     public function get_icon() { return 'eicon-dashboard'; }
-    public function get_categories(){ return ['lmb-cw-admin']; }
+    public function get_categories(){ return ['lmb-admin-widgets']; }
 
     protected function render() {
         if (!current_user_can('manage_options')) {
