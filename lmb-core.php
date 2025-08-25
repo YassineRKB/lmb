@@ -2,18 +2,16 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core.
- * Version: 4.0.0
+ * Version: 5.0.0 Sparta Fix
  * Author: Yassine Rakibi
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Text Domain: lmb-core
  */
 
-if (!defined('ABSPATH')) {
-    exit;
-}
+if (!defined('ABSPATH')) exit;
 
-define('LMB_CORE_VERSION', '4.0.0');
+define('LMB_CORE_VERSION', '5.0.0');
 define('LMB_CORE_FILE', __FILE__);
 define('LMB_CORE_PATH', plugin_dir_path(__FILE__));
 define('LMB_CORE_URL', plugin_dir_url(__FILE__));
@@ -21,14 +19,11 @@ define('LMB_CORE_URL', plugin_dir_url(__FILE__));
 // Autoloader
 spl_autoload_register(function($class) {
     if (strpos($class, 'LMB_') !== 0) return;
-    $directories = ['includes/', 'elementor/widgets/'];
+    $dirs = ['includes/', 'elementor/widgets/'];
     $file = 'class-' . str_replace('_', '-', strtolower($class)) . '.php';
-    foreach ($directories as $dir) {
+    foreach ($dirs as $dir) {
         $path = LMB_CORE_PATH . $dir . $file;
-        if (file_exists($path)) {
-            require_once $path;
-            return;
-        }
+        if (file_exists($path)) { require_once $path; return; }
     }
 });
 
@@ -63,25 +58,27 @@ register_activation_hook(__FILE__, function () {
  * Enqueue scripts and styles and unify AJAX parameters.
  */
 function lmb_enqueue_assets() {
-    wp_register_style('lmb-core', LMB_CORE_URL . 'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
-    wp_enqueue_style('lmb-core');
-
+    // Register global script with unified AJAX parameters
     wp_register_script('lmb-core', LMB_CORE_URL . 'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
-    $ajax_params = [
+    wp_localize_script('lmb-core', 'lmb_ajax_params', [
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce'   => wp_create_nonce('lmb_nonce'),
-    ];
-    wp_localize_script('lmb-core', 'lmb_ajax_params', $ajax_params);
+    ]);
     wp_enqueue_script('lmb-core');
+
+    // Register global styles
+    wp_enqueue_style('lmb-core-styles', LMB_CORE_URL . 'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
+    wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
 }
 add_action('wp_enqueue_scripts', 'lmb_enqueue_assets');
 add_action('admin_enqueue_scripts', 'lmb_enqueue_assets');
 
 /**
- * Registers widget-specific assets for Elementor.
+ * Registers all widget-specific assets for Elementor.
+ * This ensures they are available to be loaded by get_script_depends().
  */
 function lmb_register_widget_assets() {
-    // Scripts
+    // Register Scripts
     $scripts = [
         'lmb-admin-actions'           => 'assets/js/lmb-admin-actions.js',
         'lmb-notifications'           => 'assets/js/lmb-notifications.js',
@@ -90,19 +87,17 @@ function lmb_register_widget_assets() {
         'lmb-upload-newspaper'        => 'assets/js/lmb-upload-newspaper.js',
         'lmb-upload-bank-proof'       => 'assets/js/lmb-upload-bank-proof.js',
         'lmb-admin-lists'             => 'assets/js/lmb-admin-lists.js',
-        'lmb-invoices'                => 'assets/js/lmb-invoices.js',
-        'lmb-legal-ads-receipts'      => 'assets/js/lmb-legal-ads-receipts.js',
     ];
     foreach ($scripts as $handle => $path) {
-        wp_register_script($handle, LMB_CORE_URL . $path, ['jquery', 'lmb-core'], LMB_CORE_VERSION, true);
+        wp_register_script($handle, LMB_CORE_URL . $path, ['lmb-core'], LMB_CORE_VERSION, true);
     }
     
+    // Localize settings for the admin feed widget
     wp_localize_script('lmb-admin-actions', 'lmb_admin_settings', [
         'refresh_interval' => (int) get_option('lmb_admin_feed_refresh_interval', 30) * 1000,
     ]);
-     wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], '3.7.0', true);
 
-    // Styles
+    // Register Styles
     $styles = [
         'lmb-admin-widgets'     => 'assets/css/lmb-admin-widgets.css',
         'lmb-user-widgets'      => 'assets/css/lmb-user-widgets.css',
@@ -111,6 +106,9 @@ function lmb_register_widget_assets() {
     foreach ($styles as $handle => $path) {
         wp_register_style($handle, LMB_CORE_URL . $path, [], LMB_CORE_VERSION);
     }
+    
+    // Enqueue Chart.js for pages that might use it
+    wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], '3.7.0', true);
 }
 add_action('elementor/frontend/after_register_scripts', 'lmb_register_widget_assets');
 add_action('elementor/editor/before_enqueue_scripts', 'lmb_register_widget_assets');
