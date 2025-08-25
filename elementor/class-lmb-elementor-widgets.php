@@ -1,50 +1,33 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-final class LMB_Elementor_Widgets_Helper {
-    // These shortcodes act as fallbacks if you need to use the widgets outside of Elementor
-    public static function ads_directory_shortcode($atts=[]) {
-        ob_start();
-        the_widget('LMB_Ads_Directory_Widget');
-        return ob_get_clean();
-    }
-    public static function newspaper_directory_shortcode($atts=[]) {
-        ob_start();
-        the_widget('LMB_Newspaper_Directory_Widget');
-        return ob_get_clean();
-    }
-}
-
 // Register the custom "LMB Core Widgets" category in Elementor
 add_action('elementor/elements/categories_registered', function($elements_manager) {
+    // New User-Facing Category
     $elements_manager->add_category(
-        'lmb-cw-admin',
+        'lmb-user-widgets',
         [
-            'title' => __('LMB Core Admin Widgets', 'lmb-core'),
-            'icon' => 'eicon-folder',
+            'title' => __('LMB USER WIDGETS', 'lmb-core'),
+            'icon' => 'eicon-user-circle-o',
         ]
     );
     
-    // Add new LMB-2 category
+    // New Admin-Facing Category
     $elements_manager->add_category(
-        'lmb-cw-user',
+        'lmb-admin-widgets',
         [
-            'title' => __('LMB Core User Widgets', 'lmb-core'),
-            'icon' => 'eicon-apps',
+            'title' => __('LMB ADMIN WIDGETS', 'lmb-core'),
+            'icon' => 'eicon-lock-user',
         ]
     );
 });
 
 /**
- * --- FIX APPLIED HERE MY DEAR YOUNG PADWAN---
+ * --- FIX APPLIED HERE ---
  * This block explicitly loads each widget's file right before it's needed.
- * This prevents any "Class not found" fatal errors that cause the 500 error on save.
- * if you have headaches its good time to meditate for 5min and get back to work
- * if your immunity is getting weak, maybe an std test will do, if that comes out fine
- * drink orange juice for a boost
+ * This prevents any "Class not found" fatal errors.
  */
 add_action('elementor/widgets/register', function($widgets_manager) {
-    // An array mapping widget class names to their file paths
     $widgets = [
         'LMB_Admin_Stats_Widget' => __DIR__ . '/widgets/class-lmb-admin-stats-widget.php',
         'LMB_Admin_Actions_Widget' => __DIR__ . '/widgets/class-lmb-admin-actions-widget.php',
