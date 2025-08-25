@@ -15,7 +15,7 @@ class LMB_Ajax_Handlers {
         add_action('wp_ajax_lmb_update_balance', [__CLASS__, 'update_balance']);
         // handlers for package editor
         add_action('wp_ajax_lmb_save_package', function() {
-            check_ajax_referer('lmb_packages_nonce', 'nonce');
+            check_ajax_referer('lmbAjax', 'nonce');
             
             if (!current_user_can('manage_options')) {
                 wp_send_json_error(['message' => 'Access denied']);
@@ -73,7 +73,7 @@ class LMB_Ajax_Handlers {
         });
 
         add_action('wp_ajax_lmb_delete_package', function() {
-            check_ajax_referer('lmb_packages_nonce', 'nonce');
+            check_ajax_referer('lmbAjax', 'nonce');
             
             if (!current_user_can('manage_options')) {
                 wp_send_json_error(['message' => 'Access denied']);
@@ -108,7 +108,7 @@ class LMB_Ajax_Handlers {
             wp_send_json_success();
         });
         add_action('wp_ajax_lmb_generate_invoice_pdf', function() {
-            check_ajax_referer('lmb_invoice_nonce', 'nonce');
+            check_ajax_referer('lmbAjax', 'nonce');
             
             if (!is_user_logged_in()) {
                 wp_send_json_error(['message' => 'Access denied']);

@@ -210,7 +210,7 @@ class LMB_Invoices_Widget extends Widget_Base {
                 // Generate and download invoice PDF
                 $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_generate_invoice_pdf',
-                    nonce: '<?php echo wp_create_nonce('lmb_invoice_nonce'); ?>',
+                    nonce: lmbAjax.nonce,
                     payment_id: paymentId
                 }, function(response) {
                     if (response.success && response.data.pdf_url) {

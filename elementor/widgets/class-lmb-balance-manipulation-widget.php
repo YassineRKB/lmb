@@ -214,7 +214,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
 
                 $.post(lmbAdmin.ajaxurl, {
                     action: 'lmb_search_user',
-                    nonce: lmbAdmin.nonce,
+                    nonce: lmbAjax.nonce,
                     search_term: searchTerm
                 }, function(response) {
                     if (response.success) {
@@ -265,7 +265,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
 
                 $.post(lmbAdmin.ajaxurl, {
                     action: 'lmb_update_balance',
-                    nonce: lmbAdmin.nonce,
+                    nonce: lmbAjax.nonce,
                     user_id: selectedUserId,
                     balance_action: action,
                     amount: amount,
@@ -290,7 +290,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
                 
                 $.post(lmbAdmin.ajaxurl, {
                     action: 'lmb_get_balance_history',
-                    nonce: lmbAdmin.nonce,
+                    nonce: lmbAjax.nonce,
                     user_id: userId
                 }, function(response) {
                     if (response.success) {

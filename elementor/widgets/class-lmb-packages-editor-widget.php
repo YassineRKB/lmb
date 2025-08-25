@@ -298,7 +298,7 @@ class LMB_Packages_Editor_Widget extends Widget_Base {
 
                 $.post(ajaxurl, {
                     action: 'lmb_delete_package',
-                    nonce: '<?php echo wp_create_nonce('lmb_packages_nonce'); ?>',
+                    nonce: lmbAjax.nonce,
                     package_id: packageId
                 }, function(response) {
                     if (response.success) {
