@@ -13,7 +13,156 @@ class LMB_Ajax_Handlers {
         // Centralized balance manipulation handlers (moved out of widget)
         add_action('wp_ajax_lmb_search_user', [__CLASS__, 'search_user']);
         add_action('wp_ajax_lmb_update_balance', [__CLASS__, 'update_balance']);
+        // handlers for package editor
+        add_action('wp_ajax_lmb_save_package', function() {
+            check_ajax_referer('lmb_packages_nonce', 'nonce');
+            
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(['message' => 'Access denied']);
+            }
+
+            $package_id = intval($_POST['package_id']);
+            $name = sanitize_text_field($_POST['name']);
+            $price = floatval($_POST['price']);
+            $points = intval($_POST['points']);
+            $cost_per_ad = intval($_POST['cost_per_ad']);
+            $description = sanitize_textarea_field($_POST['description']);
+
+            if (!$name || !$price || !$points || !$cost_per_ad) {
+                wp_send_json_error(['message' => __('All fields are required', 'lmb-core')]);
+            }
+
+            $post_data = [
+                'post_title' => $name,
+                'post_content' => $description,
+                'post_type' => 'lmb_package',
+                'post_status' => 'publish'
+            ];
+
+            if ($package_id) {
+                // Update existing package
+                $post_data['ID'] = $package_id;
+                $result = wp_update_post($post_data);
+            } else {
+                // Create new package
+                $result = wp_insert_post($post_data);
+            }
+
+            if (is_wp_error($result)) {
+                wp_send_json_error(['message' => $result->get_error_message()]);
+            }
+
+            $package_id = $package_id ?: $result;
+
+            // Update meta fields
+            update_post_meta($package_id, 'price', $price);
+            update_post_meta($package_id, 'points', $points);
+            update_post_meta($package_id, 'cost_per_ad', $cost_per_ad);
+
+            // Log the action
+            if (class_exists('LMB_Ad_Manager')) {
+                LMB_Ad_Manager::log_activity(sprintf(
+                    'Package "%s" %s by admin %s',
+                    $name,
+                    $_POST['package_id'] ? 'updated' : 'created',
+                    wp_get_current_user()->display_name
+                ));
+            }
+
+            wp_send_json_success(['package_id' => $package_id]);
+        });
+
+        add_action('wp_ajax_lmb_delete_package', function() {
+            check_ajax_referer('lmb_packages_nonce', 'nonce');
+            
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(['message' => 'Access denied']);
+            }
+
+            $package_id = intval($_POST['package_id']);
+            
+            if (!$package_id) {
+                wp_send_json_error(['message' => __('Invalid package ID', 'lmb-core')]);
+            }
+
+            $package = get_post($package_id);
+            if (!$package || $package->post_type !== 'lmb_package') {
+                wp_send_json_error(['message' => __('Package not found', 'lmb-core')]);
+            }
+
+            $result = wp_delete_post($package_id, true);
+            
+            if (!$result) {
+                wp_send_json_error(['message' => __('Failed to delete package', 'lmb-core')]);
+            }
+
+            // Log the action
+            if (class_exists('LMB_Ad_Manager')) {
+                LMB_Ad_Manager::log_activity(sprintf(
+                    'Package "%s" deleted by admin %s',
+                    $package->post_title,
+                    wp_get_current_user()->display_name
+                ));
+            }
+
+            wp_send_json_success();
+        });
+        add_action('wp_ajax_lmb_generate_invoice_pdf', function() {
+            check_ajax_referer('lmb_invoice_nonce', 'nonce');
+            
+            if (!is_user_logged_in()) {
+                wp_send_json_error(['message' => 'Access denied']);
+            }
+            
+            $payment_id = intval($_POST['payment_id']);
+            $user_id = get_current_user_id();
+            
+            // Verify payment belongs to current user
+            $payment_user_id = get_post_meta($payment_id, 'user_id', true);
+            if ($payment_user_id != $user_id) {
+                wp_send_json_error(['message' => 'Access denied']);
+            }
+            
+            $payment = get_post($payment_id);
+            if (!$payment || $payment->post_type !== 'lmb_payment') {
+                wp_send_json_error(['message' => 'Payment not found']);
+            }
+            
+            $package_id = get_post_meta($payment_id, 'package_id', true);
+            $package = get_post($package_id);
+            $package_price = get_post_meta($package_id, 'price', true);
+            $payment_reference = get_post_meta($payment_id, 'payment_reference', true);
+            
+            // Generate invoice PDF
+            try {
+                if (class_exists('LMB_Invoice_Handler')) {
+                    $pdf_url = LMB_Invoice_Handler::create_package_invoice(
+                        $user_id,
+                        $package_id,
+                        $package_price,
+                        $package ? $package->post_content : '',
+                        $payment_reference ?: 'INV-' . $payment_id
+                    );
+                } else {
+                    wp_send_json_error(['message' => 'Invoice handler not available']);
+                }
+                
+                if ($pdf_url) {
+                    wp_send_json_success(['pdf_url' => $pdf_url]);
+                } else {
+                    wp_send_json_error(['message' => 'Failed to generate PDF']);
+                }
+            } catch (Exception $e) {
+                wp_send_json_error(['message' => $e->getMessage()]);
+            }
+        });
     }
+
+    public function __construct() {
+        add_action('wp_ajax_lmb_upload_accuse', [$this, 'handle_upload_accuse']);
+        add_action('wp_ajax_lmb_generate_receipt_pdf', [$this, 'handle_generate_receipt_pdf']);
+    }
+
     public function handle_upload_accuse() {
         check_ajax_referer('lmb_upload_accuse_nonce', '_wpnonce');
 
@@ -378,5 +527,33 @@ class LMB_Ajax_Handlers {
         }
 
         wp_send_json_success(['message' => 'Balance updated']);
+    }
+
+    public function handle_generate_receipt_pdf() {
+        check_ajax_referer('lmb_receipt_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => __('Access denied', 'lmb-core')]);
+        }
+
+        $ad_id = intval($_POST['ad_id']);
+        $ad_type = sanitize_text_field($_POST['ad_type']);
+        $user_id = get_current_user_id();
+
+        $ad = get_post($ad_id);
+        if (!$ad || $ad->post_type !== 'lmb_legal_ad' || $ad->post_author != $user_id) {
+            wp_send_json_error(['message' => __('Ad not found or access denied', 'lmb-core')]);
+        }
+
+        try {
+            $pdf_url = LMB_Receipt_Generator::create_receipt_pdf($ad_id, $ad_type);
+            if ($pdf_url) {
+                wp_send_json_success(['pdf_url' => $pdf_url]);
+            } else {
+                wp_send_json_error(['message' => __('Failed to generate PDF', 'lmb-core')]);
+            }
+        } catch (Exception $e) {
+            wp_send_json_error(['message' => $e->getMessage()]);
+        }
     }
 }

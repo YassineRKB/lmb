@@ -105,7 +105,7 @@ add_action('wp_enqueue_scripts', function() {
     wp_enqueue_style('lmb-core', LMB_CORE_URL . 'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
     wp_enqueue_script('lmb-core', LMB_CORE_URL . 'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
 
-    wp_localize_script('jquery', 'lmbAjax', [
+    wp_localize_script('lmb-core', 'lmbAjax', [
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce'   => wp_create_nonce('lmb_frontend_ajax_nonce'),
     ]);

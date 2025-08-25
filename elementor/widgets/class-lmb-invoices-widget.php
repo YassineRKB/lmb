@@ -208,7 +208,7 @@ class LMB_Invoices_Widget extends Widget_Base {
                 button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> <?php esc_js_e('Generating...', 'lmb-core'); ?>');
                 
                 // Generate and download invoice PDF
-                $.post(lmbAjax.lmbAjax.ajaxurl, {
+                $.post(lmbAjax.ajaxurl, {
                     action: 'lmb_generate_invoice_pdf',
                     nonce: '<?php echo wp_create_nonce('lmb_invoice_nonce'); ?>',
                     payment_id: paymentId
@@ -233,52 +233,3 @@ class LMB_Invoices_Widget extends Widget_Base {
 }
 
 // Add AJAX handler for invoice generation
-add_action('wp_ajax_lmb_generate_invoice_pdf', function() {
-    check_ajax_referer('lmb_invoice_nonce', 'nonce');
-    
-    if (!is_user_logged_in()) {
-        wp_send_json_error(['message' => 'Access denied']);
-    }
-    
-    $payment_id = intval($_POST['payment_id']);
-    $user_id = get_current_user_id();
-    
-    // Verify payment belongs to current user
-    $payment_user_id = get_post_meta($payment_id, 'user_id', true);
-    if ($payment_user_id != $user_id) {
-        wp_send_json_error(['message' => 'Access denied']);
-    }
-    
-    $payment = get_post($payment_id);
-    if (!$payment || $payment->post_type !== 'lmb_payment') {
-        wp_send_json_error(['message' => 'Payment not found']);
-    }
-    
-    $package_id = get_post_meta($payment_id, 'package_id', true);
-    $package = get_post($package_id);
-    $package_price = get_post_meta($package_id, 'price', true);
-    $payment_reference = get_post_meta($payment_id, 'payment_reference', true);
-    
-    // Generate invoice PDF
-    try {
-        if (class_exists('LMB_Invoice_Handler')) {
-            $pdf_url = LMB_Invoice_Handler::create_package_invoice(
-                $user_id,
-                $package_id,
-                $package_price,
-                $package ? $package->post_content : '',
-                $payment_reference ?: 'INV-' . $payment_id
-            );
-        } else {
-            wp_send_json_error(['message' => 'Invoice handler not available']);
-        }
-        
-        if ($pdf_url) {
-            wp_send_json_success(['pdf_url' => $pdf_url]);
-        } else {
-            wp_send_json_error(['message' => 'Failed to generate PDF']);
-        }
-    } catch (Exception $e) {
-        wp_send_json_error(['message' => $e->getMessage()]);
-    }
-});
