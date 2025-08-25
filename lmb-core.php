@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core.
- * Version: 5.0.0 Sparta Fix
+ * Version: 5.1.0 Sparta Fix
  * Author: Yassine Rakibi
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -11,7 +11,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('LMB_CORE_VERSION', '5.0.0');
+define('LMB_CORE_VERSION', '5.1.0');
 define('LMB_CORE_FILE', __FILE__);
 define('LMB_CORE_PATH', plugin_dir_path(__FILE__));
 define('LMB_CORE_URL', plugin_dir_url(__FILE__));
@@ -87,6 +87,8 @@ function lmb_register_widget_assets() {
         'lmb-upload-newspaper'        => 'assets/js/lmb-upload-newspaper.js',
         'lmb-upload-bank-proof'       => 'assets/js/lmb-upload-bank-proof.js',
         'lmb-admin-lists'             => 'assets/js/lmb-admin-lists.js',
+        'lmb-legal-ads-receipts'      => 'assets/js/lmb-legal-ads-receipts.js',
+        'lmb-invoices'                => 'assets/js/lmb-invoices.js',
     ];
     foreach ($scripts as $handle => $path) {
         wp_register_script($handle, LMB_CORE_URL . $path, ['lmb-core'], LMB_CORE_VERSION, true);
@@ -112,7 +114,3 @@ function lmb_register_widget_assets() {
 }
 add_action('elementor/frontend/after_register_scripts', 'lmb_register_widget_assets');
 add_action('elementor/editor/before_enqueue_scripts', 'lmb_register_widget_assets');
-// documentation is hard dont u agree.
-// suffer the same pain as i, my younge padwan
-// this is a pain in the buttocks to finish in tight deadlines
-// but we made it, we are the chosen ones yay

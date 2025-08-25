@@ -186,3 +186,51 @@
         flex-direction: column;
     }
 }
+/* --- Styles for LMB Admin Widgets --- */
+
+/* Common Widget Structure */
+.lmb-admin-widget {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+.lmb-widget-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+}
+.lmb-widget-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.lmb-widget-content {
+    padding: 20px;
+}
+
+/* Admin Actions Widget Tabs */
+.lmb-tabs-nav {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+}
+.lmb-tab-btn {
+    padding: 10px 15px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+}
+.lmb-tab-btn.active {
+    border-bottom-color: #667eea;
+    font-weight: bold;
+}
+.lmb-tab-badge {
+    background: #e0e0e0;
+    color: #333;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 10px;
+    margin-left: 5px;
+}
