@@ -1,14 +1,13 @@
 <?php
 use Elementor\Widget_Base;
-use Elementor\Controls_Manager;
 
 if (!defined('ABSPATH')) exit;
 
 class LMB_Invoices_Widget extends Widget_Base {
     public function get_name() { return 'lmb_invoices'; }
-    public function get_title() { return __('LMB User Invoices', 'lmb-core'); }
+    public function get_title() { return __('LMB Payment Invoices', 'lmb-core'); } // Renamed
     public function get_icon() { return 'eicon-file-download'; }
-    public function get_categories() { return ['lmb-user-widgets']; }
+    public function get_categories() { return ['lmb-user-widgets']; } // Updated category
 
     public function get_script_depends() {
         return ['lmb-invoices'];
@@ -32,7 +31,7 @@ class LMB_Invoices_Widget extends Widget_Base {
             'post_status' => 'publish',
             'posts_per_page' => 10,
             'paged' => $paged,
-            'meta_query' => [['key' => 'user_id', 'value' => $user_id, 'compare' => '=']],
+            'meta_query' => [['key' => 'user_id', 'value' => $user_id]],
             'orderby' => 'date',
             'order' => 'DESC'
         ]);
@@ -40,7 +39,7 @@ class LMB_Invoices_Widget extends Widget_Base {
         ?>
         <div class="lmb-invoices-widget lmb-user-widget">
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-file-invoice"></i> <?php esc_html_e('Your Invoices', 'lmb-core'); ?></h3>
+                <h3><i class="fas fa-file-invoice"></i> <?php esc_html_e('Payment Invoices', 'lmb-core'); ?></h3>
             </div>
             <div class="lmb-widget-content">
                 <?php if (!empty($payments)): ?>
@@ -71,9 +70,13 @@ class LMB_Invoices_Widget extends Widget_Base {
                                         <td><strong><?php echo esc_html($package_price); ?> MAD</strong></td>
                                         <td><span class="lmb-status-badge lmb-status-<?php echo esc_attr($payment_status); ?>"><?php echo esc_html(ucfirst($payment_status)); ?></span></td>
                                         <td>
+                                            <?php if ($payment_status === 'approved'): ?>
                                             <button class="lmb-btn lmb-btn-sm lmb-btn-primary lmb-download-invoice" data-payment-id="<?php echo esc_attr($payment->ID); ?>">
                                                 <i class="fas fa-download"></i> <?php esc_html_e('Download PDF', 'lmb-core'); ?>
                                             </button>
+                                            <?php else: ?>
+                                                <span>-</span>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

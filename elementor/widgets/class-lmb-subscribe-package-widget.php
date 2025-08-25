@@ -9,6 +9,14 @@ class LMB_Subscribe_Package_Widget extends Widget_Base {
     public function get_icon() { return 'eicon-price-table'; }
     public function get_categories(){ return ['lmb-user-widgets']; }
 
+    public function get_script_depends() {
+        return ['lmb-core']; // Logic is in the main JS file
+    }
+    
+    public function get_style_depends() {
+        return ['lmb-user-widgets'];
+    }
+
     protected function render() {
         if (!is_user_logged_in()) {
             echo '<div class="lmb-notice lmb-notice-error"><p>'.esc_html__('You must be logged in to view packages.', 'lmb-core').'</p></div>';
@@ -31,7 +39,9 @@ class LMB_Subscribe_Package_Widget extends Widget_Base {
             echo '<div class="lmb-package-item">';
                 echo '<h3 class="lmb-package-title">'.esc_html($p->post_title).'</h3>';
                 echo '<div class="lmb-package-price"><span>MAD</span>'.esc_html($price).'</div>';
-                echo '<div class="lmb-package-description">'.wp_kses_post($p->post_content).'</div>';
+                if ($p->post_content) {
+                    echo '<div class="lmb-package-description">'.wp_kses_post($p->post_content).'</div>';
+                }
                 echo '<ul class="lmb-package-features">';
                     echo '<li><strong>'.esc_html($points).'</strong> Points Included</li>';
                     echo '<li><strong>'.esc_html($ad_cost).'</strong> Points Per Ad</li>';
