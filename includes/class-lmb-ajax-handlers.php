@@ -9,23 +9,67 @@ class LMB_Ajax_Handlers {
             'lmb_get_balance_history', 'lmb_load_admin_tab', 'lmb_search_user', 'lmb_update_balance',
             'lmb_generate_package_invoice', 'lmb_get_notifications', 'lmb_mark_notification_read',
             'lmb_mark_all_notifications_read', 'lmb_save_package', 'lmb_delete_package',
-            'lmb_upload_newspaper', 'lmb_upload_bank_proof', 'lmb_fetch_users', 'lmb_fetch_ads'
+            'lmb_upload_newspaper', 'lmb_upload_bank_proof', 'lmb_fetch_users', 'lmb_fetch_ads',
+            'lmb_upload_accuse', 'lmb_user_get_ads'
         ];
         foreach ($actions as $action) {
             add_action('wp_ajax_' . $action, [__CLASS__, 'handle_request']);
+            add_action('wp_ajax_nopriv_' . $action, [__CLASS__, 'handle_request']);
         }
     }
 
     public static function handle_request() {
-        // Nonce verification is now centralized here for all actions
         check_ajax_referer('lmb_nonce', 'nonce');
-        
         $action = isset($_POST['action']) ? sanitize_key($_POST['action']) : '';
         if (method_exists(__CLASS__, $action)) {
             self::$action();
         } else {
             wp_send_json_error(['message' => 'Invalid AJAX Action.'], 400);
         }
+    }
+
+    private static function lmb_user_get_ads() {
+        if (!is_user_logged_in()) wp_send_json_error(['message' => 'You must be logged in.']);
+        $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $query = new WP_Query([
+            'author' => get_current_user_id(),
+            'post_type' => 'lmb_legal_ad',
+            'posts_per_page' => 5,
+            'paged' => $paged,
+            'post_status' => ['publish', 'draft', 'pending']
+        ]);
+        
+        $ads = [];
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $ads[] = [
+                    'ID' => get_the_ID(),
+                    'title' => get_the_title(),
+                    'status' => get_post_meta(get_the_ID(), 'lmb_status', true),
+                    'date' => get_the_date(),
+                ];
+            }
+        }
+        wp_send_json_success(['ads' => $ads, 'max_pages' => $query->max_num_pages]);
+    }
+
+    private static function lmb_upload_accuse() {
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
+        if (empty($_POST['legal_ad_id']) || empty($_FILES['accuse_file'])) wp_send_json_error(['message' => 'Missing fields.']);
+
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        $attachment_id = media_handle_upload('accuse_file', 0);
+
+        if (is_wp_error($attachment_id)) {
+            wp_send_json_error(['message' => $attachment_id->get_error_message()]);
+        }
+
+        $ad_id = intval($_POST['legal_ad_id']);
+        update_post_meta($attachment_id, 'lmb_accuse_for_ad', $ad_id);
+        update_post_meta($ad_id, 'lmb_accuse_attachment_id', $attachment_id);
+        
+        wp_send_json_success(['message' => 'Accuse uploaded and linked successfully.']);
     }
 
     private static function lmb_fetch_ads() {
@@ -123,7 +167,7 @@ class LMB_Ajax_Handlers {
 
         wp_send_json_success(['html' => $html]);
     }
-    
+
     private static function lmb_upload_newspaper() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
         if (empty($_POST['newspaper_title']) || empty($_FILES['newspaper_pdf'])) wp_send_json_error(['message' => 'Missing required fields.']);

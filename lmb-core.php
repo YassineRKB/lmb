@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core.
- * Version: 5.1.0 Sparta Fix
+ * Version: 5.3.0 Sparta Fix
  * Author: Yassine Rakibi
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -11,7 +11,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('LMB_CORE_VERSION', '5.1.0');
+define('LMB_CORE_VERSION', '5.3.0');
 define('LMB_CORE_FILE', __FILE__);
 define('LMB_CORE_PATH', plugin_dir_path(__FILE__));
 define('LMB_CORE_URL', plugin_dir_url(__FILE__));
@@ -58,7 +58,6 @@ register_activation_hook(__FILE__, function () {
  * Enqueue scripts and styles and unify AJAX parameters.
  */
 function lmb_enqueue_assets() {
-    // Register global script with unified AJAX parameters
     wp_register_script('lmb-core', LMB_CORE_URL . 'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
     wp_localize_script('lmb-core', 'lmb_ajax_params', [
         'ajaxurl' => admin_url('admin-ajax.php'),
@@ -66,19 +65,13 @@ function lmb_enqueue_assets() {
     ]);
     wp_enqueue_script('lmb-core');
 
-    // Register global styles
     wp_enqueue_style('lmb-core-styles', LMB_CORE_URL . 'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
     wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
 }
 add_action('wp_enqueue_scripts', 'lmb_enqueue_assets');
 add_action('admin_enqueue_scripts', 'lmb_enqueue_assets');
 
-/**
- * Registers all widget-specific assets for Elementor.
- * This ensures they are available to be loaded by get_script_depends().
- */
 function lmb_register_widget_assets() {
-    // Register Scripts
     $scripts = [
         'lmb-admin-actions'           => 'assets/js/lmb-admin-actions.js',
         'lmb-notifications'           => 'assets/js/lmb-notifications.js',
@@ -89,17 +82,16 @@ function lmb_register_widget_assets() {
         'lmb-admin-lists'             => 'assets/js/lmb-admin-lists.js',
         'lmb-legal-ads-receipts'      => 'assets/js/lmb-legal-ads-receipts.js',
         'lmb-invoices'                => 'assets/js/lmb-invoices.js',
+        'lmb-user-ads-list'           => 'assets/js/lmb-user-ads-list.js',
     ];
     foreach ($scripts as $handle => $path) {
         wp_register_script($handle, LMB_CORE_URL . $path, ['lmb-core'], LMB_CORE_VERSION, true);
     }
-    
-    // Localize settings for the admin feed widget
+
     wp_localize_script('lmb-admin-actions', 'lmb_admin_settings', [
         'refresh_interval' => (int) get_option('lmb_admin_feed_refresh_interval', 30) * 1000,
     ]);
 
-    // Register Styles
     $styles = [
         'lmb-admin-widgets'     => 'assets/css/lmb-admin-widgets.css',
         'lmb-user-widgets'      => 'assets/css/lmb-user-widgets.css',
@@ -109,7 +101,6 @@ function lmb_register_widget_assets() {
         wp_register_style($handle, LMB_CORE_URL . $path, [], LMB_CORE_VERSION);
     }
     
-    // Enqueue Chart.js for pages that might use it
     wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], '3.7.0', true);
 }
 add_action('elementor/frontend/after_register_scripts', 'lmb_register_widget_assets');

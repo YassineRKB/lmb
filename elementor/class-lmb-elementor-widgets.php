@@ -45,6 +45,7 @@ add_action('elementor/widgets/register', function($widgets_manager) {
         'LMB_Packages_Editor_Widget' => __DIR__ . '/widgets/class-lmb-packages-editor-widget.php',
         'LMB_Invoices_Widget' => __DIR__ . '/widgets/class-lmb-invoices-widget.php',
         'LMB_Legal_Ads_Receipts_Widget' => __DIR__ . '/widgets/class-lmb-legal-ads-receipts-widget.php',
+        'LMB_User_Ads_List_Widget' => __DIR__ . '/widgets/class-lmb-user-ads-list-widget.php',
     ];
 
     foreach ($widgets as $class_name => $file_path) {
