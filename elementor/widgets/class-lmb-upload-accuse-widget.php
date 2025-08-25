@@ -28,7 +28,7 @@ class LMB_Upload_Accuse_Widget extends \Elementor\Widget_Base {
     public function get_script_depends() {
         wp_enqueue_script(
             'lmb-upload-accuse',
-            plugin_dir_url(__DIR__) . 'assets/js/lmb-upload-accuse.js',
+            LMB_CORE_URL . 'assets/js/lmb-upload-accuse.js',
             ['jquery'],
             '1.0.0',
             true
@@ -47,7 +47,7 @@ class LMB_Upload_Accuse_Widget extends \Elementor\Widget_Base {
     public function get_style_depends() {
         wp_enqueue_style(
             'lmb-upload-accuse',
-            plugin_dir_url(__DIR__) . 'assets/css/lmb-upload-accuse.css',
+            LMB_CORE_URL . 'assets/css/lmb-upload-accuse.css',
             [],
             '1.0.0'
         );

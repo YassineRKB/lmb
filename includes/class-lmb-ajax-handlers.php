@@ -506,27 +506,42 @@ class LMB_Ajax_Handlers {
 
         $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
         $amount  = isset($_POST['amount']) ? intval($_POST['amount']) : 0;
-        $reason  = isset($_POST['reason']) ? sanitize_text_field($_POST['reason']) : '';
-        $type    = isset($_POST['type']) ? sanitize_key($_POST['type']) : 'add';
+        $reason  = isset($_POST['reason']) ? sanitize_text_field($_POST['reason']) : 'Manual balance adjustment by admin';
+        $action  = isset($_POST['balance_action']) ? sanitize_key($_POST['balance_action']) : '';
 
-        if (!$user_id || !$amount) {
-            wp_send_json_error(['message' => 'Missing user or amount'], 400);
+        if (!$user_id || !$action) {
+            wp_send_json_error(['message' => 'Missing user ID or action.'], 400);
         }
-
+        if ($amount < 0) {
+            wp_send_json_error(['message' => 'Amount cannot be negative.'], 400);
+        }
         if (!class_exists('LMB_Points')) {
-            wp_send_json_error(['message' => 'Points system unavailable'], 500);
+            wp_send_json_error(['message' => 'Points system unavailable.'], 500);
         }
 
-        if ($type === 'remove') {
-            $amount = -abs($amount);
+        $new_balance = 0;
+
+        switch ($action) {
+            case 'add':
+                $new_balance = LMB_Points::add($user_id, $amount, $reason);
+                break;
+            case 'subtract':
+                if (LMB_Points::get_balance($user_id) < $amount) {
+                    wp_send_json_error(['message' => 'User has insufficient points to subtract this amount.'], 400);
+                }
+                $new_balance = LMB_Points::deduct($user_id, $amount, $reason);
+                break;
+            case 'set':
+                $new_balance = LMB_Points::set_balance($user_id, $amount, $reason);
+                break;
+            default:
+                wp_send_json_error(['message' => 'Invalid action specified.'], 400);
         }
 
-        $ok = LMB_Points::add_points($user_id, $amount, $reason ?: 'Manual update');
-        if (!$ok) {
-            wp_send_json_error(['message' => 'Failed to update balance'], 500);
-        }
-
-        wp_send_json_success(['message' => 'Balance updated']);
+        wp_send_json_success([
+            'message' => 'Balance updated successfully!',
+            'new_balance' => $new_balance
+        ]);
     }
 
     public function handle_generate_receipt_pdf() {
