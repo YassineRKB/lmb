@@ -17,7 +17,9 @@ class LMB_Ajax_Handlers {
     }
 
     public static function handle_request() {
+        // Nonce verification is now centralized here for all actions
         check_ajax_referer('lmb_nonce', 'nonce');
+        
         $action = isset($_POST['action']) ? sanitize_key($_POST['action']) : '';
         if (method_exists(__CLASS__, $action)) {
             self::$action();
@@ -121,8 +123,6 @@ class LMB_Ajax_Handlers {
         LMB_Ad_Manager::log_activity(sprintf('Package "%s" %s', $name, $package_id ? 'updated' : 'created'));
         wp_send_json_success(['message' => 'Package saved successfully.']);
     }
-
-    // --- All other handlers remain below ---
 
     private static function lmb_ad_status_change() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);

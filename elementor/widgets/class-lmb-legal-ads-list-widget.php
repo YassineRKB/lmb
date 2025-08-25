@@ -1,5 +1,6 @@
 <?php
 use Elementor\Widget_Base;
+use Elementor\Controls_Manager;
 
 if (!defined('ABSPATH')) exit;
 
@@ -22,7 +23,12 @@ class LMB_Legal_Ads_List_Widget extends Widget_Base {
             echo '<div class="lmb-notice lmb-notice-error"><p>' . esc_html__('Access denied.', 'lmb-core') . '</p></div>';
             return;
         }
-        $ad_types = LMB_Admin::get_unique_ad_types();
+
+        $ad_types = [];
+        if(method_exists('LMB_Admin', 'get_unique_ad_types')){
+            $ad_types = LMB_Admin::get_unique_ad_types();
+        }
+        
         ?>
         <div class="lmb-legal-ads-list-widget lmb-admin-widget" id="lmb-legal-ads-list-widget">
             <div class="lmb-widget-header">

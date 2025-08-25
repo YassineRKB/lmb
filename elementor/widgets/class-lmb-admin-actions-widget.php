@@ -1,5 +1,6 @@
 <?php
 use Elementor\Widget_Base;
+use Elementor\Controls_Manager;
 
 if (!defined('ABSPATH')) exit;
 

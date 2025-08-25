@@ -26,7 +26,7 @@ jQuery(document).ready(function($) {
         .done(function(response) {
             if (response.success) {
                 alert(response.data.message);
-                location.reload(); // Easiest way to show the updated list
+                location.reload();
             } else {
                 alert('Error: ' + response.data.message);
             }
