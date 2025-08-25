@@ -457,7 +457,7 @@ class LMB_Ajax_Handlers {
     }
 
     public static function search_user() {
-        check_ajax_referer('lmb_balance_nonce', 'nonce');
+        check_ajax_referer('lmb_admin_ajax_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Access denied'], 403);
@@ -498,7 +498,7 @@ class LMB_Ajax_Handlers {
     }
 
     public static function update_balance() {
-        check_ajax_referer('lmb_balance_nonce', 'nonce');
+        check_ajax_referer('lmb_admin_ajax_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Access denied'], 403);
