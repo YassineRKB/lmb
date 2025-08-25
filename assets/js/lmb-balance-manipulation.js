@@ -1,126 +1,100 @@
 jQuery(document).ready(function($) {
-    const widget = $('.lmb-balance-manipulation-widget');
-    if (!widget.length) {
-        return;
-    }
+    const widget = $('#lmb-balance-manipulation-widget');
+    if (!widget.length) return;
 
-    let selectedUserId = null;
+    // Search for user
+    widget.on('submit', '#lmb-user-search-form', function(e) {
+        e.preventDefault();
+        const searchTerm = $('#lmb-user-search-term').val().trim();
+        const resultsContainer = $('#lmb-search-results');
+        const balanceSection = $('#lmb-balance-section');
+        const historySection = $('#lmb-history-section');
 
-    // Search user
-    widget.on('click', '#lmb-search-btn', function() {
-        const searchTerm = $('#lmb-user-search').val().trim();
         if (!searchTerm) {
-            alert('Please enter a user email or ID');
+            resultsContainer.html('<div class="lmb-notice lmb-notice-error"><p>Please enter a search term.</p></div>');
             return;
         }
 
-        $('#lmb-search-results').html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>');
+        resultsContainer.html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>');
+        balanceSection.hide();
+        historySection.hide();
 
-        $.post(lmbAjax.ajaxurl, {
+        $.post(lmb_ajax_params.ajaxurl, {
             action: 'lmb_search_user',
-            nonce: lmbAjax.nonce,
+            nonce: lmb_ajax_params.nonce,
             search_term: searchTerm
-        }, function(response) {
+        }).done(function(response) {
             if (response.success) {
                 const user = response.data.user;
-                selectedUserId = user.ID;
-                
-                $('#lmb-search-results').html(`
-                    <div class="lmb-user-found">
-                        <h5><i class="fas fa-user"></i> ${user.display_name}</h5>
-                        <p><strong>Email:</strong> ${user.user_email}</p>
-                        <p><strong>ID:</strong> ${user.ID}</p>
-                    </div>
-                `);
-
-                $('#lmb-user-details').html(`
-                    <h5>${user.display_name} (ID: ${user.ID})</h5>
-                    <p>${user.user_email}</p>
-                `);
-
+                resultsContainer.html(`<div class="lmb-notice lmb-notice-success"><p>Found user: ${user.display_name}</p></div>`);
+                $('#lmb-user-id').val(user.ID);
+                $('#lmb-user-details').html(`<h5>${user.display_name} (ID: ${user.ID})</h5><p>${user.user_email}</p>`);
                 $('#lmb-current-balance').text(user.balance);
-                $('#lmb-balance-section, #lmb-history-section').show();
-                
+                balanceSection.show();
+                historySection.show();
                 loadBalanceHistory(user.ID);
             } else {
-                $('#lmb-search-results').html(`<div class="lmb-notice lmb-notice-error"><p>${response.data.message}</p></div>`);
-                $('#lmb-balance-section, #lmb-history-section').hide();
+                resultsContainer.html(`<div class="lmb-notice lmb-notice-error"><p>${response.data.message}</p></div>`);
             }
+        }).fail(function() {
+            resultsContainer.html('<div class="lmb-notice lmb-notice-error"><p>Server error occurred.</p></div>');
         });
     });
 
     // Update balance
-    widget.on('click', '#lmb-update-balance-btn', function() {
-        const button = $(this);
-        if (!selectedUserId) {
-            alert('Please search and select a user first');
-            return;
-        }
-
-        const action = $('#lmb-balance-action').val();
-        const amount = parseInt($('#lmb-balance-amount').val());
-        const reason = $('#lmb-balance-reason').val();
-
-        if (isNaN(amount) || amount < 0) {
-            alert('Please enter a valid amount');
-            return;
-        }
+    widget.on('submit', '#lmb-balance-form', function(e) {
+        e.preventDefault();
+        const button = $('#lmb-update-balance-btn');
+        const userId = $('#lmb-user-id').val();
 
         button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
 
-        $.post(lmbAjax.ajaxurl, {
+        $.post(lmb_ajax_params.ajaxurl, {
             action: 'lmb_update_balance',
-            nonce: lmbAjax.nonce,
-            user_id: selectedUserId,
-            balance_action: action,
-            amount: amount,
-            reason: reason
-        }, function(response) {
+            nonce: lmb_ajax_params.nonce,
+            user_id: userId,
+            balance_action: $('#lmb-balance-action').val(),
+            amount: $('#lmb-balance-amount').val(),
+            reason: $('#lmb-balance-reason').val()
+        }).done(function(response) {
             if (response.success) {
                 $('#lmb-current-balance').text(response.data.new_balance);
-                $('#lmb-balance-amount').val('');
-                $('#lmb-balance-reason').val('');
-                loadBalanceHistory(selectedUserId);
                 alert(response.data.message);
+                loadBalanceHistory(userId);
             } else {
                 alert('Error: ' + response.data.message);
             }
+        }).fail(function() {
+            alert('An unknown server error occurred.');
         }).always(function() {
             button.prop('disabled', false).html('<i class="fas fa-save"></i> Update Balance');
         });
     });
 
     function loadBalanceHistory(userId) {
-        $('#lmb-balance-history').html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Loading history...</div>');
+        const historyContainer = $('#lmb-balance-history');
+        historyContainer.html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Loading history...</div>');
         
-        $.post(lmbAjax.ajaxurl, {
+        $.post(lmb_ajax_params.ajaxurl, {
             action: 'lmb_get_balance_history',
-            nonce: lmbAjax.nonce,
+            nonce: lmb_ajax_params.nonce,
             user_id: userId
-        }, function(response) {
-            if (response.success) {
-                let historyHtml = '';
-                if (response.data.history && response.data.history.length > 0) {
-                    response.data.history.forEach(function(item) {
-                        const amountClass = item.amount >= 0 ? 'positive' : 'negative';
-                        const amountSign = item.amount >= 0 ? '+' : '';
-                        historyHtml += `
-                            <div class="lmb-history-item">
-                                <div>
-                                    <strong class="${amountClass}">${amountSign}${item.amount}</strong> points
-                                    <br><small>${item.reason}</small>
-                                </div>
-                                <div>
-                                    <small>${item.created_at}</small>
-                                    <br><small>Balance: ${item.balance_after}</small>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    historyHtml = '<p class="lmb-no-results">No balance history found.</p>';
-                }
-                $('#lmb-balance-history').html(historyHtml);
+        }).done(function(response) {
+            if (response.success && response.data.history.length > 0) {
+                let historyHtml = response.data.history.map(item => `
+                    <div class="lmb-history-item">
+                        <div>
+                            <strong>${item.amount > 0 ? '+' : ''}${item.amount}</strong> points
+                            <br><small>${item.reason}</small>
+                        </div>
+                        <div>
+                            <small>${item.created_at}</small>
+                            <br><small>New Balance: ${item.balance_after}</small>
+                        </div>
+                    </div>`).join('');
+                historyContainer.html(historyHtml);
+            } else {
+                historyContainer.html('<p>No balance history found for this user.</p>');
             }
         });
     }

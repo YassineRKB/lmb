@@ -19,7 +19,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
 
     protected function render() {
         if (!current_user_can('manage_options')) {
-            echo '<div class="lmb-notice lmb-notice-error"><p>' . esc_html__('Access denied. Administrator privileges required.', 'lmb-core') . '</p></div>';
+            echo '<div class="lmb-notice lmb-notice-error"><p>' . esc_html__('Access denied.', 'lmb-core') . '</p></div>';
             return;
         }
         ?>
@@ -27,22 +27,20 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
             <div class="lmb-widget-header">
                 <h3><i class="fas fa-coins"></i> <?php esc_html_e('Balance Manipulation', 'lmb-core'); ?></h3>
             </div>
-
             <div class="lmb-widget-content">
                 <div class="lmb-search-section">
                     <h4><?php esc_html_e('Search User', 'lmb-core'); ?></h4>
-                    <div class="lmb-search-form">
-                        <input type="text" id="lmb-user-search" placeholder="<?php esc_attr_e('Enter user email or ID...', 'lmb-core'); ?>" class="lmb-input">
-                        <button type="button" id="lmb-search-btn" class="lmb-btn lmb-btn-primary">
+                    <form id="lmb-user-search-form" class="lmb-search-form">
+                        <input type="text" id="lmb-user-search-term" placeholder="<?php esc_attr_e('Enter user email, ID, or name...', 'lmb-core'); ?>" class="lmb-input">
+                        <button type="submit" id="lmb-search-btn" class="lmb-btn lmb-btn-primary">
                             <i class="fas fa-search"></i> <?php esc_html_e('Search', 'lmb-core'); ?>
                         </button>
-                    </div>
+                    </form>
                     <div id="lmb-search-results" class="lmb-search-results"></div>
                 </div>
 
                 <div id="lmb-balance-section" class="lmb-balance-section" style="display: none;">
                     <h4><?php esc_html_e('Balance Management', 'lmb-core'); ?></h4>
-                    
                     <div class="lmb-user-info">
                         <div id="lmb-user-details"></div>
                         <div class="lmb-current-balance">
@@ -51,8 +49,8 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
                             <span class="lmb-balance-unit"><?php esc_html_e('points', 'lmb-core'); ?></span>
                         </div>
                     </div>
-
-                    <div class="lmb-balance-form">
+                    <form id="lmb-balance-form" class="lmb-form">
+                        <input type="hidden" id="lmb-user-id" value="">
                         <div class="lmb-form-row">
                             <div class="lmb-form-group">
                                 <label for="lmb-balance-action"><?php esc_html_e('Action', 'lmb-core'); ?></label>
@@ -62,24 +60,21 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
                                     <option value="set"><?php esc_html_e('Set Balance', 'lmb-core'); ?></option>
                                 </select>
                             </div>
-                            
                             <div class="lmb-form-group">
                                 <label for="lmb-balance-amount"><?php esc_html_e('Amount', 'lmb-core'); ?></label>
-                                <input type="number" id="lmb-balance-amount" min="0" step="1" class="lmb-input" placeholder="0">
+                                <input type="number" id="lmb-balance-amount" min="0" step="1" class="lmb-input" placeholder="0" required>
                             </div>
                         </div>
-
                         <div class="lmb-form-group">
                             <label for="lmb-balance-reason"><?php esc_html_e('Reason (optional)', 'lmb-core'); ?></label>
-                            <textarea id="lmb-balance-reason" class="lmb-textarea" rows="3" placeholder="<?php esc_attr_e('Enter reason for balance change...', 'lmb-core'); ?>"></textarea>
+                            <textarea id="lmb-balance-reason" class="lmb-textarea" rows="2" placeholder="<?php esc_attr_e('e.g., Bonus points, correction', 'lmb-core'); ?>"></textarea>
                         </div>
-
                         <div class="lmb-form-actions">
-                            <button type="button" id="lmb-update-balance-btn" class="lmb-btn lmb-btn-success">
+                            <button type="submit" id="lmb-update-balance-btn" class="lmb-btn lmb-btn-success">
                                 <i class="fas fa-save"></i> <?php esc_html_e('Update Balance', 'lmb-core'); ?>
                             </button>
                         </div>
-                    </div>
+                    </form>
                 </div>
 
                 <div id="lmb-history-section" class="lmb-history-section" style="display: none;">
