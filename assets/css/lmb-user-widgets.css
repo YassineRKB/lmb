@@ -1,0 +1,74 @@
+/* --- Styles for LMB User Widgets --- */
+
+/* Common Widget Structure */
+.lmb-user-widget {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+.lmb-widget-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+}
+.lmb-widget-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.lmb-widget-content {
+    padding: 20px;
+}
+
+/* Invoices & Receipts Widgets Table */
+.lmb-table-container {
+    overflow-x: auto;
+}
+.lmb-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+.lmb-data-table th,
+.lmb-data-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+.lmb-data-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+.lmb-data-table tbody tr:hover {
+    background: #f8f9fa;
+}
+.lmb-no-results-container {
+    text-align: center;
+    padding: 40px 20px;
+}
+.lmb-empty-state {
+    max-width: 400px;
+    margin: 0 auto;
+}
+.lmb-empty-state i {
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+.lmb-empty-state h4 {
+    color: #495057;
+    margin-bottom: 10px;
+}
+.lmb-empty-state p {
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .lmb-data-table {
+        font-size: 14px;
+    }
+}

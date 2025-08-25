@@ -9,21 +9,26 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
     public function get_icon() { return 'eicon-coins'; }
     public function get_categories() { return ['lmb-cw-admin']; }
 
+    public function get_script_depends() {
+        return ['lmb-balance-manipulation'];
+    }
+
+    public function get_style_depends() {
+        return ['lmb-admin-widgets'];
+    }
+
     protected function render() {
         if (!current_user_can('manage_options')) {
             echo '<div class="lmb-notice lmb-notice-error"><p>' . esc_html__('Access denied. Administrator privileges required.', 'lmb-core') . '</p></div>';
             return;
         }
-
-        wp_enqueue_script('jquery');
         ?>
-        <div class="lmb-balance-manipulation-widget">
+        <div class="lmb-balance-manipulation-widget lmb-admin-widget">
             <div class="lmb-widget-header">
                 <h3><i class="fas fa-coins"></i> <?php esc_html_e('Balance Manipulation', 'lmb-core'); ?></h3>
             </div>
 
             <div class="lmb-widget-content">
-                <!-- User Search Section -->
                 <div class="lmb-search-section">
                     <h4><?php esc_html_e('Search User', 'lmb-core'); ?></h4>
                     <div class="lmb-search-form">
@@ -35,7 +40,6 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
                     <div id="lmb-search-results" class="lmb-search-results"></div>
                 </div>
 
-                <!-- Balance Manipulation Section -->
                 <div id="lmb-balance-section" class="lmb-balance-section" style="display: none;">
                     <h4><?php esc_html_e('Balance Management', 'lmb-core'); ?></h4>
                     
@@ -78,248 +82,12 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
                     </div>
                 </div>
 
-                <!-- Balance History Section -->
                 <div id="lmb-history-section" class="lmb-history-section" style="display: none;">
                     <h4><?php esc_html_e('Recent Balance Changes', 'lmb-core'); ?></h4>
                     <div id="lmb-balance-history" class="lmb-balance-history"></div>
                 </div>
             </div>
         </div>
-
-        <style>
-        .lmb-balance-manipulation-widget {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            overflow: hidden;
-        }
-        .lmb-widget-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-        }
-        .lmb-widget-header h3 {
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .lmb-widget-content {
-            padding: 20px;
-        }
-        .lmb-search-section,
-        .lmb-balance-section,
-        .lmb-history-section {
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .lmb-search-form {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .lmb-search-form .lmb-input {
-            flex: 1;
-        }
-        .lmb-search-results {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            min-height: 50px;
-        }
-        .lmb-user-info {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .lmb-current-balance {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .lmb-balance-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #28a745;
-        }
-        .lmb-form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .lmb-form-group {
-            margin-bottom: 15px;
-        }
-        .lmb-form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #495057;
-        }
-        .lmb-input, .lmb-select, .lmb-textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        .lmb-form-actions {
-            text-align: center;
-        }
-        .lmb-balance-history {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .lmb-history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .lmb-history-item:last-child {
-            border-bottom: none;
-        }
-        .lmb-loading {
-            text-align: center;
-            color: #6c757d;
-        }
-        @media (max-width: 768px) {
-            .lmb-form-row {
-                grid-template-columns: 1fr;
-            }
-            .lmb-search-form {
-                flex-direction: column;
-            }
-        }
-        </style>
-
-        <script>
-        jQuery(document).ready(function($) {
-            let selectedUserId = null;
-
-            // Search user
-            $('#lmb-search-btn').on('click', function() {
-                const searchTerm = $('#lmb-user-search').val().trim();
-                if (!searchTerm) {
-                    alert('<?php esc_js_e('Please enter a user email or ID', 'lmb-core'); ?>');
-                    return;
-                }
-
-                $('#lmb-search-results').html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> <?php esc_js_e('Searching...', 'lmb-core'); ?></div>');
-
-                $.post(lmbAdmin.ajaxurl, {
-                    action: 'lmb_search_user',
-                    nonce: lmbAjax.nonce,
-                    search_term: searchTerm
-                }, function(response) {
-                    if (response.success) {
-                        const user = response.data.user;
-                        selectedUserId = user.ID;
-                        
-                        $('#lmb-search-results').html(`
-                            <div class="lmb-user-found">
-                                <h5><i class="fas fa-user"></i> ${user.display_name}</h5>
-                                <p><strong><?php esc_js_e('Email:', 'lmb-core'); ?></strong> ${user.user_email}</p>
-                                <p><strong><?php esc_js_e('ID:', 'lmb-core'); ?></strong> ${user.ID}</p>
-                            </div>
-                        `);
-
-                        $('#lmb-user-details').html(`
-                            <h5>${user.display_name} (ID: ${user.ID})</h5>
-                            <p>${user.user_email}</p>
-                        `);
-
-                        $('#lmb-current-balance').text(user.balance);
-                        $('#lmb-balance-section, #lmb-history-section').show();
-                        
-                        loadBalanceHistory(user.ID);
-                    } else {
-                        $('#lmb-search-results').html(`<div class="lmb-notice lmb-notice-error"><p>${response.data.message}</p></div>`);
-                        $('#lmb-balance-section, #lmb-history-section').hide();
-                    }
-                });
-            });
-
-            // Update balance
-            $('#lmb-update-balance-btn').on('click', function() {
-                if (!selectedUserId) {
-                    alert('<?php esc_js_e('Please search and select a user first', 'lmb-core'); ?>');
-                    return;
-                }
-
-                const action = $('#lmb-balance-action').val();
-                const amount = parseInt($('#lmb-balance-amount').val());
-                const reason = $('#lmb-balance-reason').val();
-
-                if (!amount || amount < 0) {
-                    alert('<?php esc_js_e('Please enter a valid amount', 'lmb-core'); ?>');
-                    return;
-                }
-
-                $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> <?php esc_js_e('Updating...', 'lmb-core'); ?>');
-
-                $.post(lmbAdmin.ajaxurl, {
-                    action: 'lmb_update_balance',
-                    nonce: lmbAjax.nonce,
-                    user_id: selectedUserId,
-                    balance_action: action,
-                    amount: amount,
-                    reason: reason
-                }, function(response) {
-                    if (response.success) {
-                        $('#lmb-current-balance').text(response.data.new_balance);
-                        $('#lmb-balance-amount').val('');
-                        $('#lmb-balance-reason').val('');
-                        loadBalanceHistory(selectedUserId);
-                        alert('<?php esc_js_e('Balance updated successfully!', 'lmb-core'); ?>');
-                    } else {
-                        alert('<?php esc_js_e('Error:', 'lmb-core'); ?> ' + response.data.message);
-                    }
-                }).always(function() {
-                    $('#lmb-update-balance-btn').prop('disabled', false).html('<i class="fas fa-save"></i> <?php esc_js_e('Update Balance', 'lmb-core'); ?>');
-                });
-            });
-
-            function loadBalanceHistory(userId) {
-                $('#lmb-balance-history').html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> <?php esc_js_e('Loading history...', 'lmb-core'); ?></div>');
-                
-                $.post(lmbAdmin.ajaxurl, {
-                    action: 'lmb_get_balance_history',
-                    nonce: lmbAjax.nonce,
-                    user_id: userId
-                }, function(response) {
-                    if (response.success) {
-                        let historyHtml = '';
-                        if (response.data.history.length > 0) {
-                            response.data.history.forEach(function(item) {
-                                historyHtml += `
-                                    <div class="lmb-history-item">
-                                        <div>
-                                            <strong>${item.amount > 0 ? '+' : ''}${item.amount}</strong> points
-                                            <br><small>${item.reason}</small>
-                                        </div>
-                                        <div>
-                                            <small>${item.created_at}</small>
-                                            <br><small>Balance: ${item.balance_after}</small>
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                        } else {
-                            historyHtml = '<p class="lmb-no-results"><?php esc_js_e('No balance history found.', 'lmb-core'); ?></p>';
-                        }
-                        $('#lmb-balance-history').html(historyHtml);
-                    }
-                });
-            }
-        });
-        </script>
         <?php
     }
 }
-
