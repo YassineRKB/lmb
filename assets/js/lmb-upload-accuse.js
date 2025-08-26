@@ -1,16 +1,18 @@
 jQuery(document).ready(function($) {
     $('#lmb-upload-accuse-form').on('submit', function(e) {
-        e.preventDefault();
+        e.preventDefault(); // Prevent page reload
 
         var $form = $(this);
         var $messageContainer = $form.closest('.lmb-upload-accuse-widget').find('.lmb-upload-messages');
         var formData = new FormData($form[0]);
+        formData.append('action', 'lmb_upload_accuse'); // Add action
+        formData.append('nonce', lmb_ajax_params.nonce); // Add nonce
 
         $messageContainer.html('');
         $form.find('button[type="submit"]').prop('disabled', true).text('Uploading...');
 
         $.ajax({
-            url: lmb_accuse_ajax.ajax_url,
+            url: lmb_ajax_params.ajaxurl,
             type: 'POST',
             data: formData,
             processData: false,

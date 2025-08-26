@@ -4,7 +4,7 @@ jQuery(document).ready(function($) {
 
     // Search for user
     widget.on('submit', '#lmb-user-search-form', function(e) {
-        e.preventDefault();
+        e.preventDefault(); // Prevent page reload
         const searchTerm = $('#lmb-user-search-term').val().trim();
         const resultsContainer = $('#lmb-search-results');
         const balanceSection = $('#lmb-balance-section');
@@ -43,7 +43,7 @@ jQuery(document).ready(function($) {
 
     // Update balance
     widget.on('submit', '#lmb-balance-form', function(e) {
-        e.preventDefault();
+        e.preventDefault(); // Prevent page reload
         const button = $('#lmb-update-balance-btn');
         const userId = $('#lmb-user-id').val();
 

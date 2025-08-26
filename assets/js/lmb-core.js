@@ -45,7 +45,7 @@
                     window.open(response.data.pdf_url, '_blank');
                     showLMBModal('success', 'Your invoice has been generated successfully!');
                 } else {
-                    showLMBModal('error', response.data.message || 'Could not generate invoice.');
+                    showLMBModal('error', response.data ? response.data.message : 'Could not generate invoice.');
                 }
             }).fail(function() {
                 showLMBModal('error', 'An unknown server error occurred.');

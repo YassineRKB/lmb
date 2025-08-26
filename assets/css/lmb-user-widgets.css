@@ -66,6 +66,47 @@
     line-height: 1.5;
 }
 
+/* New User Ads List Widget Styles */
+#lmb-user-ads-list-container .lmb-ad-item {
+    background-color: #f9f9f9;
+    border-left: 4px solid #ccc;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+#lmb-user-ads-list-container .lmb-ad-item.status-draft { border-left-color: #777; }
+#lmb-user-ads-list-container .lmb-ad-item.status-pending_review { border-left-color: #ffb900; }
+#lmb-user-ads-list-container .lmb-ad-item.status-published { border-left-color: #4ab866; }
+#lmb-user-ads-list-container .lmb-ad-item.status-denied { border-left-color: #d63638; }
+
+#lmb-user-ads-list-container .lmb-ad-item h4 { margin: 0 0 5px; }
+#lmb-user-ads-list-container .lmb-ad-item p { margin: 0; font-size: 0.9em; color: #555; }
+#lmb-user-ads-list-container .lmb-submit-review {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background-color: #667eea;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+#lmb-user-ads-pagination {
+    margin-top: 20px;
+}
+#lmb-user-ads-pagination .page-btn {
+    padding: 8px 12px;
+    margin: 0 5px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+#lmb-user-ads-pagination .page-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+
 /* Responsive */
 @media (max-width: 768px) {
     .lmb-data-table {
