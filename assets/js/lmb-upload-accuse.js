@@ -3,7 +3,6 @@ jQuery(document).ready(function($) {
     if (!widget.length) return;
 
     const container = $('#lmb-pending-accuse-list-container');
-    let mediaFrame;
 
     function fetchPendingAds(page = 1) {
         container.html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Loading ads...</div>');
@@ -29,56 +28,41 @@ jQuery(document).ready(function($) {
         fetchPendingAds(page);
     });
 
-    // Handle the "Upload" button click
-    container.on('click', '.lmb-upload-accuse-btn', function() {
-        const adId = $(this).data('ad-id');
-        const $button = $(this);
+    // --- REWRITTEN EVENT HANDLER ---
+    // Handle the submission of the individual upload forms
+    container.on('submit', '.lmb-accuse-upload-form', function(e) {
+        e.preventDefault(); // This is crucial to prevent page reload
 
-        // If the media frame already exists, reopen it.
-        if (mediaFrame) {
-            mediaFrame.off('select'); // Clear previous event handlers
-        } else {
-            // Create the media frame.
-            mediaFrame = wp.media({
-                title: 'Select or Upload Accuse Document',
-                button: { text: 'Use this Document' },
-                multiple: false,
-                library: { type: ['application/pdf', 'image/jpeg', 'image/png'] }
-            });
-        }
+        const $form = $(this);
+        const $button = $form.find('button[type="submit"]');
+        const formData = new FormData(this); // 'this' is the form element
         
-        // When a file is selected, run a callback.
-        mediaFrame.on('select', function() {
-            const attachment = mediaFrame.state().get('selection').first().toJSON();
-            $button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        // Add the action and nonce for the AJAX request
+        formData.append('action', 'lmb_upload_accuse');
+        formData.append('nonce', lmb_ajax_params.nonce);
 
-            // Fire an AJAX request to attach the file to the ad
-            $.post(lmb_ajax_params.ajaxurl, {
-                action: 'lmb_attach_accuse_to_ad',
-                nonce: lmb_ajax_params.nonce,
-                ad_id: adId,
-                attachment_id: attachment.id
-            }).done(function(response) {
+        $button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: lmb_ajax_params.ajaxurl,
+            type: 'POST',
+            data: formData,
+            processData: false, // Required for FormData
+            contentType: false, // Required for FormData
+            success: function(response) {
                 if (response.success) {
-                    if (typeof showLMBModal === 'function') {
-                        showLMBModal('success', response.data.message);
-                    } else {
-                        alert(response.data.message);
-                    }
-                    fetchPendingAds(1); // Refresh the list
+                    showLMBModal('success', response.data.message);
+                    fetchPendingAds(1); // Refresh the list from page 1
                 } else {
-                    if (typeof showLMBModal === 'function') {
-                        showLMBModal('error', response.data.message);
-                    } else {
-                        alert('Error: ' + response.data.message);
-                    }
+                    showLMBModal('error', response.data.message);
                     $button.prop('disabled', false).html('<i class="fas fa-upload"></i> Upload');
                 }
-            });
+            },
+            error: function() {
+                showLMBModal('error', 'An unexpected server error occurred.');
+                $button.prop('disabled', false).html('<i class="fas fa-upload"></i> Upload');
+            }
         });
-
-        // Finally, open the modal.
-        mediaFrame.open();
     });
 
     // Initial load

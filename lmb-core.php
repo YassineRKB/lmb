@@ -83,6 +83,7 @@ function lmb_register_widget_assets() {
         'lmb-legal-ads-receipts'      => 'assets/js/lmb-legal-ads-receipts.js',
         'lmb-invoices'                => 'assets/js/lmb-invoices.js',
         'lmb-user-ads-list'           => 'assets/js/lmb-user-ads-list.js',
+        'lmb-upload-accuse'           => 'assets/js/lmb-upload-accuse.js',
     ];
     foreach ($scripts as $handle => $path) {
         wp_register_script($handle, LMB_CORE_URL . $path, ['lmb-core'], LMB_CORE_VERSION, true);

@@ -384,3 +384,35 @@
 .lmb-accuse-actions {
     flex-shrink: 0;
 }
+/* Upload Accuse Widget Form Styles */
+.lmb-accuse-item.lmb-accuse-upload-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    gap: 15px;
+}
+
+.lmb-accuse-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Style for the file input */
+.lmb-file-input-accuse {
+    max-width: 200px; /* Or adjust as needed */
+    font-size: 13px;
+}
+
+/* For better browser consistency with file inputs */
+input[type="file"].lmb-file-input-accuse::file-selector-button {
+  border: 1px solid #ccc;
+  padding: .4em .6em;
+  border-radius: .3em;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  margin-right: 10px;
+}

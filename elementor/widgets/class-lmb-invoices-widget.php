@@ -1,13 +1,16 @@
 <?php
+// FILE: elementor/widgets/class-lmb-invoices-widget.php
+
 use Elementor\Widget_Base;
+use WP_Query;
 
 if (!defined('ABSPATH')) exit;
 
 class LMB_Invoices_Widget extends Widget_Base {
     public function get_name() { return 'lmb_invoices'; }
-    public function get_title() { return __('LMB Payment Invoices', 'lmb-core'); } // Renamed
+    public function get_title() { return __('LMB Payment Invoices', 'lmb-core'); }
     public function get_icon() { return 'eicon-file-download'; }
-    public function get_categories() { return ['lmb-user-widgets']; } // Updated category
+    public function get_categories() { return ['lmb-user-widgets']; }
 
     public function get_script_depends() {
         return ['lmb-invoices'];
@@ -35,14 +38,13 @@ class LMB_Invoices_Widget extends Widget_Base {
             'orderby' => 'date',
             'order' => 'DESC'
         ]);
-        $payments = $payments_query->posts;
         ?>
         <div class="lmb-invoices-widget lmb-user-widget">
             <div class="lmb-widget-header">
                 <h3><i class="fas fa-file-invoice"></i> <?php esc_html_e('Payment Invoices', 'lmb-core'); ?></h3>
             </div>
             <div class="lmb-widget-content">
-                <?php if (!empty($payments)): ?>
+                <?php if ($payments_query->have_posts()): ?>
                     <div class="lmb-table-container">
                         <table class="lmb-data-table">
                             <thead>
@@ -56,19 +58,30 @@ class LMB_Invoices_Widget extends Widget_Base {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($payments as $payment):
+                                <?php while ($payments_query->have_posts()): $payments_query->the_post();
+                                    $payment = get_post();
                                     $package_id = get_post_meta($payment->ID, 'package_id', true);
                                     $package = get_post($package_id);
-                                    $package_price = get_post_meta($package_id, 'price', true);
+                                    $package_price = get_post_meta($payment->ID, 'package_price', true); // Use price from payment meta for accuracy
                                     $payment_status = get_post_meta($payment->ID, 'payment_status', true);
                                     $payment_reference = get_post_meta($payment->ID, 'payment_reference', true);
+                                    $rejection_reason = get_post_meta($payment->ID, 'rejection_reason', true);
                                     ?>
                                     <tr>
                                         <td><strong><?php echo esc_html($payment_reference ?: '#' . $payment->ID); ?></strong></td>
                                         <td><?php echo esc_html(get_the_date('Y-m-d H:i', $payment->ID)); ?></td>
                                         <td><?php echo $package ? esc_html($package->post_title) : '<em>' . esc_html__('N/A', 'lmb-core') . '</em>'; ?></td>
                                         <td><strong><?php echo esc_html($package_price); ?> MAD</strong></td>
-                                        <td><span class="lmb-status-badge lmb-status-<?php echo esc_attr($payment_status); ?>"><?php echo esc_html(ucfirst($payment_status)); ?></span></td>
+                                        <td>
+                                            <span class="lmb-status-badge lmb-status-<?php echo esc_attr($payment_status); ?>">
+                                                <?php echo esc_html(ucfirst($payment_status)); ?>
+                                            </span>
+                                            <?php if ($payment_status === 'rejected' && !empty($rejection_reason)): ?>
+                                                <div class="lmb-rejection-reason">
+                                                    <strong><?php esc_html_e('Reason:', 'lmb-core'); ?></strong> <?php echo esc_html($rejection_reason); ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
                                         <td>
                                             <?php if ($payment_status === 'approved'): ?>
                                             <button class="lmb-btn lmb-btn-sm lmb-btn-primary lmb-download-invoice" data-payment-id="<?php echo esc_attr($payment->ID); ?>">
@@ -79,7 +92,7 @@ class LMB_Invoices_Widget extends Widget_Base {
                                             <?php endif; ?>
                                         </td>
                                     </tr>
-                                <?php endforeach; ?>
+                                <?php endwhile; ?>
                             </tbody>
                         </table>
                     </div>

@@ -11,7 +11,8 @@ class LMB_Ajax_Handlers {
             'lmb_mark_all_notifications_read', 'lmb_save_package', 'lmb_delete_package',
             'lmb_upload_newspaper', 'lmb_upload_bank_proof', 'lmb_fetch_users', 'lmb_fetch_ads',
             'lmb_upload_accuse', 'lmb_user_get_ads',
-            'lmb_get_pending_accuse_ads', 'lmb_attach_accuse_to_ad'
+            'lmb_get_pending_accuse_ads', 'lmb_attach_accuse_to_ad',
+            'lmb_get_pending_invoices_form', 'lmb_generate_invoice_pdf',
         ];
         foreach ($actions as $action) {
             add_action('wp_ajax_' . $action, [__CLASS__, 'handle_request']);
@@ -312,42 +313,60 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['message' => 'Newspaper uploaded successfully.']);
     }
 
+    // --- REVISED FUNCTION ---
     private static function lmb_upload_bank_proof() {
-        if (!is_user_logged_in()) wp_send_json_error(['message' => 'You must be logged in.']);
-        if (empty($_POST['package_id']) || empty($_FILES['proof_file'])) wp_send_json_error(['message' => 'Missing required fields.']);
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => 'You must be logged in.']);
+        }
+        
+        // --- FIX: Changed the check from 'package_id' to 'payment_id' ---
+        if (empty($_POST['payment_id']) || empty($_FILES['proof_file'])) {
+            wp_send_json_error(['message' => 'Missing required fields. Please select an invoice and a proof file.']);
+        }
         
         require_once(ABSPATH . 'wp-admin/includes/file.php');
         require_once(ABSPATH . 'wp-admin/includes/image.php');
         require_once(ABSPATH . 'wp-admin/includes/media.php');
         
         $user_id = get_current_user_id();
-        $attachment_id = media_handle_upload('proof_file', 0);
-        if (is_wp_error($attachment_id)) wp_send_json_error(['message' => 'File Upload Error: ' . $attachment_id->get_error_message()]);
+        $payment_id = intval($_POST['payment_id']);
+        $payment_post = get_post($payment_id);
 
-        $package_id = intval($_POST['package_id']);
-        $payment_id = wp_insert_post([
-            'post_type' => 'lmb_payment',
-            'post_title' => sprintf('Proof from %s for %s', wp_get_current_user()->display_name, get_the_title($package_id)),
-            'post_status' => 'publish',
-            'post_author' => $user_id,
-        ]);
-        if (is_wp_error($payment_id)) {
-            wp_delete_attachment($attachment_id, true);
-            wp_send_json_error(['message' => 'Could not create payment record.']);
+        // Security check: ensure the payment belongs to the current user
+        if (!$payment_post || $payment_post->post_author != $user_id) {
+            wp_send_json_error(['message' => 'Invalid invoice selected.']);
         }
 
-        update_post_meta($payment_id, 'user_id', $user_id);
-        update_post_meta($payment_id, 'package_id', $package_id);
-        update_post_meta($payment_id, 'proof_attachment_id', $attachment_id);
-        update_post_meta($payment_id, 'payment_reference', sanitize_text_field($_POST['payment_reference']));
-        update_post_meta($payment_id, 'payment_status', 'pending');
-        
-        LMB_Ad_Manager::log_activity(sprintf('Payment proof #%d submitted.', $payment_id));
-        LMB_Notification_Manager::notify_admin('New Payment Proof Submitted', sprintf('User %s submitted proof for "%s".', wp_get_current_user()->display_name, get_the_title($package_id)));
+        // Handle the file upload
+        $attachment_id = media_handle_upload('proof_file', $payment_id); // Associate upload with payment post
+        if (is_wp_error($attachment_id)) {
+            wp_send_json_error(['message' => 'File Upload Error: ' . $attachment_id->get_error_message()]);
+        }
 
-        wp_send_json_success(['message' => 'Your proof has been submitted for review.']);
+        // Update the payment post with the proof attachment ID
+        update_post_meta($payment_id, 'proof_attachment_id', $attachment_id);
+        
+        LMB_Ad_Manager::log_activity(sprintf('Payment proof for invoice #%d submitted.', $payment_id));
+        
+        // Notify admins that a new proof is ready for verification
+        if(class_exists('LMB_Notification_Manager')) {
+            $user = wp_get_current_user();
+            $package_id = get_post_meta($payment_id, 'package_id', true);
+            $title = 'New Payment Proof Submitted';
+            $msg = sprintf('User %s has submitted proof for invoice #%s ("%s").', $user->display_name, get_post_meta($payment_id, 'payment_reference', true), get_the_title($package_id));
+            
+            // This is a new helper function we should add to the notification manager
+            // For now, we'll just get the admin IDs directly.
+            $admin_ids = get_users(['role' => 'administrator', 'fields' => 'ID']);
+            foreach ($admin_ids as $admin_id) {
+                LMB_Notification_Manager::add($admin_id, 'proof_submitted', $title, $msg, ['ad_id' => $payment_id]);
+            }
+        }
+
+        wp_send_json_success(['message' => 'Your proof has been submitted for review. You will be notified once it is approved.']);
     }
 
+    // --- REVISED FUNCTION ---
     private static function lmb_save_package() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied']);
         
@@ -356,18 +375,24 @@ class LMB_Ajax_Handlers {
         $price = floatval($_POST['price']);
         $points = intval($_POST['points']);
         $cost = intval($_POST['cost_per_ad']);
-        $desc = sanitize_textarea_field($_POST['description']);
-        if (!$name || !$price || !$points || !$cost) wp_send_json_error(['message' => 'All fields are required']);
+        $desc = wp_kses_post($_POST['description']);
+
+        if (!$name || !$price || !$points || !$cost) {
+            wp_send_json_error(['message' => 'All fields except description are required.']);
+        }
 
         $post_data = ['post_title' => $name, 'post_content' => $desc, 'post_type' => 'lmb_package', 'post_status' => 'publish'];
+        
         if ($package_id) {
             $post_data['ID'] = $package_id;
-            $result = wp_update_post($post_data);
+            $result = wp_update_post($post_data, true);
         } else {
-            $result = wp_insert_post($post_data);
+            $result = wp_insert_post($post_data, true);
         }
         
-        if (is_wp_error($result) || $result === 0) wp_send_json_error(['message' => 'Could not save the package.']);
+        if (is_wp_error($result)) {
+            wp_send_json_error(['message' => $result->get_error_message()]);
+        }
         
         $new_pkg_id = $package_id ?: $result;
         update_post_meta($new_pkg_id, 'price', $price);
@@ -375,7 +400,20 @@ class LMB_Ajax_Handlers {
         update_post_meta($new_pkg_id, 'cost_per_ad', $cost);
         
         LMB_Ad_Manager::log_activity(sprintf('Package "%s" %s', $name, $package_id ? 'updated' : 'created'));
-        wp_send_json_success(['message' => 'Package saved successfully.']);
+        
+        // --- ADDED: Return the full package data for dynamic updates ---
+        wp_send_json_success([
+            'message' => 'Package saved successfully.',
+            'package' => [
+                'id' => $new_pkg_id,
+                'name' => $name,
+                'price' => $price,
+                'points' => $points,
+                'cost_per_ad' => $cost,
+                'description' => $desc,
+                'trimmed_description' => wp_trim_words($desc, 20)
+            ]
+        ]);
     }
 
     private static function lmb_ad_status_change() {
@@ -585,11 +623,20 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['message' => 'Balance updated successfully!', 'new_balance' => $new_balance]);
     }
 
+    // --- REVISED FUNCTION ---
     private static function lmb_generate_package_invoice() {
-        if (!is_user_logged_in() || !isset($_POST['pkg_id'])) wp_send_json_error(['message' => 'Invalid request.'], 403);
-        $pdf_url = LMB_Invoice_Handler::generate_package_invoice_pdf_for_user(get_current_user_id(), intval($_POST['pkg_id']));
-        if ($pdf_url) wp_send_json_success(['pdf_url' => $pdf_url]);
-        else wp_send_json_error(['message' => 'Could not generate invoice.']);
+        if (!is_user_logged_in() || !isset($_POST['pkg_id'])) {
+            wp_send_json_error(['message' => 'Invalid request.'], 403);
+        }
+
+        // The handler now calls our robust, centralized invoice creation method
+        $pdf_url = LMB_Invoice_Handler::create_invoice_for_package(get_current_user_id(), intval($_POST['pkg_id']));
+        
+        if ($pdf_url) {
+            wp_send_json_success(['pdf_url' => $pdf_url]);
+        } else {
+            wp_send_json_error(['message' => 'Could not generate invoice. Please try again.']);
+        }
     }
 
     private static function lmb_get_notifications() {
@@ -620,41 +667,22 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['message' => 'Package deleted.']);
     }
 
-    // --- REVISED AND FINAL FUNCTION ---
+    // --- REVISED FUNCTION ---
     private static function lmb_get_pending_accuse_ads() {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Access Denied.']);
         }
-
         $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
-        
-        // --- THIS IS THE CORRECTED QUERY ---
-        // It relies ONLY on your custom meta fields for status, which is the correct approach.
-        // The 'post_status' => 'publish' has been removed to prevent conflicts.
         $args = [
-            'post_type' => 'lmb_legal_ad',
-            'posts_per_page' => 5,
-            'paged' => $paged,
+            'post_type' => 'lmb_legal_ad', 'posts_per_page' => 5, 'paged' => $paged,
             'meta_query' => [
                 'relation' => 'AND',
-                // Condition 1: The custom status must be 'published'.
-                [
-                    'key' => 'lmb_status',
-                    'value' => 'published',
-                    'compare' => '=',
-                ],
-                // Condition 2: The meta key for the accuse ID must not exist.
-                [
-                    'key' => 'lmb_accuse_attachment_id',
-                    'compare' => 'NOT EXISTS',
-                ]
+                ['key' => 'lmb_status', 'value' => 'published'],
+                ['key' => 'lmb_accuse_attachment_id', 'compare' => 'NOT EXISTS']
             ],
-            'orderby' => 'date',
-            'order' => 'DESC'
+            'orderby' => 'date', 'order' => 'DESC'
         ];
-        
         $query = new WP_Query($args);
-        
         ob_start();
         if ($query->have_posts()) {
             echo '<div class="lmb-accuse-pending-list">';
@@ -662,20 +690,22 @@ class LMB_Ajax_Handlers {
                 $query->the_post();
                 $ad_id = get_the_ID();
                 $client = get_userdata(get_post_field('post_author', $ad_id));
-                echo '<div class="lmb-accuse-item">
+                // --- THIS HTML IS NOW A FORM FOR EACH ITEM ---
+                echo '<form class="lmb-accuse-item lmb-accuse-upload-form" enctype="multipart/form-data">
                         <div class="lmb-accuse-info">
                             <strong>' . get_the_title() . '</strong> (ID: ' . $ad_id . ')<br>
                             <small>Client: ' . ($client ? esc_html($client->display_name) : 'N/A') . ' | Published: ' . get_the_date() . '</small>
                         </div>
                         <div class="lmb-accuse-actions">
-                            <button class="lmb-btn lmb-btn-sm lmb-btn-primary lmb-upload-accuse-btn" data-ad-id="' . $ad_id . '">
+                            <input type="file" name="accuse_file" class="lmb-file-input-accuse" required accept=".pdf,.jpg,.jpeg,.png">
+                            <input type="hidden" name="legal_ad_id" value="' . $ad_id . '">
+                            <button type="submit" class="lmb-btn lmb-btn-sm lmb-btn-primary">
                                 <i class="fas fa-upload"></i> Upload
                             </button>
                         </div>
-                      </div>';
+                      </form>';
             }
             echo '</div>';
-            
             $total_pages = $query->max_num_pages;
             if ($total_pages > 1) {
                 echo '<div class="lmb-pagination">' . paginate_links(['total' => $total_pages, 'current' => $paged, 'format' => '?paged=%#%', 'base' => '#%#%']) . '</div>';
@@ -685,7 +715,6 @@ class LMB_Ajax_Handlers {
         }
         $html = ob_get_clean();
         wp_reset_postdata();
-        
         wp_send_json_success(['html' => $html]);
     }
 
@@ -716,5 +745,77 @@ class LMB_Ajax_Handlers {
         }
         
         wp_send_json_success(['message' => 'Accuse attached successfully! The client has been notified.']);
+    }
+
+    // --- ADD THIS NEW FUNCTION TO THE CLASS ---
+    private static function lmb_get_pending_invoices_form() {
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => 'Not logged in.']);
+        }
+
+        $pending_payments = get_posts([
+            'post_type' => 'lmb_payment',
+            'post_status' => 'publish',
+            'author' => get_current_user_id(),
+            'posts_per_page' => -1,
+            'meta_query' => [['key' => 'payment_status', 'value' => 'pending']]
+        ]);
+
+        ob_start();
+        if (empty($pending_payments)) {
+            echo '<div class="lmb-empty-state">
+                    <i class="fas fa-check-circle fa-3x"></i>
+                    <h4>' . esc_html__('No Pending Invoices', 'lmb-core') . '</h4>
+                    <p>' . esc_html__('You have no invoices awaiting payment. To get one, please select a package from our pricing table.', 'lmb-core') . '</p>
+                  </div>';
+        } else {
+            echo '<form id="lmb-upload-proof-form" class="lmb-form" enctype="multipart/form-data">
+                    <div class="lmb-form-group">
+                        <label for="payment_id"><i class="fas fa-file-invoice"></i> ' . esc_html__('Select Invoice to Pay','lmb-core') . '</label>
+                        <select name="payment_id" id="payment_id" class="lmb-select" required>
+                            <option value="">' . esc_html__('Select the invoice you paid...','lmb-core') . '</option>';
+            foreach ($pending_payments as $payment) {
+                $ref = get_post_meta($payment->ID, 'payment_reference', true);
+                $price = get_post_meta($payment->ID, 'package_price', true);
+                echo '<option value="' . esc_attr($payment->ID) . '">' . esc_html($ref) . ' (' . esc_html(get_the_title(get_post_meta($payment->ID, 'package_id', true))) . ' - ' . esc_html($price) . ' MAD)</option>';
+            }
+            echo '</select>
+                    </div>
+                    <div class="lmb-form-group">
+                        <label for="proof_file"><i class="fas fa-paperclip"></i> ' . esc_html__('Proof of Payment File','lmb-core') . '</label>
+                        <input type="file" name="proof_file" id="proof_file" class="lmb-input" accept="image/jpeg,image/png,application/pdf" required>
+                        <small>' . esc_html__('Accepted formats: JPG, PNG, PDF. Maximum size: 5MB.','lmb-core') . '</small>
+                    </div>
+                    <div class="lmb-form-actions">
+                        <button type="submit" class="lmb-btn lmb-btn-primary lmb-btn-large"><i class="fas fa-check-circle"></i> ' . esc_html__('Submit for Verification','lmb-core') . '</button>
+                    </div>
+                </form>';
+        }
+        $html = ob_get_clean();
+        wp_send_json_success(['html' => $html]);
+    }
+
+    // --- NEW FUNCTION ---
+    private static function lmb_generate_invoice_pdf() {
+        if (!is_user_logged_in() || !isset($_POST['payment_id'])) {
+            wp_send_json_error(['message' => 'Invalid request.'], 403);
+        }
+
+        $payment_id = intval($_POST['payment_id']);
+        $payment_post = get_post($payment_id);
+
+        // Security check: ensure the invoice belongs to the current user
+        if (!$payment_post || $payment_post->post_author != get_current_user_id()) {
+            wp_send_json_error(['message' => 'Permission denied.'], 403);
+        }
+
+        // Call the existing PDF generation logic
+        $pdf_url = LMB_Invoice_Handler::generate_invoice_pdf($payment_id);
+        
+        if ($pdf_url) {
+            wp_send_json_success(['pdf_url' => $pdf_url]);
+        } else {
+            wp_send_json_error(['message' => 'Could not generate PDF invoice.']);
+        }
     }
 }

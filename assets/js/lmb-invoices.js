@@ -1,3 +1,5 @@
+// FILE: assets/js/lmb-invoices.js
+
 jQuery(document).ready(function($) {
     $('.lmb-invoices-widget').on('click', '.lmb-download-invoice', function() {
         const paymentId = $(this).data('payment-id');
@@ -6,9 +8,10 @@ jQuery(document).ready(function($) {
         
         button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Generating...');
         
-        $.post(lmbAjax.ajaxurl, {
+        // --- FIX: Replaced lmbAjax with the correct object name lmb_ajax_params ---
+        $.post(lmb_ajax_params.ajaxurl, {
             action: 'lmb_generate_invoice_pdf',
-            nonce: lmbAjax.nonce,
+            nonce: lmb_ajax_params.nonce,
             payment_id: paymentId
         }, function(response) {
             if (response.success && response.data.pdf_url) {

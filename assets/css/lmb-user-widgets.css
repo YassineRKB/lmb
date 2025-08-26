@@ -146,3 +146,15 @@ h4.lmb-ad-title {
     color: white;
     border-color: #667eea;
 }
+/* ... add to the end of lmb-user-widgets.css ... */
+
+/* Rejection Reason Styling in Tables */
+.lmb-rejection-reason {
+    font-size: 12px;
+    color: #a94442; /* A reddish color to indicate an issue */
+    background-color: #f2dede;
+    border-left: 3px solid #ebccd1;
+    padding: 8px 12px;
+    margin-top: 8px;
+    border-radius: 4px;
+}

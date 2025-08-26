@@ -1,6 +1,28 @@
 jQuery(document).ready(function($) {
-    $('#lmb-upload-proof-form').on('submit', function(e) {
-        e.preventDefault();
+    const widget = $('.lmb-upload-bank-proof-widget');
+    if (!widget.length) return;
+
+    const container = $('#lmb-upload-proof-container');
+
+    // Function to fetch and render the form/content
+    function fetchFormContent() {
+        container.html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Loading pending invoices...</div>');
+        
+        $.post(lmb_ajax_params.ajaxurl, {
+            action: 'lmb_get_pending_invoices_form',
+            nonce: lmb_ajax_params.nonce,
+        }).done(function(response) {
+            if (response.success) {
+                container.html(response.data.html);
+            } else {
+                container.html('<div class="lmb-notice lmb-notice-error"><p>Could not load content.</p></div>');
+            }
+        });
+    }
+
+    // Handle form submission using event delegation
+    container.on('submit', '#lmb-upload-proof-form', function(e) {
+        e.preventDefault(); // Prevent page reload
         const form = $(this);
         const submitBtn = form.find('button[type="submit"]');
         const formData = new FormData(this);
@@ -17,15 +39,19 @@ jQuery(document).ready(function($) {
             contentType: false,
         }).done(function(response) {
             if (response.success) {
-                alert('Success: Your proof has been submitted for review.');
-                form[0].reset();
+                showLMBModal('success', response.data.message);
+                // --- FIX: Instead of reloading the page, we just refresh the widget's content ---
+                fetchFormContent();
             } else {
-                alert('Error: ' + response.data.message);
+                showLMBModal('error', response.data.message);
+                submitBtn.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Submit for Verification');
             }
         }).fail(function() {
-            alert('An unexpected server error occurred.');
-        }).always(function() {
+            showLMBModal('error', 'An unexpected server error occurred.');
             submitBtn.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Submit for Verification');
         });
     });
+
+    // Initial load of the form
+    fetchFormContent();
 });
