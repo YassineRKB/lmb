@@ -23,12 +23,33 @@ class LMB_User_Dashboard {
         add_shortcode('lmb_user_list', [__CLASS__, 'render_user_list']);
     }
 
+    // --- REVISED FUNCTION ---
     public static function collect_user_stats() {
-        if (!is_user_logged_in()) return ['points_balance' => 0, 'ads_total' => 0, 'ads_pending' => 0, 'ads_published' => 0];
+        if (!is_user_logged_in()) return [];
+        
+        global $wpdb;
         $user_id = get_current_user_id();
-        $pending_query = new WP_Query(['author' => $user_id, 'post_type' => 'lmb_legal_ad', 'post_status' => 'any', 'posts_per_page' => -1, 'meta_query' => [['key' => 'lmb_status', 'value' => 'pending_review']]]);
-        $published_query = new WP_Query(['author' => $user_id, 'post_type' => 'lmb_legal_ad', 'post_status' => 'publish', 'posts_per_page' => -1]);
-        return ['points_balance' => LMB_Points::get_balance($user_id), 'ads_total' => count_user_posts($user_id, 'lmb_legal_ad', true), 'ads_pending' => $pending_query->found_posts, 'ads_published' => $published_query->found_posts];
+
+        $stats = [];
+        $stats['points_balance'] = LMB_Points::get_balance($user_id);
+        $stats['ads_total'] = count_user_posts($user_id, 'lmb_legal_ad', true);
+        
+        // Count ads by custom status
+        $stats['ads_pending'] = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id WHERE p.post_author = %d AND p.post_type = 'lmb_legal_ad' AND pm.meta_key = 'lmb_status' AND pm.meta_value = 'pending_review'", $user_id));
+        $stats['ads_published'] = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id WHERE p.post_author = %d AND p.post_type = 'lmb_legal_ad' AND pm.meta_key = 'lmb_status' AND pm.meta_value = 'published'", $user_id));
+
+        // --- NEW STAT: Due Payments ---
+        $stats['due_payments_value'] = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(CAST(pm.meta_value AS DECIMAL(10,2))) 
+             FROM {$wpdb->posts} p 
+             JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id 
+             WHERE p.post_type = 'lmb_payment' AND p.post_author = %d 
+             AND pm.meta_key = 'package_price' 
+             AND p.ID IN (SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = 'payment_status' AND meta_value = 'pending')", 
+            $user_id
+        ));
+
+        return $stats;
     }
     
     public static function render_user_stats() {

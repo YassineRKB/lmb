@@ -67,6 +67,42 @@ class LMB_Admin {
         );
     }
 
+    // --- REPLACED aTH a NEW, COMPREHENSIVE FUNCTION ---
+    public static function collect_stats() {
+        global $wpdb;
+        $stats = [];
+
+        // Ad Counts by Status
+        $ad_counts = (array) wp_count_posts('lmb_legal_ad');
+        $stats['ads_draft'] = $ad_counts['draft'] ?? 0;
+        $stats['ads_pending'] = $ad_counts['pending'] ?? 0; // WordPress uses 'pending' for pending review
+        $stats['ads_published'] = $ad_counts['publish'] ?? 0;
+        $stats['ads_total'] = array_sum($ad_counts);
+
+        // Due Payments (pending invoices)
+        $stats['due_payments_count'] = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = 'payment_status' AND meta_value = 'pending'");
+        $stats['due_payments_value'] = (float) $wpdb->get_var("SELECT SUM(CAST(meta_value AS DECIMAL(10,2))) FROM {$wpdb->postmeta} WHERE meta_key = 'package_price' AND post_id IN (SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = 'payment_status' AND meta_value = 'pending')");
+
+        // Points & Earnings (based on transactions)
+        $transactions_table = $wpdb->prefix . 'lmb_points_transactions';
+        $stats['total_spent_points'] = abs((int) $wpdb->get_var("SELECT SUM(amount) FROM {$transactions_table} WHERE amount < 0"));
+
+        // Time-based earnings (assuming 1 point = 1 MAD for simplicity, adjust if different)
+        $stats['earnings_month'] = abs((float) $wpdb->get_var($wpdb->prepare("SELECT SUM(amount) FROM {$transactions_table} WHERE amount < 0 AND created_at >= %s", date('Y-m-01'))));
+        $stats['earnings_quarter'] = abs((float) $wpdb->get_var($wpdb->prepare("SELECT SUM(amount) FROM {$transactions_table} WHERE amount < 0 AND created_at >= %s", date('Y-m-d', strtotime('-3 months')))));
+        $stats['earnings_year'] = abs((float) $wpdb->get_var($wpdb->prepare("SELECT SUM(amount) FROM {$transactions_table} WHERE amount < 0 AND created_at >= %s", date('Y-01-01'))));
+
+        // Total points in the system
+        $stats['total_unspent_points'] = (int) $wpdb->get_var("SELECT SUM(CAST(meta_value AS UNSIGNED)) FROM {$wpdb->usermeta} WHERE meta_key = 'lmb_points_balance'");
+        $stats['total_points_system'] = $stats['total_unspent_points'] + $stats['total_spent_points'];
+        
+        // Other Counts
+        $stats['users_total'] = count_users()['total_users'];
+        $stats['news_total'] = wp_count_posts('lmb_newspaper')->publish ?? 0;
+
+        return $stats;
+    }
+
     /**
      * Register settings used in the tabs.
      */
@@ -257,28 +293,27 @@ class LMB_Admin {
         <p><?php esc_html_e('Roles management is handled elsewhere in the plugin.', 'lmb-core'); ?></p>
     <?php }
 
-    /**
-     * Stats for the dashboard cards.
-     */
-    public static function collect_stats() {
-        $ad_counts = (array) wp_count_posts('lmb_legal_ad');
-        $news_counts = (array) wp_count_posts('lmb_newspaper');
-        $user_counts = count_users();
+    
+     /*    public static function collect_stats() {
+            $ad_counts = (array) wp_count_posts('lmb_legal_ad');
+            $news_counts = (array) wp_count_posts('lmb_newspaper');
+            $user_counts = count_users();
 
-        $ads_published = isset($ad_counts['publish']) ? (int) $ad_counts['publish'] : 0;
-        $ads_draft = isset($ad_counts['draft']) ? (int) $ad_counts['draft'] : 0;
-        // Note: The status is 'pending_review', not 'pending'
-        $ads_pending = isset($ad_counts['pending_review']) ? (int) $ad_counts['pending_review'] : 0;
-        
-        return [
-            'users_total'     => isset($user_counts['total_users']) ? (int) $user_counts['total_users'] : 0,
-            'ads_published'   => $ads_published,
-            'ads_unpublished' => $ads_draft + $ads_pending,
-            'ads_total'       => $ads_published + $ads_draft + $ads_pending,
-            'news_total'      => isset($news_counts['publish']) ? (int) $news_counts['publish'] : 0,
-            'rev_year'        => 1250, // Placeholder value
-        ];
-    }
+            $ads_published = isset($ad_counts['publish']) ? (int) $ad_counts['publish'] : 0;
+            $ads_draft = isset($ad_counts['draft']) ? (int) $ad_counts['draft'] : 0;
+            // Note: The status is 'pending_review', not 'pending'
+            $ads_pending = isset($ad_counts['pending_review']) ? (int) $ad_counts['pending_review'] : 0;
+            
+            return [
+                'users_total'     => isset($user_counts['total_users']) ? (int) $user_counts['total_users'] : 0,
+                'ads_published'   => $ads_published,
+                'ads_unpublished' => $ads_draft + $ads_pending,
+                'ads_total'       => $ads_published + $ads_draft + $ads_pending,
+                'news_total'      => isset($news_counts['publish']) ? (int) $news_counts['publish'] : 0,
+                'rev_year'        => 1250, // Placeholder value
+            ];
+        } */
+    
     
     private static function get_default_invoice_template() {
         return '<h1>Invoice {{invoice_number}}</h1>

@@ -416,3 +416,23 @@ input[type="file"].lmb-file-input-accuse::file-selector-button {
   cursor: pointer;
   margin-right: 10px;
 }
+/* ADD to lmb-admin-widgets.css */
+.lmb-stats-grid-admin {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.lmb-stat-card .lmb-currency {
+    font-size: 16px;
+    font-weight: 500;
+    color: #6c757d;
+    margin-left: 4px;
+}
+
+/* Specific card colors for better visual distinction */
+.lmb-stat-card.lmb-stat-ads-published .lmb-stat-icon { color: #28a745; }
+.lmb-stat-card.lmb-stat-ads-pending .lmb-stat-icon { color: #ffc107; }
+.lmb-stat-card.lmb-stat-ads-draft .lmb-stat-icon { color: #6c757d; }
+.lmb-stat-card.lmb-stat-due-payments .lmb-stat-icon { color: #dc3545; }
+.lmb-stat-card.lmb-stat-earnings .lmb-stat-icon { color: #17a2b8; }
+.lmb-stat-card.lmb-stat-points .lmb-stat-icon { color: #6610f2; }
+.lmb-stat-card.lmb-stat-news .lmb-stat-icon { color: #fd7e14; }
