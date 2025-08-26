@@ -1,4 +1,6 @@
 <?php
+// FILE: elementor/widgets/class-lmb-notifications-widget.php
+
 use Elementor\Widget_Base;
 if (!defined('ABSPATH')) exit;
 
@@ -9,6 +11,11 @@ class LMB_Notifications_Widget extends Widget_Base {
     public function get_categories(){ return ['lmb-user-widgets', 'lmb-admin-widgets']; }
 
     public function get_script_depends() {
+        return ['lmb-notifications'];
+    }
+    
+    // --- FIX: Add the correct style dependency ---
+    public function get_style_depends() {
         return ['lmb-notifications'];
     }
 
@@ -24,7 +31,8 @@ class LMB_Notifications_Widget extends Widget_Base {
                 <span class="lmb-badge" data-count="0">0</span>
                 <span class="screen-reader-text"><?php esc_html_e('Toggle notifications', 'lmb-core'); ?></span>
             </button>
-            <div class="lmb-dropdown" id="lmb-dropdown-<?php echo $widget_id; ?>" role="menu" aria-label="<?php esc_attr_e('Notifications', 'lmb-core'); ?>" style="display:none">
+            
+            <div class="lmb-dropdown" id="lmb-dropdown-<?php echo $widget_id; ?>" role="menu" aria-label="<?php esc_attr_e('Notifications', 'lmb-core'); ?>">
                 <div class="lmb-dropdown-header">
                     <strong><?php esc_html_e('Notifications', 'lmb-core'); ?></strong>
                     <button type="button" class="lmb-mark-all" disabled><?php esc_html_e('Mark all as read', 'lmb-core'); ?></button>

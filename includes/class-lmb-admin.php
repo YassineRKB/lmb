@@ -307,16 +307,19 @@ class LMB_Admin {
     }
     
     private static function get_default_receipt_template() {
-        return '<div style="text-align: center; margin-bottom: 30px;">
-    <h1>ACCUSE DE PUBLICATION</h1>
-    <p>Legal Ad Receipt #{{ad_id}}</p>
-</div>
+        return '<h1 style="color: #4CAF50;">Payment Receipt</h1>
+<h2>Reference: {{invoice_number}}</h2>
 <hr>
-<h3>{{company_name}}</h3>
-<p><strong>Ad Type:</strong> {{ad_type}}</p>
-<p><strong>Publication Date:</strong> {{publication_date}}</p>
+<h3>Client Details</h3>
+<p>Name: {{user_name}}</p>
 <hr>
-<p>This document serves as proof of publication for the above legal advertisement.</p>';
+<h3>Transaction Details</h3>
+<p><strong>Package Purchased:</strong> {{package_name}}</p>
+<p><strong>Amount Paid:</strong> {{package_price}} MAD</p>
+<p><strong>Points Awarded:</strong> {{points_awarded}}</p>
+<p><strong>Approval Date:</strong> {{approval_date}}</p>
+<hr>
+<p style="text-align:center;">Thank you for your business. The points have been added to your account.</p>';
     }
 
 

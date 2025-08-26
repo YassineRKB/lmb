@@ -60,6 +60,9 @@ class LMB_Invoice_Handler {
 
         if (!$user || !$package) return false;
 
+        $payment_status = get_post_meta($payment_id, 'payment_status', true);
+        $is_receipt = ($payment_status === 'approved');
+
         $vars = [
             'invoice_number'    => get_post_meta($payment_id, 'payment_reference', true),
             'invoice_date'      => get_the_date('Y-m-d', $payment_id),
@@ -70,18 +73,26 @@ class LMB_Invoice_Handler {
             'payment_reference' => get_post_meta($payment_id, 'payment_reference', true),
             'our_bank_name'     => get_option('lmb_bank_name', 'Your Bank Name'),
             'our_iban'          => get_option('lmb_bank_iban', 'Your IBAN/RIB'),
+            'points_awarded'    => get_post_meta($package_id, 'points', true),
+            'approval_date'     => get_post_meta($payment_id, 'approved_date', true) ?: current_time('mysql'),
         ];
         
-        $template = get_option('lmb_invoice_template_html', self::get_default_invoice_template());
+        if ($is_receipt) {
+            // Use the receipt template from options, with a fallback default.
+            $template = get_option('lmb_receipt_template_html', '<h1>Receipt {{invoice_number}}</h1><p>Thank you for your payment of {{package_price}} MAD for package: {{package_name}}.</p><p>{{points_awarded}} points have been added to your account.</p>');
+            $filename = 'receipt-' . $vars['invoice_number'] . '.pdf';
+            $title = 'Receipt';
+        } else {
+            // Use the invoice template from options, with a fallback default.
+            $template = get_option('lmb_invoice_template_html', '<h1>Invoice {{invoice_number}}</h1><p>Please pay {{package_price}} MAD for package: {{package_name}}.</p><p>Reference: {{payment_reference}}</p>');
+            $filename = 'invoice-' . $vars['invoice_number'] . '.pdf';
+            $title = 'Invoice';
+        }
+
         foreach ($vars as $key => $value) {
             $template = str_replace('{{'.$key.'}}', esc_html($value), $template);
         }
 
-        $filename = 'invoice-' . $vars['invoice_number'] . '.pdf';
-        return LMB_PDF_Generator::generate_html_pdf($filename, $template, 'Invoice');
-    }
-    
-    private static function get_default_invoice_template() {
-        return '<h1>Invoice {{invoice_number}}</h1><p>Package: {{package_name}}</p><p>Price: {{package_price}}</p><p>Ref: {{payment_reference}}</p>';
+        return LMB_PDF_Generator::generate_html_pdf($filename, $template, $title);
     }
 }

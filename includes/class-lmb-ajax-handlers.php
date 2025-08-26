@@ -747,7 +747,7 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['message' => 'Accuse attached successfully! The client has been notified.']);
     }
 
-    // --- ADD THIS NEW FUNCTION TO THE CLASS ---
+    // --- REVISED FUNCTION ---
     private static function lmb_get_pending_invoices_form() {
         if (!is_user_logged_in()) {
             wp_send_json_error(['message' => 'Not logged in.']);
