@@ -325,3 +325,27 @@
     border-color: #667eea;
     font-weight: 600;
 }
+/* Legal Ads List Filter Grid */
+.lmb-filters-container {
+    margin-bottom: 20px;
+}
+.lmb-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    align-items: center;
+}
+.lmb-filter-grid .lmb-btn {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* Legal Ads List Table Actions */
+.lmb-ads-table .lmb-actions-cell {
+    display: flex;
+    gap: 5px;
+}
+.lmb-ads-table .lmb-actions-cell .lmb-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+}

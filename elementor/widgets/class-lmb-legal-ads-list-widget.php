@@ -24,10 +24,8 @@ class LMB_Legal_Ads_List_Widget extends Widget_Base {
             return;
         }
 
-        $ad_types = [];
-        if(method_exists('LMB_Admin', 'get_unique_ad_types')){
-            $ad_types = LMB_Admin::get_unique_ad_types();
-        }
+        // --- THIS CALL WILL NOW WORK ---
+        $ad_types = class_exists('LMB_Admin') ? LMB_Admin::get_unique_ad_types() : [];
         
         ?>
         <div class="lmb-legal-ads-list-widget lmb-admin-widget" id="lmb-legal-ads-list-widget">
@@ -37,13 +35,13 @@ class LMB_Legal_Ads_List_Widget extends Widget_Base {
             <div class="lmb-widget-content">
                 <div class="lmb-filters-container">
                     <form id="lmb-ads-filters-form">
-                        <div class="lmb-filter-row" style="grid-template-columns: repeat(5, 1fr) auto auto;">
+                        <div class="lmb-filter-grid">
                             <input type="text" name="filter_ref" placeholder="<?php esc_attr_e('Ref/ID or Title', 'lmb-core'); ?>" class="lmb-filter-input">
                             <input type="text" name="filter_user" placeholder="<?php esc_attr_e('User (ID/login/email)', 'lmb-core'); ?>" class="lmb-filter-input">
                             <input type="text" name="filter_company" placeholder="<?php esc_attr_e('Company', 'lmb-core'); ?>" class="lmb-filter-input">
                             <select name="filter_ad_type" class="lmb-filter-select">
                                 <option value=""><?php esc_html_e('All Ad Types', 'lmb-core'); ?></option>
-                                <?php foreach ($ad_types as $type): ?>
+                                <?php foreach ($ad_types as $type): if(empty($type)) continue; ?>
                                     <option value="<?php echo esc_attr($type); ?>"><?php echo esc_html($type); ?></option>
                                 <?php endforeach; ?>
                             </select>

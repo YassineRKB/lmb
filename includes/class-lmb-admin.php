@@ -318,4 +318,30 @@ class LMB_Admin {
 <hr>
 <p>This document serves as proof of publication for the above legal advertisement.</p>';
     }
+
+
+    /**
+     * Get unique ad types from post meta for filtering.
+     */
+    public static function get_unique_ad_types() {
+        global $wpdb;
+        $meta_key = 'ad_type';
+        // The phpcs:ignore below is safe because we are controlling all parts of the query.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+        $results = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm
+             JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+             WHERE p.post_type = 'lmb_legal_ad' AND pm.meta_key = %s
+             ORDER BY pm.meta_value ASC",
+            $meta_key
+        ));
+        return $results;
+    }
+
+
+
+
+
+
+
 }

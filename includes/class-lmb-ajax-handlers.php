@@ -102,7 +102,12 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['message' => 'Accuse uploaded and linked successfully.']);
     }
 
+    // --- REVISED FUNCTION ---
     private static function lmb_fetch_ads() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access Denied.']);
+        }
+
         $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
         
         $args = [
@@ -110,16 +115,64 @@ class LMB_Ajax_Handlers {
             'post_status' => 'any',
             'posts_per_page' => 10,
             'paged' => $paged,
-            'meta_query' => [],
-            's' => '',
+            'meta_query' => ['relation' => 'AND'],
         ];
 
-        // Filtering logic
-        if (!empty($_POST['filter_ref'])) {
-            $args['s'] = sanitize_text_field($_POST['filter_ref']);
-        }
+        // --- FILTERING LOGIC ---
+
+        // Filter by Status
         if (!empty($_POST['filter_status'])) {
-            $args['meta_query'][] = ['key' => 'lmb_status', 'value' => sanitize_text_field($_POST['filter_status'])];
+            $args['meta_query'][] = [
+                'key' => 'lmb_status', 
+                'value' => sanitize_text_field($_POST['filter_status'])
+            ];
+        }
+
+        // Filter by Ad Type
+        if (!empty($_POST['filter_ad_type'])) {
+            $args['meta_query'][] = [
+                'key' => 'ad_type', 
+                'value' => sanitize_text_field($_POST['filter_ad_type'])
+            ];
+        }
+
+        // Filter by Company Name
+        if (!empty($_POST['filter_company'])) {
+            $args['meta_query'][] = [
+                'key' => 'company_name', 
+                'value' => sanitize_text_field($_POST['filter_company']),
+                'compare' => 'LIKE'
+            ];
+        }
+
+        // Filter by Reference/ID or Title
+        if (!empty($_POST['filter_ref'])) {
+            $ref = sanitize_text_field($_POST['filter_ref']);
+            if (is_numeric($ref)) {
+                // If it's a number, search by ID and title/content
+                $args['meta_query']['relation'] = 'OR';
+                $args['meta_query'][] = ['key' => 'ID', 'value' => $ref];
+                $args['s'] = $ref;
+            } else {
+                // If it's text, just search title/content
+                $args['s'] = $ref;
+            }
+        }
+
+        // Filter by User
+        if (!empty($_POST['filter_user'])) {
+            $user_data = sanitize_text_field($_POST['filter_user']);
+            if (is_numeric($user_data)) {
+                $args['author'] = intval($user_data);
+            } else {
+                $user = get_user_by('email', $user_data) ?: get_user_by('login', $user_data);
+                if ($user) {
+                    $args['author'] = $user->ID;
+                } else {
+                    // No user found, so force no results
+                    $args['author'] = -1;
+                }
+            }
         }
         
         $query = new WP_Query($args);
@@ -138,10 +191,12 @@ class LMB_Ajax_Handlers {
                 echo '<td>' . ($client ? esc_html($client->display_name) : 'N/A') . '</td>';
                 echo '<td><span class="lmb-status-badge lmb-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td>';
                 echo '<td>' . get_the_date() . '</td>';
-                echo '<td>';
+                echo '<td class="lmb-actions-cell">';
                 if ($status === 'pending_review') {
                     echo '<button class="lmb-btn lmb-btn-sm lmb-ad-action" data-action="approve" data-id="'.$post_id.'">Approve</button>';
                     echo '<button class="lmb-btn lmb-btn-sm lmb-ad-action" data-action="deny" data-id="'.$post_id.'">Deny</button>';
+                } else {
+                    echo '—';
                 }
                 echo '</td>';
                 echo '</tr>';
@@ -151,10 +206,10 @@ class LMB_Ajax_Handlers {
             // Pagination
             $total_pages = $query->max_num_pages;
             if ($total_pages > 1) {
-                echo '<div class="lmb-pagination">' . paginate_links(['total' => $total_pages, 'current' => $paged, 'format' => '?paged=%#%']) . '</div>';
+                echo '<div class="lmb-pagination">' . paginate_links(['total' => $total_pages, 'current' => $paged, 'format' => '?paged=%#%', 'base' => '#%#%']) . '</div>';
             }
         } else {
-            echo '<div class="lmb-no-results">No ads found.</div>';
+            echo '<div class="lmb-no-results">No ads found matching your criteria.</div>';
         }
         $html = ob_get_clean();
         
