@@ -620,7 +620,7 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['message' => 'Package deleted.']);
     }
 
-    // --- REVISED FUNCTION ---
+    // --- REVISED AND FINAL FUNCTION ---
     private static function lmb_get_pending_accuse_ads() {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Access Denied.']);
@@ -629,17 +629,25 @@ class LMB_Ajax_Handlers {
         $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
         
         // --- THIS IS THE CORRECTED QUERY ---
+        // It relies ONLY on your custom meta fields for status, which is the correct approach.
+        // The 'post_status' => 'publish' has been removed to prevent conflicts.
         $args = [
             'post_type' => 'lmb_legal_ad',
-            'post_status' => 'publish',
             'posts_per_page' => 5,
             'paged' => $paged,
             'meta_query' => [
                 'relation' => 'AND',
-                // Find ads that are published
-                ['key' => 'lmb_status', 'value' => 'published'],
-                // And where the accuse ID key does NOT exist
-                ['key' => 'lmb_accuse_attachment_id', 'compare' => 'NOT EXISTS']
+                // Condition 1: The custom status must be 'published'.
+                [
+                    'key' => 'lmb_status',
+                    'value' => 'published',
+                    'compare' => '=',
+                ],
+                // Condition 2: The meta key for the accuse ID must not exist.
+                [
+                    'key' => 'lmb_accuse_attachment_id',
+                    'compare' => 'NOT EXISTS',
+                ]
             ],
             'orderby' => 'date',
             'order' => 'DESC'
@@ -668,7 +676,6 @@ class LMB_Ajax_Handlers {
             }
             echo '</div>';
             
-            // Pagination
             $total_pages = $query->max_num_pages;
             if ($total_pages > 1) {
                 echo '<div class="lmb-pagination">' . paginate_links(['total' => $total_pages, 'current' => $paged, 'format' => '?paged=%#%', 'base' => '#%#%']) . '</div>';
