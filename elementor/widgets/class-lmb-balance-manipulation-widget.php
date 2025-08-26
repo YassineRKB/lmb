@@ -1,4 +1,5 @@
 <?php
+// FILE: elementor/widgets/class-lmb-balance-manipulation-widget.php
 use Elementor\Widget_Base;
 
 if (!defined('ABSPATH')) exit;
@@ -23,7 +24,7 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
             return;
         }
         ?>
-        <div class="lmb-balance-manipulation-widget lmb-admin-widget">
+        <div class="lmb-balance-manipulation-widget lmb-admin-widget" data-nonce="<?php echo wp_create_nonce('lmb_nonce'); ?>">
             <div class="lmb-widget-header">
                 <h3><i class="fas fa-coins"></i> <?php esc_html_e('Balance Manipulation', 'lmb-core'); ?></h3>
             </div>
@@ -40,14 +41,11 @@ class LMB_Balance_Manipulation_Widget extends Widget_Base {
                 </div>
 
                 <div id="lmb-balance-section" class="lmb-balance-section" style="display: none;">
-                    <h4><?php esc_html_e('Balance Management', 'lmb-core'); ?></h4>
-                    <div class="lmb-user-info">
-                        <div id="lmb-user-details"></div>
-                        <div class="lmb-current-balance">
-                            <span class="lmb-balance-label"><?php esc_html_e('Current Balance:', 'lmb-core'); ?></span>
-                            <span id="lmb-current-balance" class="lmb-balance-value">0</span>
-                            <span class="lmb-balance-unit"><?php esc_html_e('points', 'lmb-core'); ?></span>
-                        </div>
+                    <h4><?php esc_html_e('Balance Management for', 'lmb-core'); ?> <span id="lmb-selected-user-name" style="color: #667eea;"></span></h4>
+                    <div class="lmb-current-balance">
+                        <span class="lmb-balance-label"><?php esc_html_e('Current Balance:', 'lmb-core'); ?></span>
+                        <span id="lmb-current-balance" class="lmb-balance-value">0</span>
+                        <span class="lmb-balance-unit"><?php esc_html_e('points', 'lmb-core'); ?></span>
                     </div>
                     <form id="lmb-balance-form" class="lmb-form">
                         <input type="hidden" id="lmb-user-id" value="">

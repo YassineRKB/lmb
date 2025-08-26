@@ -212,15 +212,38 @@
 
 /* Admin Actions Widget Tabs */
 .lmb-tabs-nav {
-    display: flex;
+    display: flex; /* Changed from grid to flex */
+    justify-content: space-around; /* Distribute items evenly */
     border-bottom: 1px solid #e0e0e0;
 }
 .lmb-tab-btn {
-    padding: 10px 15px;
+    flex: 1; /* Each button will take equal space */
+    padding: 15px 10px; /* Adjusted padding */
     cursor: pointer;
     border: none;
     background: transparent;
-    border-bottom: 2px solid transparent;
+    border-bottom: 3px solid transparent;
+    font-size: 14px; /* Slightly smaller font */
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+}
+.lmb-tab-btn.active {
+    border-bottom-color: #667eea;
+    color: #667eea;
+}
+.lmb-tab-badge {
+    background: #e0e0e0;
+    color: #333;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 11px;
+    margin-left: 8px;
+    font-weight: 700;
+}
+.lmb-tab-btn.active .lmb-tab-badge {
+    background: #667eea;
+    color: white;
 }
 .lmb-tab-btn.active {
     border-bottom-color: #667eea;
@@ -233,4 +256,72 @@
     padding: 2px 6px;
     font-size: 10px;
     margin-left: 5px;
+}
+/* Balance Manipulation - User Search Results */
+.lmb-user-results-list {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+.lmb-user-result-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.lmb-user-result-item:last-child {
+    border-bottom: none;
+}
+
+.lmb-user-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.lmb-user-result-item.selected {
+    background-color: #e7f3ff;
+    color: #005a87;
+    font-weight: 600;
+}
+
+/* Balance History Colors */
+.lmb-history-item strong.credit {
+    color: #28a745;
+}
+
+.lmb-history-item strong.debit {
+    color: #dc3545;
+}
+/* Pagination Styles for Admin Widgets */
+.lmb-pagination {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f1;
+    text-align: center;
+}
+
+.lmb-pagination .page-numbers {
+    display: inline-block;
+    padding: 8px 14px;
+    margin: 0 4px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #50575e;
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.lmb-pagination .page-numbers:hover {
+    background: #f0f0f1;
+    border-color: #ccc;
+}
+
+.lmb-pagination .page-numbers.current {
+    background: #667eea;
+    color: #fff;
+    border-color: #667eea;
+    font-weight: 600;
 }

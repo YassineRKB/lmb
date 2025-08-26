@@ -66,30 +66,70 @@
     line-height: 1.5;
 }
 
-/* New User Ads List Widget Styles */
-#lmb-user-ads-list-container .lmb-ad-item {
-    background-color: #f9f9f9;
-    border-left: 4px solid #ccc;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 4px;
+/* User Ads List Widget Tabs */
+.lmb-user-ads-list-widget .lmb-tabs-nav {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 20px;
 }
-#lmb-user-ads-list-container .lmb-ad-item.status-draft { border-left-color: #777; }
-#lmb-user-ads-list-container .lmb-ad-item.status-pending_review { border-left-color: #ffb900; }
-#lmb-user-ads-list-container .lmb-ad-item.status-published { border-left-color: #4ab866; }
-#lmb-user-ads-list-container .lmb-ad-item.status-denied { border-left-color: #d63638; }
+.lmb-user-ads-list-widget .lmb-tab-btn {
+    padding: 12px 20px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    border-bottom: 3px solid transparent;
+    font-size: 16px;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.3s ease;
+    margin-bottom: -2px;
+}
+.lmb-user-ads-list-widget .lmb-tab-btn.active {
+    border-bottom-color: #667eea;
+    color: #667eea;
+}
+.lmb-user-ads-list-widget .lmb-tab-btn:hover {
+    background-color: #f5f5f5;
+    color: #333;
+}
+/* User Ads List Item Layout */
+.lmb-ad-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
 
-#lmb-user-ads-list-container .lmb-ad-item h4 { margin: 0 0 5px; }
-#lmb-user-ads-list-container .lmb-ad-item p { margin: 0; font-size: 0.9em; color: #555; }
-#lmb-user-ads-list-container .lmb-submit-review {
-    margin-top: 10px;
+.lmb-ad-info {
+    flex-grow: 1;
+}
+
+.lmb-ad-actions {
+    flex-shrink: 0;
+}
+
+h4.lmb-ad-title {
+    margin: 0 0 5px;
+}
+
+.lmb-ad-meta {
+    font-size: 0.9em;
+    color: #555;
+}
+
+/* Style for the "Submit for Review" button */
+.lmb-submit-review.lmb-btn {
     padding: 5px 10px;
+    font-size: 13px;
     background-color: #667eea;
     color: white;
-    border: none;
-    cursor: pointer;
     border-radius: 4px;
 }
+.lmb-submit-review.lmb-btn:hover {
+    background-color: #5a67d8;
+}
+
+/* Pagination Buttons */
 #lmb-user-ads-pagination {
     margin-top: 20px;
 }
@@ -99,17 +139,10 @@
     cursor: pointer;
     border: 1px solid #ddd;
     background: #fff;
+    border-radius: 4px;
 }
 #lmb-user-ads-pagination .page-btn.active {
     background: #667eea;
     color: white;
     border-color: #667eea;
-}
-
-
-/* Responsive */
-@media (max-width: 768px) {
-    .lmb-data-table {
-        font-size: 14px;
-    }
 }

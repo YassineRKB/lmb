@@ -1,24 +1,32 @@
 jQuery(document).ready(function($) {
     const widget = $('.lmb-admin-actions-widget');
-    if (!widget.length) {
-        return;
-    }
+    if (!widget.length) return;
 
     let currentTab = 'feed';
+    const contentArea = $('#lmb-tab-content-area');
+    const paginationArea = $('#lmb-tab-pagination-area');
 
-    function loadTabContent(tab) {
-        $('#lmb-tab-content-area').html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
+    function loadTabContent(tab, page = 1) {
+        currentTab = tab;
+        contentArea.html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
+        paginationArea.empty();
         
         $.post(lmb_ajax_params.ajaxurl, {
             action: 'lmb_load_admin_tab',
             nonce: lmb_ajax_params.nonce,
-            tab: tab
-        }, function(response) {
+            tab: tab,
+            page: page
+        }).done(function(response) {
             if (response.success) {
-                $('#lmb-tab-content-area').html(response.data.content);
+                contentArea.html(response.data.content);
+                paginationArea.html(response.data.pagination);
                 $('#pending-ads-count').text(response.data.pending_ads_count);
                 $('#pending-payments-count').text(response.data.pending_payments_count);
+            } else {
+                contentArea.html('<div class="lmb-notice lmb-notice-error"><p>Could not load content.</p></div>');
             }
+        }).fail(function() {
+            contentArea.html('<div class="lmb-notice lmb-notice-error"><p>A server error occurred.</p></div>');
         });
     }
 
@@ -28,14 +36,22 @@ jQuery(document).ready(function($) {
     // Tab switching
     widget.on('click', '.lmb-tab-btn', function() {
         const tab = $(this).data('tab');
-        currentTab = tab;
         $('.lmb-tab-btn').removeClass('active');
         $(this).addClass('active');
-        loadTabContent(tab);
+        loadTabContent(tab, 1);
     });
 
-    // Handle approve/deny actions
-    widget.on('click', '.lmb-ad-action, .lmb-payment-action', function(e) {
+    // Pagination
+    paginationArea.on('click', '.page-numbers', function(e) {
+        e.preventDefault();
+        const href = $(this).attr('href');
+        const page = href ? new URLSearchParams(href.split('?')[1]).get('paged') : 1;
+        loadTabContent(currentTab, page);
+    });
+
+    // Handle actions (approve, deny, reject)
+    contentArea.on('click', '.lmb-ad-action, .lmb-payment-action', function(e) {
+        // ... (this entire event handler block remains unchanged from the previous version)
         e.preventDefault();
         const button = $(this);
         const id = button.data('id');
@@ -60,7 +76,10 @@ jQuery(document).ready(function($) {
             [actionKey]: actionValue,
             reason: reason
         }).done(function() {
-            loadTabContent(currentTab);
+            loadTabContent(currentTab, 1);
+        }).fail(function() {
+            alert('An error occurred. Please try again.');
+            loadTabContent(currentTab, 1);
         });
     });
 });

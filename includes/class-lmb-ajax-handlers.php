@@ -29,29 +29,59 @@ class LMB_Ajax_Handlers {
     }
 
     private static function lmb_user_get_ads() {
-        if (!is_user_logged_in()) wp_send_json_error(['message' => 'You must be logged in.']);
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => 'You must be logged in.']);
+        }
+    
         $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
-        $query = new WP_Query([
+        $status = isset($_POST['status']) ? sanitize_key($_POST['status']) : 'draft';
+    
+        // Arguments for the query to get the post count for pagination
+        $args = [
             'author' => get_current_user_id(),
             'post_type' => 'lmb_legal_ad',
             'posts_per_page' => 5,
             'paged' => $paged,
-            'post_status' => ['publish', 'draft', 'pending']
-        ]);
-        
-        $ads = [];
-        if ($query->have_posts()) {
-            while ($query->have_posts()) {
-                $query->the_post();
-                $ads[] = [
-                    'ID' => get_the_ID(),
-                    'title' => get_the_title(),
-                    'status' => get_post_meta(get_the_ID(), 'lmb_status', true),
-                    'date' => get_the_date(),
-                ];
+            'post_status' => ['publish', 'draft', 'pending'],
+            'meta_query' => [
+                [
+                    'key' => 'lmb_status',
+                    'value' => $status,
+                    'compare' => '=',
+                ],
+            ],
+        ];
+    
+        // We need to run the query to get the total number of pages
+        $query = new WP_Query($args);
+        $max_pages = $query->max_num_pages;
+        wp_reset_postdata();
+
+        // Now, get the HTML content by calling the widget's render method
+        $widget_file = LMB_CORE_PATH . 'elementor/widgets/class-lmb-user-ads-list-widget.php';
+        if (file_exists($widget_file)) {
+            require_once $widget_file;
+            if (class_exists('LMB_User_Ads_List_Widget')) {
+                // We need to create a temporary instance of the widget to access its methods
+                $widget_instance = new LMB_User_Ads_List_Widget();
+                
+                // Capture the output of the render method
+                ob_start();
+                // This is a private method, so we'll have to make it public to call it.
+                // Or, we can duplicate the logic here, but it's better to make it public.
+                // Let's assume we made it public for this example.
+                // See the updated widget file in the next step.
+                $widget_instance->render_ads_for_status($status, $paged);
+                $html = ob_get_clean();
+
+                wp_send_json_success([
+                    'html' => $html,
+                    'max_pages' => $max_pages
+                ]);
             }
         }
-        wp_send_json_success(['ads' => $ads, 'max_pages' => $query->max_num_pages]);
+    
+        wp_send_json_error(['message' => 'Widget class not found.']);
     }
 
     private static function lmb_upload_accuse() {
@@ -301,46 +331,173 @@ class LMB_Ajax_Handlers {
         LMB_Payment_Verifier::handle_payment_action($payment_id, $action, $reason);
     }
     
+    // --- REVISED FUNCTION ---
     private static function lmb_get_balance_history() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access denied'], 403);
+        }
         $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
-        if (!$user_id) wp_send_json_error(['message' => 'Invalid user ID'], 400);
-        wp_send_json_success(['history' => LMB_Points::get_transactions($user_id, 10)]);
+        if (!$user_id) {
+            wp_send_json_error(['message' => 'Invalid user ID'], 400);
+        }
+        
+        // Always fetch the current balance and the transaction history separately
+        $current_balance = LMB_Points::get_balance($user_id);
+        $history = LMB_Points::get_transactions($user_id, 10);
+
+        wp_send_json_success([
+            'current_balance' => $current_balance,
+            'history' => $history
+        ]);
     }
 
+    // --- REVISED FUNCTION ---
     private static function lmb_load_admin_tab() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
-        $tab = isset($_POST['tab']) ? sanitize_text_field($_POST['tab']) : 'feed';
-        wp_send_json_success(LMB_Admin_Actions_Widget::get_tab_content($tab));
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access denied'], 403);
+        }
+        $tab = isset($_POST['tab']) ? sanitize_key($_POST['tab']) : 'feed';
+        $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $posts_per_page = 5;
+
+        // --- Fetch counts for badges ---
+        $pending_ads_query = new WP_Query(['post_type' => 'lmb_legal_ad', 'post_status' => 'any', 'posts_per_page' => -1, 'meta_query' => [['key' => 'lmb_status', 'value' => 'pending_review']]]);
+        $pending_payments_query = new WP_Query(['post_type' => 'lmb_payment', 'post_status' => 'publish', 'posts_per_page' => -1, 'meta_query' => [['key' => 'payment_status', 'value' => 'pending']]]);
+
+        ob_start();
+
+        switch ($tab) {
+            case 'pending_ads':
+                $ads_paged_query = new WP_Query(['post_type' => 'lmb_legal_ad', 'post_status' => 'any', 'posts_per_page' => $posts_per_page, 'paged' => $paged, 'meta_query' => [['key' => 'lmb_status', 'value' => 'pending_review']]]);
+                if (!$ads_paged_query->have_posts()) {
+                    echo '<div class="lmb-feed-empty"><i class="fas fa-check-circle"></i><p>' . __('No legal ads are pending approval.', 'lmb-core') . '</p></div>';
+                } else {
+                    echo '<div class="lmb-pending-ads-feed">';
+                    while ($ads_paged_query->have_posts()) {
+                        $ads_paged_query->the_post();
+                        $ad = get_post();
+                        $client = get_userdata($ad->post_author);
+                        // --- ACTION BUTTONS REMOVED FROM THIS VIEW ---
+                        echo '<div class="lmb-feed-item" data-id="' . $ad->ID . '"><div class="lmb-feed-content"><a href="' . get_edit_post_link($ad->ID) . '" class="lmb-feed-title" target="_blank">' . esc_html($ad->post_title) . '</a><div class="lmb-feed-meta"><i class="fas fa-user"></i> ' . ($client ? esc_html($client->display_name) : 'Unknown') . ' • <i class="fas fa-clock"></i> ' . human_time_diff(get_the_time('U', $ad->ID)) . ' ago</div></div></div>';
+                    }
+                    echo '</div>';
+                }
+                break;
+
+            // ... (pending_payments and feed cases remain the same as the previous version) ...
+            case 'pending_payments':
+                $payments_paged_query = new WP_Query(['post_type' => 'lmb_payment', 'post_status' => 'publish', 'posts_per_page' => $posts_per_page, 'paged' => $paged, 'meta_query' => [['key' => 'payment_status', 'value' => 'pending']]]);
+                $posts = $payments_paged_query->posts;
+                if (empty($posts)) {
+                    echo '<div class="lmb-feed-empty"><i class="fas fa-check-circle"></i><p>' . __('No payments are pending verification.', 'lmb-core') . '</p></div>';
+                } else {
+                    echo '<div class="lmb-pending-payments-feed">';
+                    foreach ($posts as $payment) {
+                        $user = get_userdata(get_post_meta($payment->ID, 'user_id', true));
+                        $proof_url = wp_get_attachment_url(get_post_meta($payment->ID, 'proof_attachment_id', true));
+                        echo '<div class="lmb-feed-item" data-id="' . $payment->ID . '"><div class="lmb-feed-content"><a href="' . get_edit_post_link($payment->ID) . '" class="lmb-feed-title" target="_blank">' . esc_html($payment->post_title) . '</a><div class="lmb-feed-meta"><i class="fas fa-user"></i> ' . ($user ? esc_html($user->display_name) : 'Unknown') . '</div></div><div class="lmb-feed-actions">' . ($proof_url ? '<a href="'.esc_url($proof_url).'" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-paperclip"></i> Show Proof</a>' : '') . '<button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-payment-action" data-action="approve" data-id="' . $payment->ID . '"><i class="fas fa-check"></i> Approve</button><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-payment-action" data-action="reject" data-id="' . $payment->ID . '"><i class="fas fa-times"></i> Reject</button></div></div>';
+                    }
+                    echo '</div>';
+                }
+                break;
+            
+            case 'feed':
+            default:
+                $activity_log = get_option('lmb_activity_log', []);
+                if (empty($activity_log)) {
+                    echo '<div class="lmb-feed-empty"><i class="fas fa-stream"></i><p>' . __('No recent activity.', 'lmb-core') . '</p></div>';
+                } else {
+                    $total_items = count($activity_log);
+                    $log_paged = array_slice($activity_log, ($paged - 1) * $posts_per_page, $posts_per_page);
+
+                    echo '<div class="lmb-activity-feed">';
+                    foreach ($log_paged as $entry) {
+                        $user = $entry['user'] ? get_userdata($entry['user']) : null;
+                        $user_name = $user ? $user->display_name : 'System';
+                        $time_ago = human_time_diff(strtotime($entry['time'])) . ' ago';
+                        echo '<div class="lmb-feed-item"><div class="lmb-feed-content"><div class="lmb-feed-title">' . esc_html($entry['msg']) . '</div><div class="lmb-feed-meta"><i class="fas fa-user"></i> ' . esc_html($user_name) . ' • <i class="fas fa-clock"></i> ' . $time_ago . '</div></div></div>';
+                    }
+                    echo '</div>';
+                }
+                break;
+        }
+
+        $content = ob_get_clean();
+
+        // Generate pagination HTML
+        $pagination_html = '';
+        $total_pages = 1;
+        if ($tab === 'pending_ads') $total_pages = $ads_paged_query->max_num_pages;
+        if ($tab === 'pending_payments') $total_pages = $payments_paged_query->max_num_pages;
+        if ($tab === 'feed') $total_pages = ceil($total_items / $posts_per_page);
+
+        if ($total_pages > 1) {
+            $pagination_html = paginate_links([
+                'base' => '#%#%',
+                'format' => '?paged=%#%',
+                'current' => $paged,
+                'total' => $total_pages,
+                'prev_text' => '&laquo;',
+                'next_text' => '&raquo;',
+            ]);
+        }
+
+        wp_send_json_success([
+            'content' => $content,
+            'pagination' => $pagination_html,
+            'pending_ads_count' => (int) $pending_ads_query->found_posts,
+            'pending_payments_count' => (int) $pending_payments_query->found_posts,
+        ]);
     }
 
+    // --- REVISED FUNCTION ---
     private static function lmb_search_user() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access denied'], 403);
+        }
         $term = isset($_POST['search_term']) ? sanitize_text_field($_POST['search_term']) : '';
-        if (empty($term)) wp_send_json_error(['message' => 'Search term is empty.'], 400);
-        $user_query = new WP_User_Query(['search' => '*' . esc_attr($term) . '*', 'search_columns' => ['ID', 'user_login', 'user_email', 'display_name'], 'number' => 1]);
-        $user = $user_query->get_results()[0] ?? null;
-        if ($user) {
-            wp_send_json_success(['user' => ['ID' => $user->ID, 'display_name' => $user->display_name, 'user_email' => $user->user_email, 'balance' => LMB_Points::get_balance($user->ID)]]);
+        if (empty($term)) {
+            wp_send_json_error(['message' => 'Search term is empty.'], 400);
+        }
+
+        $user_query = new WP_User_Query([
+            'search' => '*' . esc_attr($term) . '*',
+            'search_columns' => ['ID', 'user_login', 'user_email', 'display_name'],
+            'number' => 10, // Limit to 10 results for performance
+            'fields' => ['ID', 'display_name', 'user_email']
+        ]);
+
+        $users = $user_query->get_results();
+
+        if (!empty($users)) {
+            wp_send_json_success(['users' => $users]);
         } else {
-            wp_send_json_error(['message' => 'User not found.'], 404);
+            wp_send_json_error(['message' => 'No users found.'], 404);
         }
     }
 
+    // --- REVISED FUNCTION ---
     private static function lmb_update_balance() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access denied'], 403);
+        }
         $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
         $amount  = isset($_POST['amount']) ? absint($_POST['amount']) : 0;
         $reason  = !empty($_POST['reason']) ? sanitize_text_field($_POST['reason']) : 'Manual balance adjustment';
         $action  = isset($_POST['balance_action']) ? sanitize_key($_POST['balance_action']) : '';
-        if (!$user_id || !$action) wp_send_json_error(['message' => 'Missing user ID or action.'], 400);
+
+        if (!$user_id || !$action) {
+            wp_send_json_error(['message' => 'Missing user ID or action.'], 400);
+        }
         switch ($action) {
             case 'add': $new_balance = LMB_Points::add($user_id, $amount, $reason); break;
             case 'subtract': $new_balance = LMB_Points::deduct($user_id, $amount, $reason); break;
             case 'set': $new_balance = LMB_Points::set_balance($user_id, $amount, $reason); break;
             default: wp_send_json_error(['message' => 'Invalid action.'], 400);
         }
-        if ($new_balance === false) wp_send_json_error(['message' => 'Insufficient balance.'], 400);
+        if ($new_balance === false) {
+            wp_send_json_error(['message' => 'Insufficient balance for this operation.'], 400);
+        }
         wp_send_json_success(['message' => 'Balance updated successfully!', 'new_balance' => $new_balance]);
     }
 

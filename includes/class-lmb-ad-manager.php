@@ -6,8 +6,7 @@ class LMB_Ad_Manager {
         // User-triggered action from dashboard
         add_action('admin_post_lmb_user_publish_ad', [__CLASS__, 'user_requests_publication']);
         
-        // Admin AJAX actions for quick management
-        add_action('wp_ajax_lmb_ad_status_change', [__CLASS__, 'ajax_ad_status_change']);
+        // Admin AJAX actions for quick management, moved to central handler
         
         // Admin list table customizations
         add_filter('manage_lmb_legal_ad_posts_columns', [__CLASS__, 'set_custom_columns']);
@@ -92,30 +91,7 @@ class LMB_Ad_Manager {
         exit;
     }
 
-    public static function ajax_ad_status_change() {
-        check_ajax_referer('lmb_admin_ajax_nonce', 'nonce');
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Permission denied.']);
-        }
-
-        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
-        $action = isset($_POST['ad_action']) ? sanitize_key($_POST['ad_action']) : '';
-
-        if ($action === 'approve') {
-            $result = self::approve_ad($ad_id);
-            if ($result['success']) {
-                wp_send_json_success(['message' => $result['message']]);
-            } else {
-                wp_send_json_error(['message' => $result['message']]);
-            }
-        } elseif ($action === 'deny') {
-            $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : 'No reason provided.';
-            self::deny_ad($ad_id, $reason);
-            wp_send_json_success(['message' => 'Ad has been denied.']);
-        } else {
-            wp_send_json_error(['message' => 'Invalid action.']);
-        }
-    }
+    // ajax ads status change handler moved to central AJAX handler
 
     private static function approve_ad($ad_id) {
         $client_id = (int) get_post_meta($ad_id, 'lmb_client_id', true);

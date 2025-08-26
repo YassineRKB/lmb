@@ -3,8 +3,6 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Payment_Verifier {
     public static function init() {
-        add_action('wp_ajax_lmb_payment_action', [__CLASS__, 'ajax_payment_action']);
-        
         add_filter('manage_lmb_payment_posts_columns', [__CLASS__, 'set_custom_columns']);
         add_action('manage_lmb_payment_posts_custom_column', [__CLASS__, 'render_custom_columns'], 10, 2);
     }
@@ -50,17 +48,20 @@ class LMB_Payment_Verifier {
         }
     }
 
-    public static function ajax_payment_action() {
-        check_ajax_referer('lmb_admin_ajax_nonce', 'nonce');
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
-
-        $payment_id = isset($_POST['payment_id']) ? intval($_POST['payment_id']) : 0;
-        $action = isset($_POST['payment_action']) ? sanitize_key($_POST['payment_action']) : '';
+    // This function is called by the central AJAX handler, so it doesn't need its own nonce check.
+    public static function handle_payment_action($payment_id, $action, $reason = '') {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Permission denied.']);
+            return;
+        }
 
         $user_id = (int) get_post_meta($payment_id, 'user_id', true);
         $package_id = (int) get_post_meta($payment_id, 'package_id', true);
 
-        if (!$user_id || !$package_id) wp_send_json_error(['message' => 'Payment record is missing data.']);
+        if (!$user_id || !$package_id) {
+            wp_send_json_error(['message' => 'Payment record is missing critical data (user or package ID).']);
+            return;
+        }
         
         if ($action === 'approve') {
             $points = (int) get_post_meta($package_id, 'points', true);
@@ -71,18 +72,18 @@ class LMB_Payment_Verifier {
             
             update_post_meta($payment_id, 'payment_status', 'approved');
             LMB_Ad_Manager::log_activity(sprintf('Payment #%d approved by %s.', $payment_id, wp_get_current_user()->display_name));
-            LMB_Notification_Manager::notify_payment_verified($user_id, $package_id, $points);
+            if (class_exists('LMB_Notification_Manager')) {
+                LMB_Notification_Manager::notify_payment_verified($user_id, $package_id, $points);
+            }
             
-            wp_send_json_success(['message' => 'Payment approved!']);
+            wp_send_json_success(['message' => 'Payment approved! Points have been added to the client\'s account.']);
 
         } elseif ($action === 'reject') {
-            $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : 'No reason provided.';
             update_post_meta($payment_id, 'payment_status', 'rejected');
             update_post_meta($payment_id, 'rejection_reason', $reason);
             LMB_Ad_Manager::log_activity(sprintf('Payment #%d rejected by %s.', $payment_id, wp_get_current_user()->display_name));
-            // You might want a notification for rejected payments as well.
             
-            wp_send_json_success(['message' => 'Payment rejected.']);
+            wp_send_json_success(['message' => 'Payment has been rejected.']);
         }
     }
 }
