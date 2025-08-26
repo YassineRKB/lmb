@@ -1179,3 +1179,72 @@
         padding: 8px 10px;
     }
 }
+/* ... add to the end of lmb-core.css ... */
+
+/* Public Newspaper Directory Table */
+.lmb-newspaper-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 30px;
+}
+
+.lmb-newspaper-table th,
+.lmb-newspaper-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.lmb-newspaper-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.lmb-newspaper-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.lmb-newspaper-table .lmb-btn {
+    white-space: nowrap;
+}
+
+/* Responsive improvements for the table */
+@media (max-width: 600px) {
+    .lmb-newspaper-table thead {
+        display: none; /* Hide table headers on small screens */
+    }
+    .lmb-newspaper-table, .lmb-newspaper-table tbody, .lmb-newspaper-table tr, .lmb-newspaper-table td {
+        display: block;
+        width: 100%;
+    }
+    .lmb-newspaper-table tr {
+        margin-bottom: 15px;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+    }
+    .lmb-newspaper-table td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .lmb-newspaper-table td:last-child {
+        border-bottom: 0;
+    }
+    .lmb-newspaper-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 15px;
+        width: calc(50% - 30px);
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 600;
+    }
+    /* Add data-label attributes via JS if needed, or set them here if the columns are static */
+    .lmb-newspaper-table td:nth-of-type(1)::before { content: "Ref"; }
+    .lmb-newspaper-table td:nth-of-type(2)::before { content: "Name"; }
+    .lmb-newspaper-table td:nth-of-type(3)::before { content: "Date"; }
+    .lmb-newspaper-table td:nth-of-type(4)::before { content: "Download"; }
+}
