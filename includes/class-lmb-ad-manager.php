@@ -93,7 +93,7 @@ class LMB_Ad_Manager {
 
     // ajax ads status change handler moved to central AJAX handler
 
-    private static function approve_ad($ad_id) {
+    public static function approve_ad($ad_id) {
         $client_id = (int) get_post_meta($ad_id, 'lmb_client_id', true);
         if (!$client_id) {
             return ['success' => false, 'message' => 'Client ID not found for this ad.'];
@@ -122,23 +122,19 @@ class LMB_Ad_Manager {
             update_post_meta($ad_id, 'ad_pdf_url', $pdf_url);
         }
         
-        // Generate invoice only if invoice handler is available
-        if (class_exists('LMB_Invoice_Handler')) {
-            $invoice_url = LMB_Invoice_Handler::create_ad_publication_invoice($client_id, $ad_id, $cost, $new_balance);
-            update_post_meta($ad_id, 'ad_invoice_pdf_url', $invoice_url);
-        }
+        
         
         self::log_activity(sprintf('Ad #%d approved by %s. Cost: %d points.', $ad_id, wp_get_current_user()->display_name, $cost));
         
         // Send notification if notification manager is available
         if (class_exists('LMB_Notification_Manager')) {
-            LMB_Notification_Manager::notify_ad_approved($client_id, $ad_id);
+            LMB_Notification_Manager::notify_user_ad_approved($ad_id);
         }
 
         return ['success' => true, 'message' => 'Ad approved and published successfully.'];
     }
     
-    private static function deny_ad($ad_id, $reason) {
+    public static function deny_ad($ad_id, $reason) {
         update_post_meta($ad_id, 'lmb_status', 'denied');
         update_post_meta($ad_id, 'denial_reason', $reason);
         wp_update_post(['ID' => $ad_id, 'post_status' => 'draft']);
@@ -146,7 +142,7 @@ class LMB_Ad_Manager {
         $client_id = get_post_meta($ad_id, 'lmb_client_id', true);
         if ($client_id) {
             if (class_exists('LMB_Notification_Manager')) {
-                LMB_Notification_Manager::notify_ad_denied($client_id, $ad_id, $reason);
+                LMB_Notification_Manager::notify_user_ad_denied($ad_id, $reason);
             }
         }
         self::log_activity(sprintf('Ad #%d denied by %s. Reason: %s', $ad_id, wp_get_current_user()->display_name, $reason));
