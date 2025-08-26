@@ -103,25 +103,19 @@ class LMB_Admin {
         return $stats;
     }
 
-    /**
-     * Register settings used in the tabs.
-     */
+    // --- REVISED FUNCTION ---
     public static function register_settings() {
-        // General
+        // General Settings
         register_setting('lmb_general_settings', 'lmb_bank_name');
         register_setting('lmb_general_settings', 'lmb_bank_iban');
         register_setting('lmb_general_settings', 'lmb_default_cost_per_ad');
 
-        // Templates
-        register_setting('lmb_templates_settings', 'lmb_invoice_template_html');
-        register_setting('lmb_templates_settings', 'lmb_newspaper_template_html');
-        register_setting('lmb_templates_settings', 'lmb_receipt_template_html');
+        // Invoice & Receipt Templates
+        register_setting('lmb_invoices_receipts_settings', 'lmb_invoice_template_html');
+        register_setting('lmb_invoices_receipts_settings', 'lmb_receipt_template_html');
 
-        // Notifications
-        register_setting('lmb_notifications_settings', 'lmb_enable_email_notifications');
-        
-        // Security
-        register_setting('lmb_security_settings', 'lmb_protected_pages');
+        // --- FIX: Register ONE option to hold an array of all ad templates ---
+        register_setting('lmb_legal_ads_settings', 'lmb_legal_ad_templates');
     }
 
     /**
@@ -169,44 +163,38 @@ class LMB_Admin {
         <?php
     }
 
-    /**
-     * Settings page with tabs
-     */
+    // --- REVISED FUNCTION to include sub-tabs ---
     public static function render_settings_page() {
         if (!current_user_can(apply_filters('lmb_admin_capability', 'manage_options'))) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
         }
 
-        $current_tab = isset($_GET['tab']) && isset(self::$settings_tabs[$_GET['tab']])
-            ? sanitize_key($_GET['tab'])
-            : 'general';
+        $main_tabs = [
+            'general'   => __('General', 'lmb-core'),
+            'templates' => __('Templates', 'lmb-core'),
+            // ... other main tabs
+        ];
+        $current_main_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('LMB Core Settings', 'lmb-core'); ?></h1>
 
             <nav class="nav-tab-wrapper">
-                <?php foreach (self::$settings_tabs as $tab_id => $tab_name): ?>
-                    <?php
-                        $tab_url = add_query_arg(['page' => 'lmb-settings', 'tab' => $tab_id], admin_url('admin.php'));
-                        $active  = $current_tab === $tab_id ? ' nav-tab-active' : '';
-                    ?>
-                    <a href="<?php echo esc_url($tab_url); ?>" class="nav-tab<?php echo esc_attr($active); ?>">
+                <?php foreach ($main_tabs as $tab_id => $tab_name): ?>
+                    <a href="?page=lmb-settings&tab=<?php echo esc_attr($tab_id); ?>" class="nav-tab<?php echo $current_main_tab === $tab_id ? ' nav-tab-active' : ''; ?>">
                         <?php echo esc_html($tab_name); ?>
                     </a>
                 <?php endforeach; ?>
             </nav>
 
-            <div class="tab-content" style="background:#fff;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 12px 12px;padding:16px;">
-                <form method="post" action="options.php">
-                    <?php
-                    settings_fields('lmb_' . $current_tab . '_settings');
-                    $method = 'render_' . $current_tab . '_tab';
-                    if (method_exists(__CLASS__, $method)) {
-                        call_user_func([__CLASS__, $method]);
-                    }
-                    submit_button();
-                    ?>
-                </form>
+            <div class="tab-content" style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-top:0;">
+                <?php
+                // Call the correct render function based on the main tab
+                $method = 'render_' . $current_main_tab . '_tab';
+                if (method_exists(__CLASS__, $method)) {
+                    call_user_func([__CLASS__, $method]);
+                }
+                ?>
             </div>
         </div>
         <?php
@@ -214,38 +202,96 @@ class LMB_Admin {
 
     /*** Tabs ***/
 
-    private static function render_general_tab() { ?>
-        <table class="form-table" role="presentation">
-            <tbody>
-            <tr>
-                <th scope="row"><label for="lmb_bank_name"><?php esc_html_e('Bank Name', 'lmb-core'); ?></label></th>
-                <td><input name="lmb_bank_name" id="lmb_bank_name" type="text" class="regular-text" value="<?php echo esc_attr(get_option('lmb_bank_name', '')); ?>"></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="lmb_bank_iban"><?php esc_html_e('IBAN / RIB', 'lmb-core'); ?></label></th>
-                <td><input name="lmb_bank_iban" id="lmb_bank_iban" type="text" class="regular-text" value="<?php echo esc_attr(get_option('lmb_bank_iban', '')); ?>"></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="lmb_default_cost_per_ad"><?php esc_html_e('Default Cost / Ad (points)', 'lmb-core'); ?></label></th>
-                <td><input name="lmb_default_cost_per_ad" id="lmb_default_cost_per_ad" type="number" min="0" step="1" class="small-text" value="<?php echo esc_attr(get_option('lmb_default_cost_per_ad', 0)); ?>"></td>
-            </tr>
-            </tbody>
-        </table>
-    <?php }
+    // --- REVISED FUNCTION to render the new sub-tabs ---
+    private static function render_templates_tab() {
+        $sub_tabs = [
+            'invoices_receipts' => __('Invoices & Receipts', 'lmb-core'),
+            'legal_ads'         => __('Legal Ads', 'lmb-core'),
+        ];
+        $current_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : 'invoices_receipts';
+        ?>
+        <h2 class="nav-tab-wrapper" style="margin-bottom: 20px;">
+            <?php foreach ($sub_tabs as $tab_id => $tab_name): ?>
+                <a href="?page=lmb-settings&tab=templates&sub_tab=<?php echo esc_attr($tab_id); ?>" class="nav-tab<?php echo $current_sub_tab === $tab_id ? ' nav-tab-active' : ''; ?>">
+                    <?php echo esc_html($tab_name); ?>
+                </a>
+            <?php endforeach; ?>
+        </h2>
 
-    private static function render_templates_tab() { ?>
-        <h3><?php esc_html_e('Invoice Template', 'lmb-core'); ?></h3>
-        <p class="description"><?php esc_html_e('Invoice template (HTML). You can use placeholders like {{invoice_number}}, {{user_name}}, {{package_name}}, {{package_price}}, {{payment_reference}}, {{our_bank_name}}, {{our_iban}}, etc.', 'lmb-core'); ?></p>
-        <textarea name="lmb_invoice_template_html" rows="12" style="width:100%;"><?php echo esc_textarea(get_option('lmb_invoice_template_html', self::get_default_invoice_template())); ?></textarea>
+        <form method="post" action="options.php">
+            <?php
+            // Call the correct render function for the sub-tab
+            $sub_method = 'render_' . $current_sub_tab . '_sub_tab';
+            if (method_exists(__CLASS__, $sub_method)) {
+                call_user_func([__CLASS__, $sub_method]);
+            }
+            submit_button();
+            ?>
+        </form>
+        <?php
+    }
+
+    // --- NEW FUNCTION for the Invoices & Receipts sub-tab ---
+    private static function render_invoices_receipts_sub_tab() {
+        settings_fields('lmb_invoices_receipts_settings');
+        ?>
+        <h3><?php esc_html_e('Invoice Template (for Pending Payments)', 'lmb-core'); ?></h3>
+        <textarea name="lmb_invoice_template_html" rows="12" style="width:100%;"><?php echo esc_textarea(get_option('lmb_invoice_template_html')); ?></textarea>
         
-        <h3><?php esc_html_e('Newspaper Template', 'lmb-core'); ?></h3>
-        <p class="description"><?php esc_html_e('Newspaper template (HTML). You can use placeholders like {{newspaper_title}}, {{publication_date}}, {{ads_content}}, etc.', 'lmb-core'); ?></p>
-        <textarea name="lmb_newspaper_template_html" rows="12" style="width:100%;"><?php echo esc_textarea(get_option('lmb_newspaper_template_html', self::get_default_newspaper_template())); ?></textarea>
+        <hr style="margin: 20px 0;">
+
+        <h3><?php esc_html_e('Receipt Template (for Approved Payments)', 'lmb-core'); ?></h3>
+        <textarea name="lmb_receipt_template_html" rows="12" style="width:100%;"><?php echo esc_textarea(get_option('lmb_receipt_template_html')); ?></textarea>
+        <?php
+    }
+
+    // --- REVISED AND FINAL FUNCTION ---
+    private static function render_legal_ads_sub_tab() {
+        settings_fields('lmb_legal_ads_settings');
+        $all_ad_types = self::get_all_ad_types();
+        $current_ad_type = isset($_GET['ad_type']) ? sanitize_text_field($_GET['ad_type']) : $all_ad_types[0];
         
-        <h3><?php esc_html_e('Receipt Template', 'lmb-core'); ?></h3>
-        <p class="description"><?php esc_html_e('Receipt template (HTML). You can use placeholders like {{ad_id}}, {{company_name}}, {{ad_type}}, {{publication_date}}, etc.', 'lmb-core'); ?></p>
-        <textarea name="lmb_receipt_template_html" rows="12" style="width:100%;"><?php echo esc_textarea(get_option('lmb_receipt_template_html', self::get_default_receipt_template())); ?></textarea>
-    <?php }
+        $all_templates = get_option('lmb_legal_ad_templates', []);
+        
+        ?>
+        <p class="description">
+            <?php esc_html_e('Select an ad type to edit its template. Use placeholders like {{field_id}} for form data.', 'lmb-core'); ?><br>
+            - <?php esc_html_e('For repeaters, use:', 'lmb-core'); ?> <code>{{#each repeater_id}}...{{/each}}</code><br>
+            - <?php esc_html_e('For calculations, use:', 'lmb-core'); ?> <code>{{sum:repeater_id:field_id}}</code><br>
+            - <?php esc_html_e('For conditions, use:', 'lmb-core'); ?> <code>{{#ifcount repeater_id > 1}}...{{else}}...{{/ifcount}}</code>
+        </p>
+        
+        <select id="lmb_ad_type_selector" onchange="window.location.href = this.value;">
+            <?php foreach ($all_ad_types as $type): ?>
+                <option value="?page=lmb-settings&tab=templates&sub_tab=legal_ads&ad_type=<?php echo urlencode($type); ?>" <?php selected($current_ad_type, $type); ?>>
+                    <?php echo esc_html($type); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        
+        <hr style="margin-top: 20px;">
+        
+        <?php
+        $current_ad_type_key = sanitize_key($current_ad_type);
+        $field_name = 'lmb_legal_ad_templates[' . $current_ad_type_key . ']';
+        $template_content = isset($all_templates[$current_ad_type_key]) ? $all_templates[$current_ad_type_key] : '';
+        ?>
+        <h3>Template for: <strong style="color: #667eea;"><?php echo esc_html($current_ad_type); ?></strong></h3>
+        <textarea name="<?php echo esc_attr($field_name); ?>" rows="20" style="width:100%;"><?php echo esc_textarea($template_content); ?></textarea>
+        
+        <?php
+        // --- THIS IS THE FIX ---
+        // Add hidden fields for all other templates to ensure they are not erased on save.
+        foreach ($all_templates as $key => $value) {
+            if ($key === $current_ad_type_key) {
+                continue; // Skip the one we are currently editing
+            }
+            echo '<input type="hidden" name="lmb_legal_ad_templates[' . esc_attr($key) . ']" value="' . esc_attr($value) . '" />';
+        }
+        ?>
+        <?php
+    }
+
 
     private static function render_notifications_tab() { ?>
         <label>
@@ -293,27 +339,6 @@ class LMB_Admin {
         <p><?php esc_html_e('Roles management is handled elsewhere in the plugin.', 'lmb-core'); ?></p>
     <?php }
 
-    
-     /*    public static function collect_stats() {
-            $ad_counts = (array) wp_count_posts('lmb_legal_ad');
-            $news_counts = (array) wp_count_posts('lmb_newspaper');
-            $user_counts = count_users();
-
-            $ads_published = isset($ad_counts['publish']) ? (int) $ad_counts['publish'] : 0;
-            $ads_draft = isset($ad_counts['draft']) ? (int) $ad_counts['draft'] : 0;
-            // Note: The status is 'pending_review', not 'pending'
-            $ads_pending = isset($ad_counts['pending_review']) ? (int) $ad_counts['pending_review'] : 0;
-            
-            return [
-                'users_total'     => isset($user_counts['total_users']) ? (int) $user_counts['total_users'] : 0,
-                'ads_published'   => $ads_published,
-                'ads_unpublished' => $ads_draft + $ads_pending,
-                'ads_total'       => $ads_published + $ads_draft + $ads_pending,
-                'news_total'      => isset($news_counts['publish']) ? (int) $news_counts['publish'] : 0,
-                'rev_year'        => 1250, // Placeholder value
-            ];
-        } */
-    
     
     private static function get_default_invoice_template() {
         return '<h1>Invoice {{invoice_number}}</h1>
@@ -377,7 +402,32 @@ class LMB_Admin {
     }
 
 
+    // --- NEW HELPER FUNCTION to get all ad types ---
+    private static function get_all_ad_types() {
+        // In a real-world scenario, you might get this from another source.
+        // For now, we use the list you provided.
+        return [
+            'Constitution - SARL', 'Constitution - SARL AU', 'Liquidation - anticipee',
+            'Liquidation - definitive', 'Modification - Capital', 'Modification - denomination',
+            'Modification - gerant', 'Modification - objects', 'Modification - parts', 'Modification - seige'
+        ];
+    }
 
+    // The other render_*_tab methods (like render_general_tab) should now be simple form content
+    private static function render_general_tab() {
+        ?>
+        <form method="post" action="options.php">
+            <?php settings_fields('lmb_general_settings'); ?>
+            <table class="form-table">
+                </table>
+            <?php submit_button(); ?>
+        </form>
+        <label>
+            <input type="checkbox" name="lmb_enable_email_notifications" value="1" <?php checked(get_option('lmb_enable_email_notifications', 0), 1); ?>>
+            <?php esc_html_e('Enable email notifications', 'lmb-core'); ?>
+        </label>
+        <?php
+    }
 
 
 
