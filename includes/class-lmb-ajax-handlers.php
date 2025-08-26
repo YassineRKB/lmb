@@ -10,7 +10,8 @@ class LMB_Ajax_Handlers {
             'lmb_generate_package_invoice', 'lmb_get_notifications', 'lmb_mark_notification_read',
             'lmb_mark_all_notifications_read', 'lmb_save_package', 'lmb_delete_package',
             'lmb_upload_newspaper', 'lmb_upload_bank_proof', 'lmb_fetch_users', 'lmb_fetch_ads',
-            'lmb_upload_accuse', 'lmb_user_get_ads'
+            'lmb_upload_accuse', 'lmb_user_get_ads',
+            'lmb_get_pending_accuse_ads', 'lmb_attach_accuse_to_ad'
         ];
         foreach ($actions as $action) {
             add_action('wp_ajax_' . $action, [__CLASS__, 'handle_request']);
@@ -84,22 +85,50 @@ class LMB_Ajax_Handlers {
         wp_send_json_error(['message' => 'Widget class not found.']);
     }
 
+    // --- REVISED FUNCTION ---
     private static function lmb_upload_accuse() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
-        if (empty($_POST['legal_ad_id']) || empty($_FILES['accuse_file'])) wp_send_json_error(['message' => 'Missing fields.']);
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Permission denied.']);
+        }
+        if (empty($_POST['legal_ad_id']) || empty($_FILES['accuse_file'])) {
+            wp_send_json_error(['message' => 'Missing required fields: Ad ID and file are required.']);
+        }
+
+        $ad_id = intval($_POST['legal_ad_id']);
+        $ad = get_post($ad_id);
+
+        // --- ADDED VALIDATION ---
+        if (!$ad || $ad->post_type !== 'lmb_legal_ad') {
+            wp_send_json_error(['message' => 'Invalid Ad ID. No legal ad found with this ID.']);
+        }
+        if (get_post_meta($ad_id, 'lmb_status', true) !== 'published') {
+            wp_send_json_error(['message' => 'This ad is not published. You can only upload an accuse for published ads.']);
+        }
+        if (get_post_meta($ad_id, 'lmb_accuse_attachment_id', true)) {
+            wp_send_json_error(['message' => 'An accuse document has already been uploaded for this ad.']);
+        }
+        // --- END VALIDATION ---
 
         require_once(ABSPATH . 'wp-admin/includes/file.php');
-        $attachment_id = media_handle_upload('accuse_file', 0);
+        $attachment_id = media_handle_upload('accuse_file', 0); // Uploads the file to the media library
 
         if (is_wp_error($attachment_id)) {
             wp_send_json_error(['message' => $attachment_id->get_error_message()]);
         }
 
-        $ad_id = intval($_POST['legal_ad_id']);
+        // Link the attachment to the ad and vice-versa
         update_post_meta($attachment_id, 'lmb_accuse_for_ad', $ad_id);
         update_post_meta($ad_id, 'lmb_accuse_attachment_id', $attachment_id);
         
-        wp_send_json_success(['message' => 'Accuse uploaded and linked successfully.']);
+        // Notify the user who submitted the ad
+        $client_id = $ad->post_author;
+        if ($client_id && class_exists('LMB_Notification_Manager')) {
+            $title = sprintf(__('Receipt for ad "%s" is ready', 'lmb-core'), get_the_title($ad_id));
+            $msg = __('The official receipt (accuse) for your legal ad is now available for download from your dashboard.', 'lmb-core');
+            LMB_Notification_Manager::add($client_id, 'receipt_ready', $title, $msg, ['ad_id' => $ad_id]);
+        }
+        
+        wp_send_json_success(['message' => 'Accuse uploaded and attached successfully. The client has been notified.']);
     }
 
     // --- REVISED FUNCTION ---
@@ -589,5 +618,96 @@ class LMB_Ajax_Handlers {
         if (!wp_delete_post($pkg_id, true)) wp_send_json_error(['message' => 'Failed to delete package']);
         LMB_Ad_Manager::log_activity(sprintf('Package "%s" deleted', $package->post_title));
         wp_send_json_success(['message' => 'Package deleted.']);
+    }
+
+    // --- REVISED FUNCTION ---
+    private static function lmb_get_pending_accuse_ads() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access Denied.']);
+        }
+
+        $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        
+        // --- THIS IS THE CORRECTED QUERY ---
+        $args = [
+            'post_type' => 'lmb_legal_ad',
+            'post_status' => 'publish',
+            'posts_per_page' => 5,
+            'paged' => $paged,
+            'meta_query' => [
+                'relation' => 'AND',
+                // Find ads that are published
+                ['key' => 'lmb_status', 'value' => 'published'],
+                // And where the accuse ID key does NOT exist
+                ['key' => 'lmb_accuse_attachment_id', 'compare' => 'NOT EXISTS']
+            ],
+            'orderby' => 'date',
+            'order' => 'DESC'
+        ];
+        
+        $query = new WP_Query($args);
+        
+        ob_start();
+        if ($query->have_posts()) {
+            echo '<div class="lmb-accuse-pending-list">';
+            while ($query->have_posts()) {
+                $query->the_post();
+                $ad_id = get_the_ID();
+                $client = get_userdata(get_post_field('post_author', $ad_id));
+                echo '<div class="lmb-accuse-item">
+                        <div class="lmb-accuse-info">
+                            <strong>' . get_the_title() . '</strong> (ID: ' . $ad_id . ')<br>
+                            <small>Client: ' . ($client ? esc_html($client->display_name) : 'N/A') . ' | Published: ' . get_the_date() . '</small>
+                        </div>
+                        <div class="lmb-accuse-actions">
+                            <button class="lmb-btn lmb-btn-sm lmb-btn-primary lmb-upload-accuse-btn" data-ad-id="' . $ad_id . '">
+                                <i class="fas fa-upload"></i> Upload
+                            </button>
+                        </div>
+                      </div>';
+            }
+            echo '</div>';
+            
+            // Pagination
+            $total_pages = $query->max_num_pages;
+            if ($total_pages > 1) {
+                echo '<div class="lmb-pagination">' . paginate_links(['total' => $total_pages, 'current' => $paged, 'format' => '?paged=%#%', 'base' => '#%#%']) . '</div>';
+            }
+        } else {
+            echo '<div class="lmb-empty-state"><i class="fas fa-check-circle fa-3x"></i><h4>All Caught Up!</h4><p>No published ads are waiting for an accuse document.</p></div>';
+        }
+        $html = ob_get_clean();
+        wp_reset_postdata();
+        
+        wp_send_json_success(['html' => $html]);
+    }
+
+    // --- NEW FUNCTION ---
+    private static function lmb_attach_accuse_to_ad() {
+        if (!current_user_can('manage_options') || !isset($_POST['ad_id'], $_POST['attachment_id'])) {
+            wp_send_json_error(['message' => 'Permission denied or missing data.']);
+        }
+
+        $ad_id = intval($_POST['ad_id']);
+        $attachment_id = intval($_POST['attachment_id']);
+        $ad = get_post($ad_id);
+
+        if (!$ad || $ad->post_type !== 'lmb_legal_ad') {
+            wp_send_json_error(['message' => 'Invalid Ad ID.']);
+        }
+        
+        // Link the attachment to the ad
+        update_post_meta($attachment_id, 'lmb_accuse_for_ad', $ad_id);
+        update_post_meta($ad_id, 'lmb_accuse_attachment_id', $attachment_id);
+        
+        // Notify the user
+        $client_id = $ad->post_author;
+        if ($client_id && class_exists('LMB_Notification_Manager')) {
+            $title = sprintf(__('Receipt for ad "%s" is ready', 'lmb-core'), get_the_title($ad_id));
+            $msg = __('The official receipt (accuse) for your legal ad is now available for download from your dashboard.', 'lmb-core');
+            LMB_Notification_Manager::add($client_id, 'receipt_ready', $title, $msg, ['ad_id' => $ad_id]);
+        }
+        
+        wp_send_json_success(['message' => 'Accuse attached successfully! The client has been notified.']);
     }
 }

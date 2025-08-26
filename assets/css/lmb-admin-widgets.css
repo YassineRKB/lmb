@@ -349,3 +349,38 @@
     padding: 4px 8px;
     font-size: 12px;
 }
+/* Upload Accuse Widget List Styles */
+.lmb-accuse-pending-list {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.lmb-accuse-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    gap: 15px;
+}
+
+.lmb-accuse-item:last-child {
+    border-bottom: none;
+}
+
+.lmb-accuse-item:hover {
+    background-color: #f8f9fa;
+}
+
+.lmb-accuse-info {
+    flex-grow: 1;
+}
+
+.lmb-accuse-info small {
+    color: #6c757d;
+}
+
+.lmb-accuse-actions {
+    flex-shrink: 0;
+}
