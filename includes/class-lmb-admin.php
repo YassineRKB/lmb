@@ -169,18 +169,13 @@ class LMB_Admin {
             wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
         }
 
-        $main_tabs = [
-            'general'   => __('General', 'lmb-core'),
-            'templates' => __('Templates', 'lmb-core'),
-            // ... other main tabs
-        ];
         $current_main_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('LMB Core Settings', 'lmb-core'); ?></h1>
 
             <nav class="nav-tab-wrapper">
-                <?php foreach ($main_tabs as $tab_id => $tab_name): ?>
+                <?php foreach (self::$settings_tabs as $tab_id => $tab_name): ?>
                     <a href="?page=lmb-settings&tab=<?php echo esc_attr($tab_id); ?>" class="nav-tab<?php echo $current_main_tab === $tab_id ? ' nav-tab-active' : ''; ?>">
                         <?php echo esc_html($tab_name); ?>
                     </a>

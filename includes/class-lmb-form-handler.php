@@ -67,7 +67,8 @@ class LMB_Form_Handler {
         }
 
         $ad_type = isset($form_data['ad_type']) ? sanitize_text_field($form_data['ad_type']) : 'Untitled Ad';
-        $ad_title = isset($form_data['companyName']) ? sanitize_text_field($form_data['companyName']) : $ad_type . ' - ' . wp_date('Y-m-d');
+        $company_name = isset($form_data['companyname']) ? sanitize_text_field($form_data['companyname']) : '';
+        $ad_title = $ad_type . ($company_name ? ' - ' . $company_name : '') . ' - ' . wp_date('Y-m-d');
 
         $post_id = wp_insert_post([
             'post_type'    => 'lmb_legal_ad',
