@@ -31,10 +31,18 @@ class LMB_Save_Ad_Action extends \ElementorPro\Modules\Forms\Classes\Action_Base
             // Flatten fields into key => value
             $form_data = [];
             foreach ($raw_fields as $key => $field) {
-                // Elementor typically: ['value' => '...']
                 if (is_array($field) && array_key_exists('value', $field)) {
-                    $form_data[$key] = is_array($field['value']) ? implode(', ', $field['value']) : $field['value'];
+                    // --- FIX START ---
+                    // If the value is an array (from a repeater), keep it as an array.
+                    // Otherwise, it's a simple field, so just get the value.
+                    if (is_array($field['value'])) {
+                        $form_data[$key] = $field['value']; // Keep it as an array
+                    } else {
+                        $form_data[$key] = $field['value']; // It's a string
+                    }
+                    // --- FIX END ---
                 } else {
+                    // Fallback for unexpected field structures
                     $form_data[$key] = is_array($field) ? json_encode($field) : $field;
                 }
             }
