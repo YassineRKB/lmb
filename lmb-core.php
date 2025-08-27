@@ -67,6 +67,15 @@ function lmb_enqueue_assets() {
 
     wp_enqueue_style('lmb-core-styles', LMB_CORE_URL . 'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
     wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
+    // Conditionally load the admin editor script only on the correct screen
+    if (is_admin()) {
+        $screen = get_current_screen();
+        if ($screen && $screen->post_type === 'lmb_legal_ad' && $screen->base === 'post') {
+            wp_register_script('lmb-admin-editor', LMB_CORE_URL . 'assets/js/lmb-admin-editor.js', ['lmb-core'], LMB_CORE_VERSION, true);
+            wp_enqueue_script('lmb-admin-editor');
+        }
+    }
+    // --- END: NEW CODE FOR ADMIN EDITOR SCRIPT ---
 }
 add_action('wp_enqueue_scripts', 'lmb_enqueue_assets');
 add_action('admin_enqueue_scripts', 'lmb_enqueue_assets');

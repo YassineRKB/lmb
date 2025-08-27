@@ -142,18 +142,33 @@ class LMB_Form_Handler {
         preg_match_all('/{{#ifcount (.*?) > (\d+)}}(.*?){{else}}(.*?){{\/ifcount}}/s', $template, $cond_matches, PREG_SET_ORDER);
         if (!empty($cond_matches)) {
             foreach ($cond_matches as $match) {
-                $repeater_id = $match[1];
+                $repeater_id = $match[1]; // This is the placeholder like 'repgerantend'
                 $count_check = (int)$match[2];
                 $text_if_true = $match[3];
                 $text_if_false = $match[4];
 
-                // Get the hidden input for the repeater to find the actual item count
-                $repeater_meta = get_post_meta($post_id, sanitize_key($repeater_id), true);
-                $repeater_data = json_decode($repeater_meta, true);
-                $item_count = isset($repeater_data['count']) ? (int)$repeater_data['count'] : 0;
+                // --- START FIX ---
+                // Instead of looking for the repeater ID, we find the FIRST field inside the corresponding '#each' block.
+                $item_count = 0;
+                $each_pattern = '/{{#each ' . preg_quote($repeater_id, '/') . '}}(.*?){{/each}}/s';
+
+                if (preg_match($each_pattern, $template, $each_match)) {
+                    $inner_template = $each_match[1];
+                    // Find the first placeholder inside the #each loop, e.g., {{namegerant}}
+                    if (preg_match('/{{(.*?)}}/', $inner_template, $first_field_match)) {
+                        $first_field_id = $first_field_match[1];
+                        // Get the data for that field, which will be an array
+                        $repeater_field_data = get_post_meta($post_id, sanitize_key($first_field_id), true);
+                        if (is_array($repeater_field_data)) {
+                            $item_count = count($repeater_field_data);
+                        }
+                    }
+                }
+                // --- END FIX ---
 
                 $output = ($item_count > $count_check) ? $text_if_true : $text_if_false;
-                $template = str_replace($match[0], $output, $template);
+                // Use preg_replace to only replace the first occurrence
+                $template = preg_replace('/' . preg_quote($match[0], '/') . '/', $output, $template, 1);
             }
         }
 

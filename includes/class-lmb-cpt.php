@@ -62,6 +62,7 @@ class LMB_CPT {
     public static function add_meta_boxes() {
         add_meta_box('lmb_package_details', __('Package Details', 'lmb-core'), [__CLASS__, 'render_package_metabox'], 'lmb_package', 'normal', 'high');
         add_meta_box('lmb_newspaper_pdf', __('Newspaper PDF', 'lmb-core'), [__CLASS__, 'render_newspaper_metabox'], 'lmb_newspaper', 'normal', 'high');
+        self::add_generation_meta_box();
     }
 
     public static function render_package_metabox($post) {
@@ -131,4 +132,35 @@ class LMB_CPT {
             update_post_meta($post_id, 'newspaper_pdf', intval($_POST['newspaper_pdf']));
         }
     }
+    public static function add_generation_meta_box() {
+        add_meta_box(
+            'lmb_generator_actions',
+            __('Actions', 'lmb-core'),
+            [__CLASS__, 'render_generator_metabox'],
+            'lmb_legal_ad', // Show on Legal Ad CPT
+            'side',         // Position on the side
+            'high'
+        );
+    }
+
+    // Add this function inside the LMB_CPT class
+    public static function render_generator_metabox($post) {
+        ?>
+        <p>
+            <button type="button" id="lmb-regenerate-text-btn" class="button">
+                <i class="fas fa-sync-alt"></i> <?php _e('Regenerate Text from Template', 'lmb-core'); ?>
+            </button>
+        </p>
+        <p>
+            <button type="button" id="lmb-generate-pdf-btn" class="button button-primary">
+                <i class="fas fa-file-pdf"></i> <?php _e('Generate PDF', 'lmb-core'); ?>
+            </button>
+        </p>
+        <div id="lmb-generator-feedback" style="margin-top:10px;"></div>
+        <p class="description">
+            Use 'Regenerate Text' to update the ad content from the latest template. 'Generate PDF' will save the current content as a PDF.
+        </p>
+        <?php
+    }
+
 }

@@ -13,6 +13,7 @@ class LMB_Ajax_Handlers {
             'lmb_upload_accuse', 'lmb_user_get_ads',
             'lmb_get_pending_accuse_ads', 'lmb_attach_accuse_to_ad',
             'lmb_get_pending_invoices_form', 'lmb_generate_invoice_pdf',
+            'lmb_regenerate_ad_text', 'lmb_admin_generate_pdf'
         ];
         foreach ($actions as $action) {
             add_action('wp_ajax_' . $action, [__CLASS__, 'handle_request']);
@@ -816,6 +817,42 @@ class LMB_Ajax_Handlers {
             wp_send_json_success(['pdf_url' => $pdf_url]);
         } else {
             wp_send_json_error(['message' => 'Could not generate PDF invoice.']);
+        }
+    }
+
+    // Add this new function inside the LMB_Ajax_Handlers class
+    private static function lmb_regenerate_ad_text() {
+        if (!current_user_can('edit_posts') || !isset($_POST['post_id'])) {
+            wp_send_json_error(['message' => 'Permission Denied.']);
+        }
+
+        $post_id = intval($_POST['post_id']);
+        
+        // This is your existing function to generate the text
+        LMB_Form_Handler::generate_and_save_formatted_text($post_id);
+
+        // Get the updated content to send back to the editor
+        $post = get_post($post_id);
+        
+        wp_send_json_success(['new_content' => $post->post_content]);
+    }
+
+    // Add this new function inside the LMB_Ajax_Handlers class
+    private static function lmb_admin_generate_pdf() {
+        if (!current_user_can('edit_posts') || !isset($_POST['post_id'])) {
+            wp_send_json_error(['message' => 'Permission Denied.']);
+        }
+
+        $post_id = intval($_POST['post_id']);
+
+        // This is your existing function to generate the PDF
+        $pdf_url = LMB_PDF_Generator::create_ad_pdf_from_fulltext($post_id);
+        
+        if ($pdf_url) {
+            update_post_meta($post_id, 'ad_pdf_url', $pdf_url);
+            wp_send_json_success(['message' => 'PDF generated successfully!', 'pdf_url' => $pdf_url]);
+        } else {
+            wp_send_json_error(['message' => 'Failed to generate PDF.']);
         }
     }
 }
