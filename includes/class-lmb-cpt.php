@@ -1,6 +1,5 @@
 <?php
 // FILE: includes/class-lmb-cpt.php
-// I've added 'editor' to the 'supports' array for your legal ad post type.
 
 if (!defined('ABSPATH')) exit;
 
@@ -10,6 +9,7 @@ class LMB_CPT {
         add_action('add_meta_boxes', [__CLASS__, 'add_meta_boxes']);
         add_action('save_post_lmb_package', [__CLASS__, 'save_package_meta']);
         add_action('save_post_lmb_newspaper', [__CLASS__, 'save_newspaper_meta']);
+        add_filter('post_type_link', [__CLASS__, 'custom_post_type_link'], 10, 2);
     }
 
     public static function register_post_types() {
@@ -18,12 +18,12 @@ class LMB_CPT {
             'public' => true,
             'show_ui' => true,
             'show_in_menu' => 'lmb-core',
-            'has_archive' => 'announces',
-            'rewrite' => ['slug' => 'announces', 'with_front' => false],
-            // --- CHANGE HERE: Added 'editor' to the supports array ---
+            'has_archive' => false, // This is the fix
+            'rewrite' => ['slug' => 'lmb_legal_ad', 'with_front' => false],
             'supports' => ['title', 'author', 'editor'],
             'menu_icon' => 'dashicons-media-text',
             'publicly_queryable' => true,
+            'query_var' => true,
             'exclude_from_search' => false,
         ]);
 
@@ -163,4 +163,13 @@ class LMB_CPT {
         <?php
     }
 
+    public static function custom_post_type_link($post_link, $post) {
+        if ($post->post_type == 'lmb_legal_ad') {
+            $announces_page = get_page_by_path('announces');
+            if ($announces_page) {
+                return add_query_arg('legal-ad', $post->ID . '-' . $post->post_name, get_permalink($announces_page));
+            }
+        }
+        return $post_link;
+    }
 }

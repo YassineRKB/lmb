@@ -11,13 +11,10 @@ class LMB_Newspaper_Directory_Widget extends Widget_Base {
     public function get_title() { return __('LMB Newspaper Directory','lmb-core'); }
     public function get_icon()  { return 'eicon-library-upload'; }
     
-    // --- FIX: Changed category to lmb-user-widgets to make it available for general use ---
     public function get_categories(){ return ['lmb-user-widgets']; }
     
-    // No JS needed for this simple display widget
     public function get_script_depends() { return []; }
 
-    // Use the core stylesheet for the table and buttons
     public function get_style_depends() { return ['lmb-core']; }
 
 
@@ -37,42 +34,34 @@ class LMB_Newspaper_Directory_Widget extends Widget_Base {
                 'post_type' => 'lmb_newspaper',
                 'post_status' => 'publish',
                 's' => $search,
-                'posts_per_page' => 15, // Increased for a list view
+                'posts_per_page' => 15,
                 'paged' => $paged,
                 'orderby' => 'date',
                 'order' => 'DESC'
             ]);
 
             if ($q->have_posts()){
-                echo '<div class="lmb-table-container">';
-                echo '<table class="lmb-data-table lmb-newspaper-table">';
-                echo '<thead><tr>';
-                echo '<th>' . esc_html__('Ref', 'lmb-core') . '</th>';
-                echo '<th>' . esc_html__('Name', 'lmb-core') . '</th>';
-                echo '<th>' . esc_html__('Date', 'lmb-core') . '</th>';
-                echo '<th>' . esc_html__('Download', 'lmb-core') . '</th>';
-                echo '</tr></thead>';
-                echo '<tbody>';
+                echo '<div class="lmb-newspaper-list">';
                 while($q->have_posts()){ 
                     $q->the_post();
                     $pdf_id = get_post_meta(get_the_ID(), 'newspaper_pdf', true);
                     $pdf_url = wp_get_attachment_url($pdf_id);
                     
-                    echo '<tr>';
-                    echo '<td>#' . esc_html(get_the_ID()) . '</td>';
-                    echo '<td><strong>' . esc_html(get_the_title()) . '</strong></td>';
-                    echo '<td>' . esc_html(get_the_date()) . '</td>';
-                    echo '<td>';
+                    echo '<div class="lmb-newspaper-list-item">';
+                    echo '<div class="lmb-newspaper-info">';
+                    echo '<strong>' . esc_html(get_the_title()) . '</strong>';
+                    echo '<span>' . esc_html(get_the_date()) . '</span>';
+                    echo '</div>';
+                    echo '<div class="lmb-actions-cell">';
                     if ($pdf_url) {
-                        echo '<a target="_blank" href="'.esc_url($pdf_url).'" class="lmb-btn lmb-btn-sm lmb-btn-primary" download><i class="fas fa-download"></i> ' . esc_html__('Download PDF','lmb-core') . '</a>';
+                        echo '<a target="_blank" href="'.esc_url($pdf_url).'" class="lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-eye"></i> ' . esc_html__('View','lmb-core') . '</a>';
+                        echo '<a target="_blank" href="'.esc_url($pdf_url).'" class="lmb-btn lmb-btn-sm lmb-btn-primary" download><i class="fas fa-download"></i> ' . esc_html__('Download','lmb-core') . '</a>';
                     } else {
                         echo '<em>' . esc_html__('Not Available', 'lmb-core') . '</em>';
                     }
-                    echo '</td>';
-                    echo '</tr>';
+                    echo '</div>';
+                    echo '</div>';
                 }
-                echo '</tbody>';
-                echo '</table>';
                 echo '</div>';
                 
                 if ($q->max_num_pages > 1) {
