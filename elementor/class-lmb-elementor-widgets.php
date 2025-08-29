@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 // Register the custom "LMB Core Widgets" category in Elementor
 add_action('elementor/elements/categories_registered', function($elements_manager) {
-    // New User-Facing Category
+    // old User-Facing Category
     $elements_manager->add_category(
         'lmb-user-widgets',
         [
@@ -12,11 +12,29 @@ add_action('elementor/elements/categories_registered', function($elements_manage
         ]
     );
     
-    // New Admin-Facing Category
+    // old Admin-Facing Category
     $elements_manager->add_category(
         'lmb-admin-widgets',
         [
             'title' => __('LMB ADMIN WIDGETS', 'lmb-core'),
+            'icon' => 'eicon-lock-user',
+        ]
+    );
+
+    // New V2 User-Facing Category
+    $elements_manager->add_category(
+        'lmb-user-widgets-v2',
+        [
+            'title' => __('LMB USERD V2', 'lmb-core'),
+            'icon' => 'eicon-user-circle-o',
+        ]
+    );
+    
+    // New V2 Admin-Facing Category
+    $elements_manager->add_category(
+        'lmb-admin-widgets-v2',
+        [
+            'title' => __('LMB ADMINS V2', 'lmb-core'),
             'icon' => 'eicon-lock-user',
         ]
     );
