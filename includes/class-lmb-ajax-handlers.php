@@ -13,7 +13,7 @@ class LMB_Ajax_Handlers {
             'lmb_upload_accuse', 'lmb_user_get_ads',
             'lmb_get_pending_accuse_ads', 'lmb_attach_accuse_to_ad',
             'lmb_get_pending_invoices_form', 'lmb_generate_invoice_pdf',
-            'lmb_regenerate_ad_text', 'lmb_admin_generate_pdf'
+            'lmb_regenerate_ad_text', 'lmb_admin_generate_pdf', 'lmb_fetch_ads_v2',
         ];
         foreach ($actions as $action) {
             add_action('wp_ajax_' . $action, [__CLASS__, 'handle_request']);
@@ -854,5 +854,124 @@ class LMB_Ajax_Handlers {
         } else {
             wp_send_json_error(['message' => 'Failed to generate PDF.']);
         }
+    }
+
+    // --- NEW FUNCTION: v2 legal ads management fetch with filters ---
+    private static function lmb_fetch_ads_v2() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access Denied.'], 403);
+        }
+    
+        $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
+        parse_str($_POST['filters'] ?? '', $filters);
+    
+        $args = [
+            'post_type' => 'lmb_legal_ad',
+            'post_status' => ['publish', 'draft', 'pending'],
+            'posts_per_page' => 10,
+            'paged' => $paged,
+            'meta_query' => ['relation' => 'AND'],
+        ];
+    
+        // Apply filters
+        if (!empty($filters['filter_ref']) && is_numeric($filters['filter_ref'])) {
+            $args['post__in'] = [intval($filters['filter_ref'])];
+        }
+        if (!empty($filters['filter_company'])) {
+            $args['meta_query'][] = ['key' => 'company_name', 'value' => sanitize_text_field($filters['filter_company']), 'compare' => 'LIKE'];
+        }
+        if (!empty($filters['filter_type'])) {
+            $args['meta_query'][] = ['key' => 'ad_type', 'value' => sanitize_text_field($filters['filter_type']), 'compare' => 'LIKE'];
+        }
+        if (!empty($filters['filter_date'])) {
+            $args['date_query'] = [['year' => date('Y', strtotime($filters['filter_date'])), 'month' => date('m', strtotime($filters['filter_date'])), 'day' => date('d', strtotime($filters['filter_date']))]];
+        }
+        if (!empty($filters['filter_client'])) {
+            $user_query = new WP_User_Query(['search' => '*' . esc_attr(sanitize_text_field($filters['filter_client'])) . '*', 'search_columns' => ['user_login', 'display_name'], 'fields' => 'ID']);
+            $user_ids = $user_query->get_results();
+            if (!empty($user_ids)) {
+                $args['author__in'] = $user_ids;
+            } else {
+                $args['author__in'] = [0]; // No results
+            }
+        }
+        if (!empty($filters['filter_status'])) {
+            $args['meta_query'][] = ['key' => 'lmb_status', 'value' => sanitize_key($filters['filter_status'])];
+        }
+        if (!empty($filters['filter_approved_by'])) {
+             $user_query = new WP_User_Query(['search' => '*' . esc_attr(sanitize_text_field($filters['filter_approved_by'])) . '*', 'search_columns' => ['user_login', 'display_name'], 'fields' => 'ID']);
+            $user_ids = $user_query->get_results();
+            if(!empty($user_ids)){
+                 $args['meta_query'][] = ['key' => 'approved_by', 'value' => $user_ids, 'compare' => 'IN'];
+            } else {
+                 $args['meta_query'][] = ['key' => 'approved_by', 'value' => 0]; // No results
+            }
+        }
+    
+        $query = new WP_Query($args);
+    
+        ob_start();
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $post_id = get_the_ID();
+                $status = get_post_meta($post_id, 'lmb_status', true) ?: 'draft';
+                $client = get_userdata(get_post_field('post_author', $post_id));
+                $approved_by_id = get_post_meta($post_id, 'approved_by', true);
+                $approved_by = $approved_by_id ? get_userdata($approved_by_id) : null;
+                $accuse_id = get_post_meta($post_id, 'lmb_accuse_attachment_id', true);
+                // Placeholder for journal logic
+                $journal_name = "Journal XYZ"; 
+    
+                echo '<tr class="clickable-row" data-href="' . esc_url(get_edit_post_link($post_id)) . '">';
+                echo '<td>' . esc_html($post_id) . '</td>';
+                echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
+                echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
+                echo '<td>' . get_the_date('Y-m-d') . '</td>';
+                echo '<td>' . ($client ? esc_html($client->display_name) : 'N/A') . '</td>';
+                echo '<td><span class="lmb-status-badge lmb-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td>';
+                echo '<td>' . ($approved_by ? esc_html($approved_by->display_name) : '<span class="cell-placeholder">N/A</span>') . '</td>';
+                
+                // Accuse Column
+                echo '<td>';
+                if ($status === 'published' && $accuse_id) {
+                    echo '<a href="' . esc_url(wp_get_attachment_url($accuse_id)) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Accuse</a>';
+                } else {
+                    echo '<span class="cell-placeholder">-</span>';
+                }
+                echo '</td>';
+    
+                // Journal Column
+                echo '<td>';
+                // Replace with your actual journal logic
+                if ($status === 'published' && $journal_name) {
+                     echo '<a href="#" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Journal</a>';
+                } else {
+                    echo '<span class="cell-placeholder">-</span>';
+                }
+                echo '</td>';
+    
+                // Actions Column
+                echo '<td class="lmb-actions-cell">';
+                if ($status === 'pending_review') {
+                    echo '<button class="lmb-btn lmb-btn-icon lmb-btn-success lmb-ad-action" data-action="approve" data-id="' . $post_id . '" title="Approve"><i class="fas fa-check-circle"></i></button>';
+                    echo '<button class="lmb-btn lmb-btn-icon lmb-btn-danger lmb-ad-action" data-action="deny" data-id="' . $post_id . '" title="Deny"><i class="fas fa-times-circle"></i></button>';
+                } elseif ($status === 'published') {
+                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-info" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>';
+                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-info" title="Generate Accuse"><i class="fas fa-receipt"></i></button>';
+                } else {
+                     echo '<button class="lmb-btn lmb-btn-sm lmb-btn-view">View</button>';
+                }
+                echo '</td>';
+    
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="10" style="text-align:center;">No ads found matching your criteria.</td></tr>';
+        }
+        $html = ob_get_clean();
+        wp_reset_postdata();
+    
+        wp_send_json_success(['html' => $html, 'pagination' => '']); // Pagination will be added next
     }
 }

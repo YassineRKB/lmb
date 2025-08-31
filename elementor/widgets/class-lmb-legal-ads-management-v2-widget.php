@@ -78,89 +78,17 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Example Row 1: Published, missing Accuse, has Journal -->
-                            <tr class="clickable-row" data-href="#">
-                                <td>101</td>
-                                <td>Tech Solutions SARL</td>
-                                <td>Constitution - SARL</td>
-                                <td>2025-08-26</td>
-                                <td>John Doe</td>
-                                <td><span class="lmb-status-badge lmb-status-published">Published</span></td>
-                                <td>Admin User</td>
-                                <td class="cell-placeholder">-</td>
-                                <td><a href="#" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Journal</a></td>
-                                <td class="lmb-actions-cell">
-                                    <button class="lmb-btn lmb-btn-sm lmb-btn-info" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>
-                                    <button class="lmb-btn lmb-btn-sm lmb-btn-info" title="Generate Accuse"><i class="fas fa-receipt"></i></button>
-                                </td>
-                            </tr>
-                            <!-- Example Row 2: Published, has Accuse, missing Journal -->
-                            <tr class="clickable-row" data-href="#">
-                                <td>102</td>
-                                <td>Global Imports</td>
-                                <td>Modification - Capital</td>
-                                <td>2025-08-25</td>
-                                <td>Jane Smith</td>
-                                <td><span class="lmb-status-badge lmb-status-published">Published</span></td>
-                                <td>Admin User</td>
-                                <td><a href="#" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Accuse</a></td>
-                                <td class="cell-placeholder">-</td>
-                                <td class="lmb-actions-cell">
-                                    <button class="lmb-btn lmb-btn-sm lmb-btn-info" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>
-                                    <button class="lmb-btn lmb-btn-sm lmb-btn-info" title="Generate Accuse"><i class="fas fa-receipt"></i></button>
-                                </td>
-                            </tr>
-                            <!-- Example Row 3: Pending -->
-                            <tr class="clickable-row" data-href="#">
-                                <td>103</td>
-                                <td>Creative Minds AU</td>
-                                <td>SARL AU</td>
-                                <td>2025-08-24</td>
-                                <td>Peter Jones</td>
-                                <td><span class="lmb-status-badge lmb-status-pending_review">Pending</span></td>
-                                <td class="cell-placeholder">N/A</td>
-                                <td class="cell-placeholder">N/A</td>
-                                <td class="cell-placeholder">N/A</td>
-                                <td class="lmb-actions-cell">
-                                    <button class="lmb-btn lmb-btn-icon lmb-btn-success" title="Approve"><i class="fas fa-check-circle"></i></button>
-                                    <button class="lmb-btn lmb-btn-icon lmb-btn-danger" title="Deny"><i class="fas fa-times-circle"></i></button>
-                                </td>
-                            </tr>
-                             <!-- Example Row 4: Denied -->
-                            <tr class="clickable-row" data-href="#">
-                                <td>104</td>
-                                <td>My Biz Consulting</td>
-                                <td>Cession de parts</td>
-                                <td>2025-08-23</td>
-                                <td>Sam Wilson</td>
-                                <td><span class="lmb-status-badge lmb-status-denied">Denied</span></td>
-                                <td>Admin User</td>
-                                <td class="cell-placeholder">N/A</td>
-                                <td class="cell-placeholder">N/A</td>
-                                <td class="lmb-actions-cell">
-                                    <button class="lmb-btn lmb-btn-sm lmb-btn-view">View</button>
-                                </td>
-                            </tr>
-                             <!-- Example Row 5: Draft -->
-                            <tr class="clickable-row" data-href="#">
-                                <td>105</td>
-                                <td>Future Ventures</td>
-                                <td>Réduction de capital</td>
-                                <td>2025-08-22</td>
-                                <td>Emily Carter</td>
-                                <td><span class="lmb-status-badge lmb-status-draft">Draft</span></td>
-                                <td class="cell-placeholder">N/A</td>
-                                <td class="cell-placeholder">N/A</td>
-                                <td class="cell-placeholder">N/A</td>
-                                <td class="lmb-actions-cell">
-                                    <button class="lmb-btn lmb-btn-sm lmb-btn-view">View</button>
-                                </td>
-                            </tr>
+                            <!-- This will be populated by AJAX -->
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Container for AJAX-loaded pagination -->
+                <div class="lmb-pagination-container" style="margin-top: 20px;"></div>
+
             </div>
         </div>
         <?php
     }
 }
+

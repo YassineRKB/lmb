@@ -1,0 +1,237 @@
+/* FILE: assets/css/lmb-user-widgets-v2.css */
+
+/* --- Global V2 Widget Styles --- */
+.lmb-user-widget-v2 {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    max-width: 1200px;
+    margin: auto;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* --- Widget Header --- */
+.lmb-user-widget-v2 .lmb-widget-header {
+    background: #f9f9f9;
+    color: #333;
+    padding: 20px 25px;
+    border-bottom: 1px solid #ddd;
+    border-radius: 8px 8px 0 0;
+}
+
+.lmb-user-widget-v2 .lmb-widget-header h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 24px;
+    margin: 0;
+    font-weight: 400;
+    color: #d78808;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lmb-user-widget-v2 .lmb-widget-content {
+    padding: 25px;
+}
+
+/* --- Filters Section --- */
+.lmb-user-widget-v2 .lmb-filters-box {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.lmb-user-widget-v2 .lmb-filters-box-title {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    color: #333;
+}
+
+.lmb-user-widget-v2 .lmb-filter-grid {
+    display: grid;
+    gap: 15px;
+    align-items: center;
+}
+
+.lmb-user-widget-v2 .lmb-filter-grid-user {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.lmb-user-widget-v2 .lmb-filter-input, 
+.lmb-user-widget-v2 .lmb-filter-select {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- Tabs Navigation --- */
+.lmb-tabs-nav-user {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.lmb-tab-btn-user {
+    padding: 12px 20px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    font-weight: 500;
+    color: #555;
+    position: relative;
+    top: 1px;
+    border-bottom: 3px solid transparent;
+}
+
+.lmb-tab-btn-user.active {
+    color: #d78808;
+    border-bottom-color: #d78808;
+}
+
+.lmb-tab-pane {
+    display: none;
+}
+
+.lmb-tab-pane.active {
+    display: block;
+}
+
+/* --- Data Table --- */
+.lmb-user-widget-v2 .lmb-table-container {
+    overflow-x: auto;
+}
+
+.lmb-user-widget-v2 .lmb-data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lmb-user-widget-v2 .lmb-data-table thead tr {
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-user-widget-v2 .lmb-data-table th,
+.lmb-user-widget-v2 .lmb-data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+.lmb-user-widget-v2 .lmb-data-table tbody tr:not(.no-hover):hover {
+    background-color: #fef8f0;
+}
+
+.lmb-data-table tbody tr.clickable-row {
+    cursor: pointer;
+}
+
+
+/* --- Status Badges & Placeholders --- */
+.lmb-user-widget-v2 .lmb-status-badge {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.lmb-user-widget-v2 .lmb-status-published { background-color: #28a745; }
+.lmb-user-widget-v2 .lmb-status-pending_review { background-color: #ffc107; color: #333; }
+.lmb-user-widget-v2 .lmb-status-draft { background-color: #6c757d; }
+.lmb-user-widget-v2 .lmb-status-denied { background-color: #dc3545; }
+.lmb-user-widget-v2 .cell-placeholder { color: #888; }
+.lmb-user-widget-v2 .denial-reason {
+    font-size: 12px;
+    color: #dc3545;
+    margin-top: 4px;
+}
+
+
+/* --- Buttons & Links --- */
+.lmb-user-widget-v2 .lmb-btn {
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.lmb-user-widget-v2 .lmb-btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.lmb-user-widget-v2 .lmb-btn-icon {
+    padding: 8px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+}
+
+.lmb-user-widget-v2 .lmb-btn-success { background-color: #28a745; color: #fff; }
+.lmb-user-widget-v2 .lmb-btn-danger { background-color: #dc3545; color: #fff; }
+.lmb-user-widget-v2 .lmb-btn-primary { background-color: #007bff; color: #fff; }
+.lmb-user-widget-v2 .lmb-btn-view { background-color: #f8f9fa; border-color: #ddd; color: #333; }
+
+.lmb-user-widget-v2 .lmb-btn-text-link {
+    background-color: transparent;
+    border: 1px solid #d78808;
+    color: #d78808;
+}
+.lmb-user-widget-v2 .lmb-btn-text-link:hover {
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-user-widget-v2 .lmb-actions-cell {
+    display: flex;
+    gap: 5px;
+}
+
+/* Pagination & View More */
+ .lmb-pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.lmb-pagination-container a, .lmb-pagination-container span {
+    padding: 8px 12px;
+    margin: 0 4px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #d78808;
+    border: 1px solid #eee;
+}
+
+.lmb-pagination-container a:hover {
+    background: #fef8f0;
+}
+
+.lmb-pagination-container .current {
+    background: #d78808;
+    color: #fff;
+    border-color: #d78808;
+}
+
