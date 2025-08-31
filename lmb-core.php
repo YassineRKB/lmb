@@ -55,33 +55,15 @@ register_activation_hook(__FILE__, function () {
 });
 
 /**
- * Enqueue scripts and styles and unify AJAX parameters.
+ * --- CORRECTED AND UNIFIED ASSET REGISTRATION ---
+ * This single function now handles registering all scripts and styles for the plugin.
+ * Elementor's dependency system will then enqueue them only when a widget is used.
  */
-function lmb_enqueue_assets() {
-    wp_register_script('lmb-core', LMB_CORE_URL . 'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
-    wp_localize_script('lmb-core', 'lmb_ajax_params', [
-        'ajaxurl' => admin_url('admin-ajax.php'),
-        'nonce'   => wp_create_nonce('lmb_nonce'),
-    ]);
-    wp_enqueue_script('lmb-core');
-
-    wp_enqueue_style('lmb-core-styles', LMB_CORE_URL . 'assets/css/lmb-core.css', [], LMB_CORE_VERSION);
-    wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
-    // Conditionally load the admin editor script only on the correct screen
-    if (is_admin()) {
-        $screen = get_current_screen();
-        if ($screen && $screen->post_type === 'lmb_legal_ad' && $screen->base === 'post') {
-            wp_register_script('lmb-admin-editor', LMB_CORE_URL . 'assets/js/lmb-admin-editor.js', ['lmb-core'], LMB_CORE_VERSION, true);
-            wp_enqueue_script('lmb-admin-editor');
-        }
-    }
-    // --- END: NEW CODE FOR ADMIN EDITOR SCRIPT ---
-}
-add_action('wp_enqueue_scripts', 'lmb_enqueue_assets');
-add_action('admin_enqueue_scripts', 'lmb_enqueue_assets');
-
-function lmb_register_widget_assets() {
+function lmb_register_all_assets() {
+    // --- SCRIPTS ---
     $scripts = [
+        'lmb-core'                    => 'assets/js/lmb-core.js',
+        'lmb-admin-editor'            => 'assets/js/lmb-admin-editor.js',
         'lmb-admin-actions'           => 'assets/js/lmb-admin-actions.js',
         'lmb-notifications'           => 'assets/js/lmb-notifications.js',
         'lmb-balance-manipulation'    => 'assets/js/lmb-balance-manipulation.js',
@@ -95,29 +77,59 @@ function lmb_register_widget_assets() {
         'lmb-upload-accuse'           => 'assets/js/lmb-upload-accuse.js',
         'lmb-legal-ads-management-v2' => 'assets/js/lmb-legal-ads-management-v2.js',
         'lmb-my-legal-ads-v2'         => 'assets/js/lmb-my-legal-ads-v2.js',
-        'lmb-my-legal-ads-v2'         => 'assets/js/lmb-my-legal-ads-v2.js',
+        'lmb-feed-v2'                 => 'assets/js/lmb-feed-v2.js',
     ];
+
     foreach ($scripts as $handle => $path) {
-        wp_register_script($handle, LMB_CORE_URL . $path, ['lmb-core'], LMB_CORE_VERSION, true);
+        // Register all scripts. Use 'lmb-core' as a dependency for widget scripts.
+        $dependency = ($handle === 'lmb-core') ? ['jquery'] : ['lmb-core'];
+        wp_register_script($handle, LMB_CORE_URL . $path, $dependency, LMB_CORE_VERSION, true);
+    }
+    
+    // --- STYLES ---
+    $styles = [
+        'lmb-core'               => 'assets/css/lmb-core.css',
+        'lmb-admin-widgets'      => 'assets/css/lmb-admin-widgets.css',
+        'lmb-user-widgets'       => 'assets/css/lmb-user-widgets.css',
+        'lmb-notifications'      => 'assets/css/lmb-notifications.css',
+        'lmb-admin-widgets-v2'   => 'assets/css/lmb-admin-widgets-v2.css',
+        'lmb-user-widgets-v2'    => 'assets/css/lmb-user-widgets-v2.css',
+    ];
+
+    foreach ($styles as $handle => $path) {
+        wp_register_style($handle, LMB_CORE_URL . $path, [], LMB_CORE_VERSION);
     }
 
+    // --- CENTRALIZE AJAX PARAMS (CRITICAL) ---
+    // This makes 'lmb_ajax_params' available to 'lmb-core.js' and any other script that depends on it.
+    wp_localize_script('lmb-core', 'lmb_ajax_params', [
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce'   => wp_create_nonce('lmb_nonce'),
+    ]);
+
+    // Localize other specific params
     wp_localize_script('lmb-admin-actions', 'lmb_admin_settings', [
         'refresh_interval' => (int) get_option('lmb_admin_feed_refresh_interval', 30) * 1000,
     ]);
 
-    $styles = [
-        'lmb-admin-widgets'     => 'assets/css/lmb-admin-widgets.css',
-        'lmb-user-widgets'      => 'assets/css/lmb-user-widgets.css',
-        'lmb-notifications'     => 'assets/css/lmb-notifications.css',
-        'lmb-admin-widgets-v2'  => 'assets/css/lmb-admin-widgets-v2.css',
-        'lmb-user-widgets-v2'   => 'assets/css/lmb-user-widgets-v2.css',
-        'lmb-feed-v2'           => 'assets/js/lmb-feed-v2.js',
-    ];
-    foreach ($styles as $handle => $path) {
-        wp_register_style($handle, LMB_CORE_URL . $path, [], LMB_CORE_VERSION);
-    }
-    
+    // --- ENQUEUE CORE ASSETS ---
+    // Enqueue assets that should be loaded on every page (frontend and backend).
+    wp_enqueue_script('lmb-core');
+    wp_enqueue_style('lmb-core');
+    wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
     wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], '3.7.0', true);
+
+
+    // Conditionally enqueue assets for specific admin pages if needed
+    if (is_admin()) {
+        $screen = get_current_screen();
+        if ($screen && $screen->post_type === 'lmb_legal_ad' && $screen->base === 'post') {
+            wp_enqueue_script('lmb-admin-editor');
+        }
+    }
 }
-add_action('elementor/frontend/after_register_scripts', 'lmb_register_widget_assets');
-add_action('elementor/editor/before_enqueue_scripts', 'lmb_register_widget_assets');
+// Use the standard WordPress hooks to register all assets. Elementor will now correctly find and enqueue them when its widgets are used.
+add_action('wp_enqueue_scripts', 'lmb_register_all_assets');
+add_action('admin_enqueue_scripts', 'lmb_register_all_assets');
+
+// We no longer need the separate lmb_register_widget_assets() function or its hooks.

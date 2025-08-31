@@ -147,39 +147,6 @@ class LMB_Notification_Manager {
     }
 
     /* -----------------------------
-     * AJAX
-     * ---------------------------*/
-    public static function verify_nonce() {
-        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field($_POST['nonce']), self::NONCE)) {
-            wp_send_json_error(['message' => 'Invalid nonce'], 403);
-        }
-    }
-
-    public static function ajax_get_notifications() {
-        if (!is_user_logged_in()) wp_send_json_error(['message' => 'Unauthorized'], 401);
-        self::verify_nonce();
-        $user_id = get_current_user_id();
-        $items = self::get_latest($user_id, 10, 0);
-        $unread = self::get_unread_count($user_id);
-        wp_send_json_success(['items' => $items, 'unread' => $unread]);
-    }
-
-    public static function ajax_mark_notification_read() {
-        if (!is_user_logged_in()) wp_send_json_error(['message' => 'Unauthorized'], 401);
-        self::verify_nonce();
-        $nid = isset($_POST['id']) ? absint($_POST['id']) : 0;
-        $ok = $nid ? self::mark_read(get_current_user_id(), $nid) : false;
-        wp_send_json_success(['ok' => (bool)$ok]);
-    }
-
-    public static function ajax_mark_all_notifications_read() {
-        if (!is_user_logged_in()) wp_send_json_error(['message' => 'Unauthorized'], 401);
-        self::verify_nonce();
-        $ok = self::mark_all_read(get_current_user_id());
-        wp_send_json_success(['ok' => (bool)$ok]);
-    }
-
-    /* -----------------------------
      * Utils
      * ---------------------------*/
     private static function get_admin_user_ids() {
