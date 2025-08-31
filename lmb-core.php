@@ -81,6 +81,7 @@ function lmb_register_all_assets() {
         'lmb-auth-v2'                 => 'assets/js/lmb-auth-v2.js',
         'lmb-inactive-clients-v2'     => 'assets/js/lmb-inactive-clients-v2.js',
         'lmb-active-clients-v2'       => 'assets/js/lmb-active-clients-v2.js',
+        'lmb-profile-v2'              => 'assets/js/lmb-profile-v2.js',
     ];
 
     foreach ($scripts as $handle => $path) {
@@ -98,6 +99,7 @@ function lmb_register_all_assets() {
         'lmb-admin-widgets-v2'   => 'assets/css/lmb-admin-widgets-v2.css',
         'lmb-user-widgets-v2'    => 'assets/css/lmb-user-widgets-v2.css',
         'lmb-auth-v2'            => 'assets/css/lmb-auth-v2.css',
+        'lmb-profile-v2'         => 'assets/css/lmb-profile-v2.css',
     ];
 
     foreach ($styles as $handle => $path) {
