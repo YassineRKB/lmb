@@ -18,7 +18,9 @@ class LMB_Ajax_Handlers {
             'lmb_regenerate_ad_text', 'lmb_admin_generate_pdf',
             'lmb_fetch_ads_v2', 'lmb_fetch_my_ads_v2', 'lmb_submit_draft_ad_v2',
             'lmb_delete_draft_ad_v2', 'lmb_fetch_feed_v2',
-            'lmb_login_v2', 'lmb_signup_v2'
+            'lmb_login_v2', 'lmb_signup_v2',
+            'lmb_fetch_inactive_clients_v2',
+            'lmb_manage_inactive_client_v2',
         ];
         // --- MODIFICATION: Make auth actions public ---
         $public_actions = ['lmb_login_v2', 'lmb_signup_v2'];
@@ -39,6 +41,16 @@ class LMB_Ajax_Handlers {
 
         if (!in_array($action, $public_actions) && !is_user_logged_in()) {
             wp_send_json_error(['message' => 'You must be logged in.'], 403);
+            return;
+        }
+
+        // --- ADDED SECURITY for admin-only actions ---
+        $admin_only_actions = [
+            'lmb_fetch_inactive_clients_v2',
+            'lmb_manage_inactive_client_v2'
+        ];
+        if (in_array($action, $admin_only_actions) && !current_user_can('manage_options')) {
+             wp_send_json_error(['message' => 'You do not have permission to perform this action.'], 403);
             return;
         }
 
@@ -1074,6 +1086,108 @@ class LMB_Ajax_Handlers {
         
         wp_send_json_success();
     }
+    // --- NEW FUNCTION: v2 fetch inactive clients with search, pagination, and approve/deny actions ---
+    private static function lmb_fetch_inactive_clients_v2() {
+        $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
+        $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 5;
+        $search_term = isset($_POST['search_term']) ? sanitize_text_field($_POST['search_term']) : '';
 
+        $args = [
+            'role' => 'client',
+            'number' => $per_page,
+            'paged' => $paged,
+            'meta_query' => [
+                [
+                    'key' => 'lmb_user_status',
+                    'value' => 'inactive',
+                    'compare' => '=',
+                ]
+            ],
+            'orderby' => 'user_registered',
+            'order' => 'DESC'
+        ];
+
+        if (!empty($search_term)) {
+            $args['search'] = '*' . esc_attr($search_term) . '*';
+            $args['search_columns'] = ['user_login', 'user_email', 'display_name'];
+        }
+
+        $user_query = new WP_User_Query($args);
+        $users = $user_query->get_results();
+        $total_users = $user_query->get_total();
+
+        ob_start();
+        if (!empty($users)) {
+            foreach ($users as $user) {
+                $user_id = $user->ID;
+                $client_type = get_user_meta($user_id, 'lmb_client_type', true);
+                $name = $client_type === 'professional' ? get_user_meta($user_id, 'company_name', true) : $user->display_name;
+                
+                echo '<div class="lmb-client-card" data-user-id="' . $user_id . '">';
+                    echo '<div class="lmb-client-info">';
+                        echo '<div class="lmb-client-header">';
+                            echo '<span class="lmb-client-name">' . esc_html($name) . '</span>';
+                            echo '<span class="lmb-client-type-badge ' . esc_attr($client_type) . '">' . esc_html($client_type) . '</span>';
+                        echo '</div>';
+                        echo '<div class="lmb-client-details">';
+                            echo '<div><i class="fas fa-envelope"></i><strong>' . esc_html($user->user_email) . '</strong></div>';
+                            echo '<div><i class="fas fa-phone"></i><strong>' . esc_html(get_user_meta($user_id, 'phone_number', true)) . '</strong></div>';
+                            echo '<div><i class="fas fa-map-marker-alt"></i><strong>' . esc_html(get_user_meta($user_id, 'city', true)) . '</strong></div>';
+                            if ($client_type === 'professional') {
+                                echo '<div><i class="fas fa-id-card"></i> RC:<strong>' . esc_html(get_user_meta($user_id, 'company_rc', true)) . '</strong></div>';
+                                echo '<div><i class="fas fa-building"></i> HQ:<strong>' . esc_html(get_user_meta($user_id, 'company_hq', true)) . '</strong></div>';
+                            }
+                            echo '<div><i class="fas fa-calendar-alt"></i> Registered:<strong>' . human_time_diff(strtotime($user->user_registered)) . ' ago</strong></div>';
+                        echo '</div>';
+                    echo '</div>';
+                    echo '<div class="lmb-client-actions">';
+                        echo '<button class="lmb-btn lmb-btn-success lmb-client-action-btn" data-action="approve" data-user-id="' . $user_id . '"><i class="fas fa-check"></i> Approve</button>';
+                        echo '<button class="lmb-btn lmb-btn-danger lmb-client-action-btn" data-action="deny" data-user-id="' . $user_id . '"><i class="fas fa-times"></i> Deny</button>';
+                    echo '</div>';
+                echo '</div>';
+            }
+        } else {
+            echo '<div style="text-align:center; padding: 20px;">No inactive clients found.</div>';
+        }
+        $html = ob_get_clean();
+
+        $pagination_html = paginate_links([
+            'base' => '#%#%',
+            'format' => '?paged=%#%',
+            'current' => $paged,
+            'total' => ceil($total_users / $per_page),
+            'prev_text' => '&laquo;',
+            'next_text' => '&raquo;',
+        ]);
+
+        wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
+    }
+    // --- NEW FUNCTION: v2 approve or deny inactive client ---
+    private static function lmb_manage_inactive_client_v2() {
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $approval_action = isset($_POST['approval_action']) ? sanitize_key($_POST['approval_action']) : '';
+
+        if (!$user_id || !$approval_action) {
+            wp_send_json_error(['message' => 'Missing parameters.'], 400);
+        }
+
+        if ($approval_action === 'approve') {
+            update_user_meta($user_id, 'lmb_user_status', 'active');
+            // Optionally, send a welcome email
+            wp_new_user_notification($user_id, null, 'user');
+            LMB_Ad_Manager::log_activity(sprintf('Approved new client #%d.', $user_id));
+            wp_send_json_success(['message' => 'Client approved.']);
+        } elseif ($approval_action === 'deny') {
+            require_once(ABSPATH.'wp-admin/includes/user.php');
+            if (wp_delete_user($user_id)) {
+                LMB_Ad_Manager::log_activity(sprintf('Denied and deleted new client #%d.', $user_id));
+                wp_send_json_success(['message' => 'Client denied and deleted.']);
+            } else {
+                wp_send_json_error(['message' => 'Could not delete user.']);
+            }
+        } else {
+            wp_send_json_error(['message' => 'Invalid action.'], 400);
+        }
+    }
 
 }
