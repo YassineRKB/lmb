@@ -176,3 +176,76 @@
 }
 
 .cell-placeholder { color: #888; }
+
+
+/* --- STYLES FOR INACTIVE CLIENTS WIDGET --- */
+.lmb-inactive-clients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.lmb-client-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    transition: box-shadow 0.2s ease-in-out;
+}
+.lmb-client-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.lmb-client-info {
+    flex-grow: 1;
+}
+
+.lmb-client-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.lmb-client-name {
+    font-size: 18px;
+    font-weight: 500;
+    color: #000;
+}
+
+.lmb-client-type-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.lmb-client-type-badge.regular { background-color: #e0f2fe; color: #0c4a6e; }
+.lmb-client-type-badge.professional { background-color: #dcfce7; color: #166534; }
+
+.lmb-client-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px 20px;
+    font-size: 14px;
+}
+
+.lmb-client-details div {
+    color: #6c757d;
+}
+
+.lmb-client-details strong {
+    font-weight: 500;
+    color: #343a40;
+    margin-left: 5px;
+}
+
+.lmb-client-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
