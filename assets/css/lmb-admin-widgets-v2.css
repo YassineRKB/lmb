@@ -1,0 +1,178 @@
+/* FILE: assets/css/lmb-admin-widgets-v2.css */
+
+/* --- Global V2 Widget Styles --- */
+.lmb-admin-widget {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* --- Widget Header --- */
+.lmb-admin-widget .lmb-widget-header {
+    background: #fff;
+    color: #333;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 8px 8px 0 0;
+}
+
+.lmb-admin-widget .lmb-widget-header h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 400;
+    color: #d78808;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Widget Content Area --- */
+.lmb-widget-content {
+    padding: 25px;
+}
+
+/* --- Filters Section --- */
+.lmb-filters-box {
+    padding: 20px 25px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 25px;
+}
+
+.lmb-filters-box-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.lmb-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    align-items: center;
+}
+
+.lmb-filter-input, .lmb-filter-select, .lmb-filter-grid .lmb-btn {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.lmb-filter-input:focus, .lmb-filter-select:focus {
+    border-color: #f5c469;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(215, 136, 8, .25);
+}
+
+/* --- Data Table --- */
+.lmb-table-container {
+    overflow-x: auto;
+}
+
+.lmb-data-table.lmb-ads-table-v2 {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lmb-data-table.lmb-ads-table-v2 thead tr {
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-data-table.lmb-ads-table-v2 th,
+.lmb-data-table.lmb-ads-table-v2 td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+    font-size: 14px;
+}
+
+.lmb-data-table.lmb-ads-table-v2 tbody tr.clickable-row:hover {
+    background-color: #fff8eb;
+    cursor: pointer;
+}
+
+/* --- Status Badges --- */
+.lmb-status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.lmb-status-published { background-color: #28a745; }
+.lmb-status-pending_review { background-color: #ffc107; color: #333; }
+.lmb-status-draft { background-color: #6c757d; }
+.lmb-status-denied { background-color: #dc3545; }
+
+
+/* --- Buttons & Actions --- */
+.lmb-btn {
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-decoration: none;
+}
+
+.lmb-btn-sm { padding: 4px 8px; font-size: 12px; }
+
+.lmb-btn-icon {
+    padding: 6px;
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+}
+
+.lmb-btn-success { background-color: #28a745; border-color: #28a745; color: #fff; }
+.lmb-btn-success:hover { background-color: #218838; border-color: #1e7e34; }
+
+.lmb-btn-danger { background-color: #dc3545; border-color: #dc3545; color: #fff; }
+.lmb-btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
+
+.lmb-btn-secondary { background-color: #6c757d; border-color: #6c757d; color: #fff; }
+.lmb-btn-secondary:hover { background-color: #5a6268; border-color: #545b62; }
+
+.lmb-btn-info { background-color: #17a2b8; border-color: #17a2b8; color: #fff; }
+.lmb-btn-info:hover { background-color: #138496; border-color: #117a8b; }
+
+.lmb-btn-view { background-color: #f0f0f1; border: 1px solid #ddd; color: #333; }
+.lmb-btn-view:hover { background-color: #e2e6ea; }
+
+.lmb-btn-text-link {
+    background-color: transparent;
+    border: 1px solid #d78808;
+    color: #d78808;
+}
+.lmb-btn-text-link:hover {
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-actions-cell {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.cell-placeholder { color: #888; }

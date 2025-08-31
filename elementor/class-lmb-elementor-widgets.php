@@ -25,7 +25,7 @@ add_action('elementor/elements/categories_registered', function($elements_manage
     $elements_manager->add_category(
         'lmb-user-widgets-v2',
         [
-            'title' => __('LMB USERD V2', 'lmb-core'),
+            'title' => __('LMB USERS V2', 'lmb-core'),
             'icon' => 'eicon-user-circle-o',
         ]
     );
@@ -64,6 +64,8 @@ add_action('elementor/widgets/register', function($widgets_manager) {
         'LMB_Invoices_Widget' => __DIR__ . '/widgets/class-lmb-invoices-widget.php',
         'LMB_Legal_Ads_Receipts_Widget' => __DIR__ . '/widgets/class-lmb-legal-ads-receipts-widget.php',
         'LMB_User_Ads_List_Widget' => __DIR__ . '/widgets/class-lmb-user-ads-list-widget.php',
+        //v2 widgets
+        'LMB_Legal_Ads_Management_V2_Widget' => __DIR__ . '/widgets/class-lmb-legal-ads-management-v2-widget.php',
     ];
 
     foreach ($widgets as $class_name => $file_path) {
