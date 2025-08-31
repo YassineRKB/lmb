@@ -72,6 +72,63 @@ jQuery(document).ready(function($) {
         alert(`Action: ${adAction} on Ad ID: ${adId}`);
     });
 
+    // --- NEW: Handle Generate Accuse ---
+    tableBody.on('click', '.lmb-generate-accuse-btn', function() {
+        const button = $(this);
+        const adId = button.data('id');
+        
+        button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
+
+        $.post(lmb_ajax_params.ajaxurl, {
+            action: 'lmb_admin_generate_accuse',
+            nonce: lmb_ajax_params.nonce,
+            ad_id: adId
+        }).done(function(response) {
+            if (response.success) {
+                showLMBModal('success', response.data.message);
+                fetchAds($('.lmb-pagination .current').text() || 1); // Refresh table
+            } else {
+                showLMBModal('error', response.data.message);
+                button.html('<i class="fas fa-receipt"></i> Generate Accuse').prop('disabled', false);
+            }
+        });
+    });
+
+    // --- NEW: Handle Upload Temporary Journal ---
+    tableBody.on('click', '.lmb-upload-journal-btn', function() {
+        const adId = $(this).data('id');
+        const fileInput = $('<input type="file" accept="application/pdf" style="display: none;">');
+        
+        fileInput.on('change', function() {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                const formData = new FormData();
+                formData.append('journal_file', file);
+                formData.append('action', 'lmb_admin_upload_temporary_journal');
+                formData.append('nonce', lmb_ajax_params.nonce);
+                formData.append('ad_id', adId);
+                
+                // You can add a loading indicator here
+                
+                $.ajax({
+                    url: lmb_ajax_params.ajaxurl,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                }).done(function(response) {
+                    if (response.success) {
+                        showLMBModal('success', response.data.message);
+                        fetchAds($('.lmb-pagination .current').text() || 1);
+                    } else {
+                        showLMBModal('error', response.data.message);
+                    }
+                });
+            }
+        });
+        
+        fileInput.click();
+    });
     // --- Initial Load ---
     fetchAds(1);
 });

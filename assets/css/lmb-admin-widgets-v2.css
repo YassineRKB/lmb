@@ -300,3 +300,113 @@
 
 .lmb-active-clients-v2 .lmb-btn-primary { background-color: #007bff; color: #fff; }
 .lmb-active-clients-v2 .lmb-btn-warning { background-color: #ffc107; color: #212529; }
+/* --- STYLES FOR PACKAGES EDITOR WIDGET --- */
+
+.lmb-packages-editor-widget .lmb-add-package-section,
+.lmb-packages-editor-widget .lmb-packages-list-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.lmb-packages-editor-widget .lmb-packages-list-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.lmb-packages-editor-widget h4 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0 0 20px 0;
+    color: #333;
+}
+
+/* Form Styling */
+.lmb-packages-editor-widget .lmb-form .lmb-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.lmb-packages-editor-widget .lmb-form .lmb-form-group {
+    margin-bottom: 20px;
+}
+
+.lmb-packages-editor-widget .lmb-form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Package Card Styling */
+.lmb-packages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.lmb-package-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.lmb-package-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+    border-color: #d78808;
+}
+
+.lmb-package-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #f8f9fa;
+    padding-bottom: 10px;
+}
+
+.lmb-package-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #000;
+    margin: 0;
+}
+
+.lmb-package-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #d78808;
+    white-space: nowrap;
+}
+
+.lmb-package-details {
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.lmb-package-detail {
+    display: flex;
+    justify-content: space-between;
+    color: #6c757d;
+    padding: 5px 0;
+}
+
+.lmb-package-description {
+    color: #6c757d;
+    font-size: 13px;
+    margin-bottom: 15px;
+    line-height: 1.5;
+    flex-grow: 1;
+}
+
+.lmb-package-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}

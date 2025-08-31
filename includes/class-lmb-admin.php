@@ -108,6 +108,7 @@ class LMB_Admin {
         // General Settings
         register_setting('lmb_general_settings', 'lmb_bank_name');
         register_setting('lmb_general_settings', 'lmb_bank_iban');
+        register_setting('lmb_general_settings', 'lmb_bank_account_holder');
         register_setting('lmb_general_settings', 'lmb_default_cost_per_ad');
 
         // Invoice & Receipt Templates
@@ -416,14 +417,24 @@ class LMB_Admin {
         ?>
         <form method="post" action="options.php">
             <?php settings_fields('lmb_general_settings'); ?>
+            <h3><?php esc_html_e('Bank Details', 'lmb-core'); ?></h3>
+            <p><?php esc_html_e('This information will be displayed to users when they need to make a payment.', 'lmb-core'); ?></p>
             <table class="form-table">
-                </table>
+                <tr valign="top">
+                    <th scope="row"><label for="lmb_bank_name"><?php esc_html_e('Bank Name', 'lmb-core'); ?></label></th>
+                    <td><input type="text" id="lmb_bank_name" name="lmb_bank_name" value="<?php echo esc_attr(get_option('lmb_bank_name')); ?>" class="regular-text" /></td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row"><label for="lmb_bank_iban"><?php esc_html_e('IBAN', 'lmb-core'); ?></label></th>
+                    <td><input type="text" id="lmb_bank_iban" name="lmb_bank_iban" value="<?php echo esc_attr(get_option('lmb_bank_iban')); ?>" class="regular-text" /></td>
+                </tr>
+                 <tr valign="top">
+                    <th scope="row"><label for="lmb_bank_account_holder"><?php esc_html_e('Account Holder Name', 'lmb-core'); ?></label></th>
+                    <td><input type="text" id="lmb_bank_account_holder" name="lmb_bank_account_holder" value="<?php echo esc_attr(get_option('lmb_bank_account_holder')); ?>" class="regular-text" /></td>
+                </tr>
+            </table>
             <?php submit_button(); ?>
         </form>
-        <label>
-            <input type="checkbox" name="lmb_enable_email_notifications" value="1" <?php checked(get_option('lmb_enable_email_notifications', 0), 1); ?>>
-            <?php esc_html_e('Enable email notifications', 'lmb-core'); ?>
-        </label>
         <?php
     }
 

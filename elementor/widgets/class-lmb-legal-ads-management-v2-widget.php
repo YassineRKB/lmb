@@ -37,7 +37,6 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                 <h3><i class="fas fa-gavel"></i> <?php esc_html_e('Legal Ads Management V2', 'lmb-core'); ?></h3>
             </div>
             <div class="lmb-widget-content">
-                <!-- Filters Section -->
                 <div class="lmb-filters-box">
                     <h4 class="lmb-filters-box-title"><?php esc_html_e('Filter Ads', 'lmb-core'); ?></h4>
                     <form id="lmb-ads-filters-form-v2">
@@ -60,7 +59,6 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                     </form>
                 </div>
 
-                <!-- Table Section -->
                 <div class="lmb-table-container">
                     <table class="lmb-data-table lmb-ads-table-v2">
                         <thead>
@@ -78,12 +76,10 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- This will be populated by AJAX -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
                 
-                <!-- Container for AJAX-loaded pagination -->
                 <div class="lmb-pagination-container" style="margin-top: 20px;"></div>
 
             </div>
@@ -91,4 +87,3 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
         <?php
     }
 }
-

@@ -24,6 +24,9 @@ class LMB_Ajax_Handlers {
             'lmb_fetch_active_clients_v2',
             'lmb_lock_active_client_v2','lmb_update_profile_v2',
             'lmb_update_password_v2',
+            'lmb_admin_generate_accuse', // New action
+            'lmb_admin_upload_temporary_journal', // New action
+            'lmb_update_password_v2',
         ];
         // --- MODIFICATION: Make auth actions public ---
         $public_actions = ['lmb_login_v2', 'lmb_signup_v2'];
@@ -234,28 +237,6 @@ class LMB_Ajax_Handlers {
         $html = ob_get_clean();
 
         wp_send_json_success(['html' => $html]);
-    }
-
-    private static function lmb_upload_newspaper() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
-        if (empty($_POST['newspaper_title']) || empty($_FILES['newspaper_pdf'])) wp_send_json_error(['message' => 'Missing required fields.']);
-        
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        require_once(ABSPATH . 'wp-admin/includes/image.php');
-        require_once(ABSPATH . 'wp-admin/includes/media.php');
-
-        $pdf_id = media_handle_upload('newspaper_pdf', 0);
-        if (is_wp_error($pdf_id)) wp_send_json_error(['message' => 'PDF Upload Error: ' . $pdf_id->get_error_message()]);
-        
-        $thumb_id = !empty($_FILES['newspaper_thumbnail']['name']) ? media_handle_upload('newspaper_thumbnail', 0) : null;
-
-        $post_id = wp_insert_post(['post_type' => 'lmb_newspaper', 'post_title' => sanitize_text_field($_POST['newspaper_title']), 'post_status' => 'publish', 'post_date' => sanitize_text_field($_POST['newspaper_date']) . ' 00:00:00']);
-        if (is_wp_error($post_id)) wp_send_json_error(['message' => $post_id->get_error_message()]);
-
-        update_post_meta($post_id, 'newspaper_pdf', $pdf_id);
-        if ($thumb_id && !is_wp_error($thumb_id)) set_post_thumbnail($post_id, $thumb_id);
-
-        wp_send_json_success(['message' => 'Newspaper uploaded successfully.']);
     }
 
     private static function lmb_upload_bank_proof() {
@@ -1390,4 +1371,100 @@ class LMB_Ajax_Handlers {
         
         wp_send_json_success();
     }
+
+    // --- NEW FUNCTION: Generate Accuse on-demand ---
+    private static function lmb_admin_generate_accuse() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Permission denied.'], 403);
+        }
+        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
+        if (!$ad_id) {
+            wp_send_json_error(['message' => 'Invalid Ad ID.'], 400);
+        }
+
+        $accuse_url = LMB_Invoice_Handler::generate_accuse_pdf($ad_id);
+        if ($accuse_url) {
+            update_post_meta($ad_id, 'lmb_accuse_pdf_url', $accuse_url);
+            wp_send_json_success(['message' => 'Accuse PDF generated successfully.']);
+        } else {
+            wp_send_json_error(['message' => 'Failed to generate Accuse PDF.']);
+        }
+    }
+
+    // --- NEW FUNCTION: Upload Temporary Journal ---
+    private static function lmb_admin_upload_temporary_journal() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Permission denied.'], 403);
+        }
+        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
+        if (!$ad_id || empty($_FILES['journal_file'])) {
+            wp_send_json_error(['message' => 'Missing Ad ID or file.'], 400);
+        }
+
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        $attachment_id = media_handle_upload('journal_file', $ad_id);
+
+        if (is_wp_error($attachment_id)) {
+            wp_send_json_error(['message' => $attachment_id->get_error_message()]);
+        }
+
+        update_post_meta($ad_id, 'lmb_temporary_journal_id', $attachment_id);
+        wp_send_json_success(['message' => 'Temporary journal uploaded successfully.']);
+    }
+
+    // --- MODIFIED FUNCTION: Upload FINAL Newspaper ---
+    private static function lmb_upload_newspaper() {
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
+        if (empty($_POST['newspaper_title']) || empty($_FILES['newspaper_pdf']) || empty($_POST['start_date']) || empty($_POST['end_date'])) {
+            wp_send_json_error(['message' => 'Missing required fields. Title, PDF, and date range are required.']);
+        }
+        
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        $pdf_id = media_handle_upload('newspaper_pdf', 0);
+        if (is_wp_error($pdf_id)) wp_send_json_error(['message' => 'PDF Upload Error: ' . $pdf_id->get_error_message()]);
+
+        $post_id = wp_insert_post([
+            'post_type' => 'lmb_newspaper', 
+            'post_title' => sanitize_text_field($_POST['newspaper_title']), 
+            'post_status' => 'publish',
+        ]);
+        if (is_wp_error($post_id)) wp_send_json_error(['message' => $post_id->get_error_message()]);
+
+        update_post_meta($post_id, 'newspaper_pdf', $pdf_id);
+
+        // --- NEW LOGIC: Associate with ads in date range ---
+        $start_date = sanitize_text_field($_POST['start_date']);
+        $end_date = sanitize_text_field($_POST['end_date']);
+        
+        $args = [
+            'post_type' => 'lmb_legal_ad',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'date_query' => [
+                [
+                    'after'     => $start_date,
+                    'before'    => $end_date,
+                    'inclusive' => true,
+                ],
+            ],
+        ];
+        $ads_query = new WP_Query($args);
+        $updated_count = 0;
+        if ($ads_query->have_posts()) {
+            while ($ads_query->have_posts()) {
+                $ads_query->the_post();
+                update_post_meta(get_the_ID(), 'lmb_final_journal_id', $pdf_id);
+                // Optional: remove temporary journal ID if it exists
+                // delete_post_meta(get_the_ID(), 'lmb_temporary_journal_id');
+                $updated_count++;
+            }
+        }
+        wp_reset_postdata();
+
+        wp_send_json_success(['message' => 'Newspaper uploaded successfully. Associated with ' . $updated_count . ' legal ads in the specified date range.']);
+    }
+
 }
