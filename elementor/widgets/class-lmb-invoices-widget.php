@@ -10,14 +10,14 @@ class LMB_Invoices_Widget extends Widget_Base {
     public function get_name() { return 'lmb_invoices'; }
     public function get_title() { return __('LMB Payment Invoices', 'lmb-core'); }
     public function get_icon() { return 'eicon-file-download'; }
-    public function get_categories() { return ['lmb-user-widgets']; }
+    public function get_categories() { return ['lmb-user-widgets-v2']; } // Changed category
 
     public function get_script_depends() {
-        return ['lmb-invoices'];
+        return []; // Removed 'lmb-invoices' dependency
     }
 
     public function get_style_depends() {
-        return ['lmb-user-widgets'];
+        return ['lmb-user-widgets-v2']; // Changed to V2 styles
     }
 
     protected function render() {
@@ -39,7 +39,7 @@ class LMB_Invoices_Widget extends Widget_Base {
             'order' => 'DESC'
         ]);
         ?>
-        <div class="lmb-invoices-widget lmb-user-widget">
+        <div class="lmb-invoices-widget lmb-user-widget-v2">
             <div class="lmb-widget-header">
                 <h3><i class="fas fa-file-invoice"></i> <?php esc_html_e('Payment Invoices', 'lmb-core'); ?></h3>
             </div>
@@ -54,7 +54,6 @@ class LMB_Invoices_Widget extends Widget_Base {
                                     <th><?php esc_html_e('Package', 'lmb-core'); ?></th>
                                     <th><?php esc_html_e('Amount', 'lmb-core'); ?></th>
                                     <th><?php esc_html_e('Status', 'lmb-core'); ?></th>
-                                    <th><?php esc_html_e('Actions', 'lmb-core'); ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -62,7 +61,7 @@ class LMB_Invoices_Widget extends Widget_Base {
                                     $payment = get_post();
                                     $package_id = get_post_meta($payment->ID, 'package_id', true);
                                     $package = get_post($package_id);
-                                    $package_price = get_post_meta($payment->ID, 'package_price', true); // Use price from payment meta for accuracy
+                                    $package_price = get_post_meta($payment->ID, 'package_price', true);
                                     $payment_status = get_post_meta($payment->ID, 'payment_status', true);
                                     $payment_reference = get_post_meta($payment->ID, 'payment_reference', true);
                                     $rejection_reason = get_post_meta($payment->ID, 'rejection_reason', true);
@@ -80,15 +79,6 @@ class LMB_Invoices_Widget extends Widget_Base {
                                                 <div class="lmb-rejection-reason">
                                                     <strong><?php esc_html_e('Reason:', 'lmb-core'); ?></strong> <?php echo esc_html($rejection_reason); ?>
                                                 </div>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($payment_status === 'approved'): ?>
-                                            <button class="lmb-btn lmb-btn-sm lmb-btn-primary lmb-download-invoice" data-payment-id="<?php echo esc_attr($payment->ID); ?>">
-                                                <i class="fas fa-download"></i> <?php esc_html_e('Download PDF', 'lmb-core'); ?>
-                                            </button>
-                                            <?php else: ?>
-                                                <span>-</span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>

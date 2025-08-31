@@ -27,8 +27,9 @@
     }
 
     $(document).ready(function() {
-        // Handle "Get Invoice" button click
-        $('body').on('click', '.lmb-get-invoice-btn', function(e) {
+        // --- MODIFICATION START ---
+        // Changed selector from .lmb-get-invoice-btn to .lmb-subscribe-btn
+        $('body').on('click', '.lmb-subscribe-btn', function(e) {
             e.preventDefault();
             const button = $(this);
             const pkgId = button.data('pkg-id');
@@ -37,15 +38,17 @@
             button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
 
             $.post(lmb_ajax_params.ajaxurl, {
+                // This action now creates a pending payment, not a PDF
                 action: 'lmb_generate_package_invoice',
                 nonce: lmb_ajax_params.nonce,
                 pkg_id: pkgId
             }).done(function(response) {
-                if (response.success && response.data.pdf_url) {
-                    window.open(response.data.pdf_url, '_blank');
-                    showLMBModal('success', 'Your invoice has been generated successfully!');
+                // Updated success logic
+                if (response.success) {
+                    showLMBModal('success', 'Subscription successful! You can now upload your proof of payment.');
+                    
                 } else {
-                    showLMBModal('error', response.data ? response.data.message : 'Could not generate invoice.');
+                    showLMBModal('error', response.data ? response.data.message : 'Could not subscribe to package.');
                 }
             }).fail(function() {
                 showLMBModal('error', 'An unknown server error occurred.');
@@ -53,6 +56,7 @@
                 button.text(originalText).prop('disabled', false);
             });
         });
+        // --- MODIFICATION END ---
     });
 
 })(jQuery);

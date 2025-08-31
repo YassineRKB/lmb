@@ -8,14 +8,14 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
     public function get_name() { return 'lmb_upload_bank_proof'; }
     public function get_title(){ return __('LMB Upload Bank Proof','lmb-core'); }
     public function get_icon() { return 'eicon-upload'; }
-    public function get_categories(){ return ['lmb-user-widgets']; }
+    public function get_categories(){ return ['lmb-user-widgets-v2']; } // Changed category
 
     public function get_script_depends() {
         return ['lmb-upload-bank-proof'];
     }
 
     public function get_style_depends() {
-        return ['lmb-user-widgets'];
+        return ['lmb-user-widgets-v2']; // Changed to V2 styles
     }
 
     protected function render() {
@@ -24,10 +24,16 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
             return;
         }
         ?>
-        <div class="lmb-upload-bank-proof-widget lmb-user-widget">
+        <div class="lmb-upload-bank-proof-widget lmb-user-widget-v2">
             <div class="lmb-widget-header"><h3><i class="fas fa-file-invoice-dollar"></i> <?php esc_html_e('Upload Payment Proof','lmb-core'); ?></h3></div>
             <div class="lmb-widget-content" id="lmb-upload-proof-container">
                 <div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> <?php esc_html_e('Loading pending invoices...', 'lmb-core'); ?></div>
+            </div>
+            <div class="lmb-bank-details">
+                <h4>Bank Details for Payment</h4>
+                <p><strong>Bank Name:</strong> YOUR_BANK_NAME</p>
+                <p><strong>IBAN:</strong> YOUR_IBAN</p>
+                <p><strong>Account Holder:</strong> YOUR_ACCOUNT_HOLDER</p>
             </div>
         </div>
         <?php

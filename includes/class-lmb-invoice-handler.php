@@ -95,4 +95,43 @@ class LMB_Invoice_Handler {
 
         return LMB_PDF_Generator::generate_html_pdf($filename, $template, $title);
     }
+
+    /**
+     * Generates an "accuse de réception" PDF for a published legal ad.
+     * This is called automatically when an ad is approved.
+     */
+    public static function generate_accuse_pdf($ad_id) {
+        $ad = get_post($ad_id);
+        if (!$ad || $ad->post_type !== 'lmb_legal_ad') {
+            return false;
+        }
+
+        $user = get_userdata($ad->post_author);
+        if (!$user) {
+            return false;
+        }
+
+        $template = get_option('lmb_accuse_template_html', '<h1>Accuse de Réception</h1><p>Ad Réf: {{ad_id}}</p>');
+
+        $client_name = get_user_meta($user->ID, 'company_name', true) ?: $user->display_name;
+
+        // --- Placeholder replacements ---
+        $vars = [
+            'ad_id'            => $ad_id,
+            'ad_title'         => $ad->post_title,
+            'publication_date' => get_the_modified_date('Y-m-d', $ad_id),
+            'client_name'      => $client_name,
+            'client_email'     => $user->user_email,
+            'ad_cost'          => get_post_meta($ad_id, 'ad_cost_points', true) ?: LMB_Points::get_cost_per_ad($user->ID),
+        ];
+
+        foreach ($vars as $key => $value) {
+            $template = str_replace('{{'.$key.'}}', esc_html($value), $template);
+        }
+
+        $filename = 'accuse-ad-' . $ad_id . '.pdf';
+        $title = 'Accuse de Réception - ' . $ad->post_title;
+
+        return LMB_PDF_Generator::generate_html_pdf($filename, $template, $title);
+    }
 }

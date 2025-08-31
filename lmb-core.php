@@ -74,7 +74,7 @@ function lmb_register_all_assets() {
         'lmb-legal-ads-receipts'      => 'assets/js/lmb-legal-ads-receipts.js',
         'lmb-invoices'                => 'assets/js/lmb-invoices.js',
         'lmb-user-ads-list'           => 'assets/js/lmb-user-ads-list.js',
-        'lmb-upload-accuse'           => 'assets/js/lmb-upload-accuse.js',
+        //'lmb-upload-accuse'           => 'assets/js/lmb-upload-accuse.js',
         'lmb-legal-ads-management-v2' => 'assets/js/lmb-legal-ads-management-v2.js',
         'lmb-my-legal-ads-v2'         => 'assets/js/lmb-my-legal-ads-v2.js',
         'lmb-feed-v2'                 => 'assets/js/lmb-feed-v2.js',

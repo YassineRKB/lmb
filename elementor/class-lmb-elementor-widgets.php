@@ -56,7 +56,7 @@ add_action('elementor/widgets/register', function($widgets_manager) {
         'LMB_Upload_Bank_Proof_Widget' => __DIR__ . '/widgets/class-lmb-upload-bank-proof-widget.php',
         'LMB_Ads_Directory_Widget' => __DIR__ . '/widgets/class-lmb-ads-directory-widget.php',
         'LMB_Newspaper_Directory_Widget' => __DIR__ . '/widgets/class-lmb-newspaper-directory-widget.php',
-        'LMB_Upload_Accuse_Widget' => __DIR__ . '/widgets/class-lmb-upload-accuse-widget.php',
+        //'LMB_Upload_Accuse_Widget' => __DIR__ . '/widgets/class-lmb-upload-accuse-widget.php',
         'LMB_User_List_Widget' => __DIR__ . '/widgets/class-lmb-user-list-widget.php',
         'LMB_Legal_Ads_List_Widget' => __DIR__ . '/widgets/class-lmb-legal-ads-list-widget.php',
         'LMB_Balance_Manipulation_Widget' => __DIR__ . '/widgets/class-lmb-balance-manipulation-widget.php',

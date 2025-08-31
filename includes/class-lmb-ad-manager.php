@@ -116,17 +116,26 @@ class LMB_Ad_Manager {
         update_post_meta($ad_id, 'approved_by', get_current_user_id());
         update_post_meta($ad_id, 'approved_date', current_time('mysql'));
         
-        // Generate PDF only if PDF generator is available
-        if (class_exists('LMB_PDF_Generator')) {
-            $pdf_url = LMB_PDF_Generator::create_ad_pdf_from_fulltext($ad_id);
-            update_post_meta($ad_id, 'ad_pdf_url', $pdf_url);
+        // --- MODIFICATION START ---
+        // Generate the accuse PDF automatically
+        if (class_exists('LMB_Invoice_Handler')) {
+            $accuse_url = LMB_Invoice_Handler::generate_accuse_pdf($ad_id);
+            if ($accuse_url) {
+                // We'll use a new meta key to store the URL directly
+                update_post_meta($ad_id, 'lmb_accuse_pdf_url', $accuse_url);
+                
+                // Notify the user that their receipt is ready
+                if (class_exists('LMB_Notification_Manager')) {
+                    $title = sprintf(__('Receipt for ad "%s" is ready', 'lmb-core'), get_the_title($ad_id));
+                    $msg = __('The official receipt (accuse) for your legal ad is now available for download from your dashboard.', 'lmb-core');
+                    LMB_Notification_Manager::add($client_id, 'receipt_ready', $title, $msg, ['ad_id' => $ad_id]);
+                }
+            }
         }
-        
-        
+        // --- MODIFICATION END ---
         
         self::log_activity(sprintf('Ad #%d approved by %s. Cost: %d points.', $ad_id, wp_get_current_user()->display_name, $cost));
         
-        // Send notification if notification manager is available
         if (class_exists('LMB_Notification_Manager')) {
             LMB_Notification_Manager::notify_user_ad_approved($ad_id);
         }

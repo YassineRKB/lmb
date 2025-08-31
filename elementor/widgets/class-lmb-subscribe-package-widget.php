@@ -7,14 +7,14 @@ class LMB_Subscribe_Package_Widget extends Widget_Base {
     public function get_name() { return 'lmb_subscribe_package'; }
     public function get_title() { return __('LMB Packages Pricing Table','lmb-core'); }
     public function get_icon() { return 'eicon-price-table'; }
-    public function get_categories(){ return ['lmb-user-widgets']; }
+    public function get_categories(){ return ['lmb-user-widgets-v2']; } // Changed category
 
     public function get_script_depends() {
-        return ['lmb-core']; // Logic is in the main JS file
+        return ['lmb-core'];
     }
     
     public function get_style_depends() {
-        return ['lmb-user-widgets'];
+        return ['lmb-user-widgets-v2']; // Changed to V2 styles
     }
 
     protected function render() {
@@ -47,7 +47,8 @@ class LMB_Subscribe_Package_Widget extends Widget_Base {
                     echo '<li><strong>'.esc_html($ad_cost).'</strong> Points Per Ad</li>';
                 echo '</ul>';
                 echo '<div class="lmb-package-action">';
-                    echo '<button class="lmb-btn lmb-btn-primary lmb-get-invoice-btn" data-pkg-id="'.esc_attr($p->ID).'">'.esc_html__('Get Invoice','lmb-core').'</button>';
+                    // Changed button to create a pending payment directly
+                    echo '<button class="lmb-btn lmb-btn-primary lmb-subscribe-btn" data-pkg-id="'.esc_attr($p->ID).'">'.esc_html__('Subscribe','lmb-core').'</button>';
                 echo '</div>';
             echo '</div>';
         }

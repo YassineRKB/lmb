@@ -116,6 +116,9 @@ class LMB_Admin {
 
         // --- FIX: Register ONE option to hold an array of all ad templates ---
         register_setting('lmb_legal_ads_settings', 'lmb_legal_ad_templates');
+        // accuse and newspaper templates
+        register_setting('lmb_accuse_newspaper_settings', 'lmb_accuse_template_html');
+    
     }
 
     /**
@@ -425,6 +428,44 @@ class LMB_Admin {
     }
 
 
+// --- NEW FUNCTION for the Accuse & Newspaper tab ---
+    private static function render_accuse_newspaper_tab() {
+        ?>
+        <form method="post" action="options.php">
+            <?php settings_fields('lmb_accuse_newspaper_settings'); ?>
+            <h3><?php esc_html_e('Accuse (Receipt) Template', 'lmb-core'); ?></h3>
+            <p class="description">
+                <?php esc_html_e('This template is used to automatically generate the accuse/receipt PDF when an ad is approved. Use the placeholders below to insert dynamic data.', 'lmb-core'); ?>
+            </p>
+            <textarea name="lmb_accuse_template_html" rows="15" style="width:100%; font-family: monospace;"><?php echo esc_textarea(get_option('lmb_accuse_template_html', self::get_default_accuse_template())); ?></textarea>
+            
+            <h4><?php esc_html_e('Available Placeholders:', 'lmb-core'); ?></h4>
+            <ul style="list-style: inside; margin-left: 20px;">
+                <li><code>{{ad_id}}</code> - The ID of the legal ad.</li>
+                <li><code>{{ad_title}}</code> - The title of the legal ad.</li>
+                <li><code>{{publication_date}}</code> - The date the ad was approved/published.</li>
+                <li><code>{{client_name}}</code> - The client's display name or company name.</li>
+                <li><code>{{client_email}}</code> - The client's email address.</li>
+                <li><code>{{ad_cost}}</code> - The cost of the ad in points.</li>
+            </ul>
+            
+            <?php submit_button(); ?>
+        </form>
+        <?php
+    }
 
+    // --- NEW HELPER FUNCTION for default template ---
+    private static function get_default_accuse_template() {
+        return '<h1>Accuse de Réception</h1>
+<p><strong>Annonce Légale Réf:</strong> {{ad_id}}</p>
+<p><strong>Titre:</strong> {{ad_title}}</p>
+<hr>
+<p>Ceci est pour confirmer que votre annonce légale a été reçue et publiée avec succès.</p>
+<p><strong>Date de Publication:</strong> {{publication_date}}</p>
+<p><strong>Client:</strong> {{client_name}} ({{client_email}})</p>
+<p><strong>Coût:</strong> {{ad_cost}} points</p>
+<br>
+<p>Merci pour votre confiance.</p>';
+    }
 
 }
