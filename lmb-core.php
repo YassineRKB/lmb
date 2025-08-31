@@ -80,6 +80,7 @@ function lmb_register_all_assets() {
         'lmb-feed-v2'                 => 'assets/js/lmb-feed-v2.js',
         'lmb-auth-v2'                 => 'assets/js/lmb-auth-v2.js',
         'lmb-inactive-clients-v2'     => 'assets/js/lmb-inactive-clients-v2.js',
+        'lmb-active-clients-v2'       => 'assets/js/lmb-active-clients-v2.js',
     ];
 
     foreach ($scripts as $handle => $path) {

@@ -21,6 +21,8 @@ class LMB_Ajax_Handlers {
             'lmb_login_v2', 'lmb_signup_v2',
             'lmb_fetch_inactive_clients_v2',
             'lmb_manage_inactive_client_v2',
+            'lmb_fetch_active_clients_v2',
+            'lmb_lock_active_client_v2',
         ];
         // --- MODIFICATION: Make auth actions public ---
         $public_actions = ['lmb_login_v2', 'lmb_signup_v2'];
@@ -47,7 +49,8 @@ class LMB_Ajax_Handlers {
         // --- ADDED SECURITY for admin-only actions ---
         $admin_only_actions = [
             'lmb_fetch_inactive_clients_v2',
-            'lmb_manage_inactive_client_v2'
+            'lmb_manage_inactive_client_v2',
+            'lmb_fetch_active_clients_v2', 'lmb_lock_active_client_v2'
         ];
         if (in_array($action, $admin_only_actions) && !current_user_can('manage_options')) {
              wp_send_json_error(['message' => 'You do not have permission to perform this action.'], 403);
@@ -1190,4 +1193,123 @@ class LMB_Ajax_Handlers {
         }
     }
 
+    // --- NEW FUNCTION: v2 fetch active clients with search, filters, pagination, and lock action ---
+    private static function lmb_fetch_active_clients_v2() {
+        $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
+        $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 10;
+        parse_str($_POST['filters'] ?? '', $filters);
+
+        $args = [
+            'number' => $per_page,
+            'paged' => $paged,
+            'meta_query' => [
+                'relation' => 'AND',
+                [
+                    'key' => 'lmb_user_status',
+                    'value' => 'active',
+                    'compare' => '=',
+                ]
+            ],
+            'orderby' => 'display_name',
+            'order' => 'ASC'
+        ];
+        
+        $search_queries = [];
+
+        // Apply filters
+        if (!empty($filters['filter_id']) && is_numeric($filters['filter_id'])) {
+             $args['include'] = [intval($filters['filter_id'])];
+        }
+        if (!empty($filters['filter_name'])) {
+            $search_queries[] = sanitize_text_field($filters['filter_name']);
+        }
+        if (!empty($filters['filter_city'])) {
+            $args['meta_query'][] = ['key' => 'city', 'value' => sanitize_text_field($filters['filter_city']), 'compare' => 'LIKE'];
+        }
+        if (!empty($filters['filter_type'])) {
+            if ($filters['filter_type'] === 'regular' || $filters['filter_type'] === 'professional') {
+                $args['meta_query'][] = ['key' => 'lmb_client_type', 'value' => sanitize_key($filters['filter_type'])];
+            } else {
+                $args['role'] = sanitize_key($filters['filter_type']);
+            }
+        }
+        
+        if (!empty($search_queries)) {
+            $args['search'] = '*' . implode('* *', $search_queries) . '*';
+            $args['search_columns'] = ['user_login', 'user_email', 'display_name'];
+        }
+
+        $user_query = new WP_User_Query($args);
+        $users = $user_query->get_results();
+        $total_users = $user_query->get_total();
+
+        ob_start();
+        if (!empty($users)) {
+            foreach ($users as $user) {
+                $user_id = $user->ID;
+                $roles = (array) $user->roles;
+                $is_admin = in_array('administrator', $roles);
+                $client_type = get_user_meta($user_id, 'lmb_client_type', true);
+                $name = ($client_type === 'professional') ? get_user_meta($user_id, 'company_name', true) : $user->display_name;
+                
+                // Count published ads for this user
+                $ad_count = count_user_posts($user_id, 'lmb_legal_ad', true);
+
+                echo '<tr>';
+                echo '<td>' . $user_id . '</td>';
+                echo '<td>' . esc_html($name) . '</td>';
+                echo '<td>' . esc_html(get_user_meta($user_id, 'city', true) ?: '-') . '</td>';
+                
+                echo '<td>';
+                if ($is_admin) {
+                    echo '<span class="lmb-client-type-badge administrator">Admin</span>';
+                } elseif ($client_type) {
+                    echo '<span class="lmb-client-type-badge ' . esc_attr($client_type) . '">' . esc_html($client_type) . '</span>';
+                }
+                echo '</td>';
+
+                echo '<td>' . ($is_admin ? '-' : esc_html($ad_count)) . '</td>';
+                echo '<td>' . ($is_admin ? '-' : esc_html(LMB_Points::get_balance($user_id))) . '</td>';
+
+                echo '<td class="lmb-actions-cell">';
+                // Example edit URL. You'll need to create this page.
+                $edit_url = admin_url('user-edit.php?user_id=' . $user_id); // Standard WordPress profile page
+                echo '<a href="' . esc_url($edit_url) . '" class="lmb-btn lmb-btn-icon lmb-btn-primary" title="Edit User"><i class="fas fa-user-edit"></i></a>';
+                if (!$is_admin) {
+                    echo '<button class="lmb-btn lmb-btn-icon lmb-btn-warning lmb-lock-user-btn" data-user-id="' . $user_id . '" title="Lock User (set to inactive)"><i class="fas fa-user-lock"></i></button>';
+                }
+                echo '</td>';
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="7" style="text-align:center;">No active clients found.</td></tr>';
+        }
+        $html = ob_get_clean();
+
+        $pagination_html = paginate_links([
+            'base' => '#%#%',
+            'format' => '?paged=%#%',
+            'current' => $paged,
+            'total' => ceil($total_users / $per_page),
+            'prev_text' => '&laquo;',
+            'next_text' => '&raquo;',
+        ]);
+
+        wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
+    }
+    // --- NEW FUNCTION: v2 lock (set to inactive) an active client ---
+    private static function lmb_lock_active_client_v2() {
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        if (!$user_id) wp_send_json_error(['message' => 'Missing user ID.'], 400);
+        
+        // Prevent locking an admin
+        if (user_can($user_id, 'manage_options')) {
+            wp_send_json_error(['message' => 'Administrators cannot be locked.'], 403);
+        }
+
+        update_user_meta($user_id, 'lmb_user_status', 'inactive');
+        LMB_Ad_Manager::log_activity(sprintf('Locked client account #%d.', $user_id));
+        
+        wp_send_json_success(['message' => 'Client account has been locked.']);
+    }
 }
