@@ -13,7 +13,12 @@ class LMB_Ajax_Handlers {
             'lmb_upload_accuse', 'lmb_user_get_ads',
             'lmb_get_pending_accuse_ads', 'lmb_attach_accuse_to_ad',
             'lmb_get_pending_invoices_form', 'lmb_generate_invoice_pdf',
-            'lmb_regenerate_ad_text', 'lmb_admin_generate_pdf', 'lmb_fetch_ads_v2',
+            'lmb_regenerate_ad_text', 'lmb_admin_generate_pdf',
+            // --- V2 WIDGET ACTIONS ---
+            'lmb_fetch_ads_v2',
+            'lmb_fetch_my_ads_v2',
+            'lmb_submit_draft_ad_v2',
+            'lmb_delete_draft_ad_v2'
         ];
         foreach ($actions as $action) {
             add_action('wp_ajax_' . $action, [__CLASS__, 'handle_request']);
@@ -856,6 +861,9 @@ class LMB_Ajax_Handlers {
         }
     }
 
+
+    // --- START: NEW V2 WIDGET FUNCTIONS ---
+
     // --- NEW FUNCTION: v2 legal ads management fetch with filters ---
     private static function lmb_fetch_ads_v2() {
         if (!current_user_can('manage_options')) {
@@ -974,4 +982,131 @@ class LMB_Ajax_Handlers {
     
         wp_send_json_success(['html' => $html, 'pagination' => '']); // Pagination will be added next
     }
+
+    // --- NEW FUNCTION: v2 my ads management fetch with filters ---
+    private static function lmb_fetch_my_ads_v2() {
+        $user_id = get_current_user_id();
+        
+        $status = isset($_POST['status']) ? sanitize_key($_POST['status']) : 'published';
+        $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
+        $posts_per_page = isset($_POST['posts_per_page']) ? intval($_POST['posts_per_page']) : 10;
+        
+        parse_str(isset($_POST['filters']) ? $_POST['filters'] : '', $filters);
+
+        $args = [
+            'post_type' => 'lmb_legal_ad',
+            'author' => $user_id,
+            'post_status' => ['publish', 'draft', 'pending'],
+            'posts_per_page' => $posts_per_page,
+            'paged' => $paged,
+            'meta_query' => ['relation' => 'AND'],
+        ];
+
+        // Set the main status from Elementor control
+        if ($status === 'drafts') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'draft'];
+        if ($status === 'pending') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'pending_review'];
+        if ($status === 'published') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'published'];
+        if ($status === 'denied') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'denied'];
+
+        // Apply live filters from the user
+        if (!empty($filters['filter_ref'])) $args['p'] = intval($filters['filter_ref']);
+        if (!empty($filters['filter_company'])) $args['meta_query'][] = ['key' => 'company_name', 'value' => sanitize_text_field($filters['filter_company']), 'compare' => 'LIKE'];
+        if (!empty($filters['filter_type'])) $args['meta_query'][] = ['key' => 'ad_type', 'value' => sanitize_text_field($filters['filter_type']), 'compare' => 'LIKE'];
+        if (!empty($filters['filter_date'])) $args['date_query'] = [['year' => date('Y', strtotime($filters['filter_date'])), 'month' => date('m', strtotime($filters['filter_date'])), 'day' => date('d', strtotime($filters['filter_date']))]];
+        
+        $query = new WP_Query($args);
+        
+        ob_start();
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $post_id = get_the_ID();
+                $ad_url = get_permalink($post_id);
+                echo '<tr class="clickable-row" data-href="' . esc_url($ad_url) . '">';
+
+                switch ($status) {
+                    case 'published':
+                        $accuse_id = get_post_meta($post_id, 'lmb_accuse_attachment_id', true);
+                        echo '<td>' . $post_id . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
+                        echo '<td>' . esc_html(get_the_date()) . '</td>';
+                        echo '<td>' . (get_post_meta($post_id, 'approved_by', true) ? get_the_author_meta('display_name', get_post_meta($post_id, 'approved_by', true)) : 'N/A') . '</td>';
+                        echo '<td>' . ($accuse_id ? '<a href="'.wp_get_attachment_url($accuse_id).'" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Accuse</a>' : '<span class="cell-placeholder">-</span>') . '</td>';
+                        echo '<td><span class="cell-placeholder">-</span></td>'; // Journal column placeholder
+                        break;
+                    case 'pending':
+                        echo '<td>' . $post_id . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
+                        echo '<td>' . esc_html(get_the_date()) . '</td>';
+                        break;
+                    case 'drafts':
+                        echo '<td>' . $post_id . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
+                        echo '<td>' . esc_html(get_the_date()) . '</td>';
+                        echo '<td class="lmb-actions-cell no-hover"><button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-submit-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-paper-plane"></i> Submit</button><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-trash"></i> Delete</button></td>';
+                        break;
+                    case 'denied':
+                        echo '<td>' . $post_id . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
+                        echo '<td>' . esc_html(get_the_modified_date()) . '</td>';
+                        echo '<td class="denial-reason">' . esc_html(get_post_meta($post_id, 'denial_reason', true)) . '</td>';
+                        echo '<td class="lmb-actions-cell no-hover"><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-trash"></i> Delete</button></td>';
+                        break;
+                }
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="7" style="text-align:center;">No ads found for this status.</td></tr>';
+        }
+        $html = ob_get_clean();
+        
+        $pagination_html = paginate_links([
+            'base' => add_query_arg('paged', '%#%'),
+            'format' => '?paged=%#%',
+            'current' => max(1, $paged),
+            'total' => $query->max_num_pages,
+            'prev_text' => '&laquo;',
+            'next_text' => '&raquo;',
+        ]);
+
+        wp_reset_postdata();
+        wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
+    }
+    // --- NEW FUNCTION: v2 submit draft ad for review ---
+    private static function lmb_submit_draft_ad_v2() {
+        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
+        $ad = get_post($ad_id);
+
+        if (!$ad || $ad->post_author != get_current_user_id()) {
+            wp_send_json_error(['message' => 'Permission denied.'], 403);
+            return;
+        }
+
+        update_post_meta($ad_id, 'lmb_status', 'pending_review');
+        LMB_Notification_Manager::notify_admins_ad_pending($ad_id);
+
+        wp_send_json_success(['message' => 'Ad submitted for review.']);
+    }
+    // --- NEW FUNCTION: v2 delete draft ad ---
+    private static function lmb_delete_draft_ad_v2() {
+        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
+        $ad = get_post($ad_id);
+
+        if (!$ad || $ad->post_author != get_current_user_id()) {
+            wp_send_json_error(['message' => 'Permission denied.'], 403);
+            return;
+        }
+
+        if (wp_delete_post($ad_id, true)) {
+            wp_send_json_success(['message' => 'Draft deleted successfully.']);
+        } else {
+            wp_send_json_error(['message' => 'Failed to delete draft.']);
+        }
+    }
+    
+    // --- END: NEW V2 WIDGET FUNCTIONS ---
 }

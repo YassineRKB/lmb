@@ -73,39 +73,6 @@
     box-sizing: border-box;
 }
 
-/* --- Tabs Navigation --- */
-.lmb-tabs-nav-user {
-    display: flex;
-    border-bottom: 1px solid #ddd;
-    margin-bottom: 20px;
-}
-
-.lmb-tab-btn-user {
-    padding: 12px 20px;
-    cursor: pointer;
-    border: none;
-    background: transparent;
-    font-size: 16px;
-    font-weight: 500;
-    color: #555;
-    position: relative;
-    top: 1px;
-    border-bottom: 3px solid transparent;
-}
-
-.lmb-tab-btn-user.active {
-    color: #d78808;
-    border-bottom-color: #d78808;
-}
-
-.lmb-tab-pane {
-    display: none;
-}
-
-.lmb-tab-pane.active {
-    display: block;
-}
-
 /* --- Data Table --- */
 .lmb-user-widget-v2 .lmb-table-container {
     overflow-x: auto;
@@ -235,3 +202,73 @@
     border-color: #d78808;
 }
 
+/* --- STYLES FOR FEED V2 WIDGET --- */
+.lmb-feed-v2-widget .feed-list {
+    position: relative;
+    padding-left: 20px;
+}
+/* The timeline bar */
+.lmb-feed-v2-widget .feed-list::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background-color: #e5e7eb;
+}
+
+.lmb-feed-v2-widget .feed-item {
+    display: flex;
+    gap: 20px;
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.lmb-feed-v2-widget .feed-item:last-child {
+    margin-bottom: 0;
+}
+
+.lmb-feed-v2-widget .feed-icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #fff;
+    background-color: #ccc; /* Default color */
+    z-index: 1;
+    border: 3px solid #fff;
+}
+
+.lmb-feed-v2-widget .feed-icon.icon-approve { background-color: #28a745; }
+.lmb-feed-v2-widget .feed-icon.icon-deny { background-color: #dc3545; }
+.lmb-feed-v2-widget .feed-icon.icon-submit { background-color: #007bff; }
+.lmb-feed-v2-widget .feed-icon.icon-create { background-color: #6c757d; }
+.lmb-feed-v2-widget .feed-icon.icon-points { background-color: #d78808; }
+.lmb-feed-v2-widget .feed-icon.icon-upload { background-color: #17a2b8; }
+
+
+.lmb-feed-v2-widget .feed-content {
+    flex-grow: 1;
+    padding-top: 8px;
+}
+
+.lmb-feed-v2-widget .feed-message {
+    font-size: 15px;
+    line-height: 1.5;
+    margin: 0 0 5px 0;
+}
+
+.lmb-feed-v2-widget .feed-message strong {
+    font-weight: 500;
+    color: #000;
+}
+
+.lmb-feed-v2-widget .feed-time {
+    font-size: 13px;
+    color: #777;
+}

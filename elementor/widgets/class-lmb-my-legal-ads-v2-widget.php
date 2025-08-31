@@ -43,7 +43,7 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
         $this->add_control(
             'default_status',
             [
-                'label' => __('Default Status Tab', 'lmb-core'),
+                'label' => __('Status to Display', 'lmb-core'),
                 'type' => Controls_Manager::SELECT,
                 'default' => 'published',
                 'options' => [
@@ -67,7 +67,7 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
             ]
         );
 
-        $this->add_control(
+		$this->add_control(
 			'view_more_link',
 			[
 				'label' => __( 'View More Link', 'lmb-core' ),
@@ -82,155 +82,67 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
 			]
 		);
 
-
         $this->end_controls_section();
     }
 
     protected function render() {
         $settings = $this->get_settings_for_display();
-        $default_status = $settings['default_status'];
+        $status_to_display = $settings['default_status'];
         $view_more_url = $settings['view_more_link']['url'];
+
+        // Pass settings to JavaScript via data attributes
+        $this->add_render_attribute('wrapper', [
+            'class' => 'lmb-my-legal-ads-v2',
+            'data-status' => $status_to_display,
+            'data-posts-per-page' => $settings['posts_per_page'],
+        ]);
         ?>
-        <div class="lmb-my-legal-ads-v2 lmb-user-widget-v2">
+        <div <?php echo $this->get_render_attribute_string('wrapper'); ?>>
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-list-alt"></i> My Legal Ads</h3>
+                <h3><i class="fas fa-list-alt"></i> My Legal Ads: <?php echo esc_html(ucfirst($status_to_display)); ?></h3>
             </div>
             <div class="lmb-widget-content">
                 
-                <div class="lmb-tabs-nav-user">
-                    <button class="lmb-tab-btn-user <?php echo $default_status === 'published' ? 'active' : ''; ?>" data-target="#tab-published">Published</button>
-                    <button class="lmb-tab-btn-user <?php echo $default_status === 'pending' ? 'active' : ''; ?>" data-target="#tab-pending">Pending</button>
-                    <button class="lmb-tab-btn-user <?php echo $default_status === 'drafts' ? 'active' : ''; ?>" data-target="#tab-drafts">Drafts</button>
-                    <button class="lmb-tab-btn-user <?php echo $default_status === 'denied' ? 'active' : ''; ?>" data-target="#tab-denied">Denied</button>
+                <div class="lmb-filters-box">
+                    <form>
+                        <div class="lmb-filter-grid lmb-filter-grid-user">
+                            <input type="text" placeholder="Ref (ID)" class="lmb-filter-input" name="filter_ref">
+                            <input type="text" placeholder="Company" class="lmb-filter-input" name="filter_company">
+                            <input type="text" placeholder="Type" class="lmb-filter-input" name="filter_type">
+                            <input type="date" class="lmb-filter-input" name="filter_date">
+                            <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Reset</button>
+                        </div>
+                    </form>
                 </div>
 
-                <div class="lmb-tabs-content">
-                    <!-- Published Ads Table -->
-                    <div id="tab-published" class="lmb-tab-pane <?php echo $default_status === 'published' ? 'active' : ''; ?>">
-                        <div class="lmb-filters-box">
-                            <form>
-                                <div class="lmb-filter-grid lmb-filter-grid-user">
-                                    <input type="text" placeholder="Ref (ID)" class="lmb-filter-input">
-                                    <input type="text" placeholder="Company" class="lmb-filter-input">
-                                    <input type="text" placeholder="Type" class="lmb-filter-input">
-                                    <input type="date" class="lmb-filter-input">
-                                    <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Reset</button>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="lmb-table-container">
-                            <table class="lmb-data-table lmb-my-ads-table-v2">
-                                <thead>
-                                    <tr>
-                                        <th>ID (Ref)</th>
-                                        <th>Company</th>
-                                        <th>Type</th>
-                                        <th>Date</th>
-                                        <th>Approved By</th>
-                                        <th>Accuse</th>
-                                        <th>Journal</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- AJAX Content for Published Ads -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Pending Ads Table -->
-                    <div id="tab-pending" class="lmb-tab-pane <?php echo $default_status === 'pending' ? 'active' : ''; ?>">
-                        <div class="lmb-filters-box">
-                             <form>
-                                <div class="lmb-filter-grid lmb-filter-grid-user">
-                                    <input type="text" placeholder="Ref (ID)" class="lmb-filter-input">
-                                    <input type="text" placeholder="Company" class="lmb-filter-input">
-                                    <input type="text" placeholder="Type" class="lmb-filter-input">
-                                    <input type="date" class="lmb-filter-input">
-                                    <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Reset</button>
-                                </div>
-                            </form>
-                        </div>
-                         <div class="lmb-table-container">
-                            <table class="lmb-data-table lmb-my-ads-table-v2">
-                                <thead>
-                                    <tr>
-                                        <th>ID (Ref)</th>
-                                        <th>Company</th>
-                                        <th>Type</th>
-                                        <th>Date Submitted</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                   <!-- AJAX Content for Pending Ads -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Drafts Table -->
-                    <div id="tab-drafts" class="lmb-tab-pane <?php echo $default_status === 'drafts' ? 'active' : ''; ?>">
-                        <div class="lmb-filters-box">
-                             <form>
-                                <div class="lmb-filter-grid lmb-filter-grid-user">
-                                    <input type="text" placeholder="Ref (ID)" class="lmb-filter-input">
-                                    <input type="text" placeholder="Company" class="lmb-filter-input">
-                                    <input type="text" placeholder="Type" class="lmb-filter-input">
-                                    <input type="date" class="lmb-filter-input">
-                                    <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Reset</button>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="lmb-table-container">
-                            <table class="lmb-data-table lmb-my-ads-table-v2">
-                                <thead>
-                                    <tr>
-                                        <th>ID (Ref)</th>
-                                        <th>Company</th>
-                                        <th>Type</th>
-                                        <th>Date Created</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- AJAX Content for Drafts -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <!-- Denied Ads Table -->
-                    <div id="tab-denied" class="lmb-tab-pane <?php echo $default_status === 'denied' ? 'active' : ''; ?>">
-                        <div class="lmb-filters-box">
-                             <form>
-                                <div class="lmb-filter-grid lmb-filter-grid-user">
-                                    <input type="text" placeholder="Ref (ID)" class="lmb-filter-input">
-                                    <input type="text" placeholder="Company" class="lmb-filter-input">
-                                    <input type="text" placeholder="Type" class="lmb-filter-input">
-                                    <input type="date" class="lmb-filter-input">
-                                    <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Reset</button>
-                                </div>
-                            </form>
-                        </div>
-                         <div class="lmb-table-container">
-                            <table class="lmb-data-table lmb-my-ads-table-v2">
-                                <thead>
-                                    <tr>
-                                        <th>ID (Ref)</th>
-                                        <th>Company</th>
-                                        <th>Type</th>
-                                        <th>Date Denied</th>
-                                        <th>Reason</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- AJAX Content for Denied Ads -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div> <!-- /.lmb-tabs-content -->
+                <div class="lmb-table-container">
+                    <table class="lmb-data-table lmb-my-ads-table-v2">
+                        <thead>
+                            <tr>
+                                <?php
+                                // Render table headers based on the selected status
+                                switch ($status_to_display) {
+                                    case 'published':
+                                        echo '<th>ID (Ref)</th><th>Company</th><th>Type</th><th>Date</th><th>Approved By</th><th>Accuse</th><th>Journal</th>';
+                                        break;
+                                    case 'pending':
+                                        echo '<th>ID (Ref)</th><th>Company</th><th>Type</th><th>Date Submitted</th>';
+                                        break;
+                                    case 'drafts':
+                                        echo '<th>ID (Ref)</th><th>Company</th><th>Type</th><th>Date Created</th><th>Actions</th>';
+                                        break;
+                                    case 'denied':
+                                        echo '<th>ID (Ref)</th><th>Company</th><th>Type</th><th>Date Denied</th><th>Reason</th><th>Actions</th>';
+                                        break;
+                                }
+                                ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- This will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
                 
                 <div class="lmb-pagination-container">
                     <!-- Pagination will be loaded here by JS -->
@@ -248,4 +160,3 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
         <?php
     }
 }
-

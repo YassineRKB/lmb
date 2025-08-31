@@ -94,7 +94,8 @@ function lmb_register_widget_assets() {
         'lmb-user-ads-list'           => 'assets/js/lmb-user-ads-list.js',
         'lmb-upload-accuse'           => 'assets/js/lmb-upload-accuse.js',
         'lmb-legal-ads-management-v2' => 'assets/js/lmb-legal-ads-management-v2.js',
-        'lmb-my-legal-ads-v2' => 'assets/js/lmb-my-legal-ads-v2.js',
+        'lmb-my-legal-ads-v2'         => 'assets/js/lmb-my-legal-ads-v2.js',
+        'lmb-my-legal-ads-v2'         => 'assets/js/lmb-my-legal-ads-v2.js',
     ];
     foreach ($scripts as $handle => $path) {
         wp_register_script($handle, LMB_CORE_URL . $path, ['lmb-core'], LMB_CORE_VERSION, true);
@@ -109,7 +110,8 @@ function lmb_register_widget_assets() {
         'lmb-user-widgets'      => 'assets/css/lmb-user-widgets.css',
         'lmb-notifications'     => 'assets/css/lmb-notifications.css',
         'lmb-admin-widgets-v2'  => 'assets/css/lmb-admin-widgets-v2.css',
-        'lmb-user-widgets-v2'  => 'assets/css/lmb-user-widgets-v2.css',
+        'lmb-user-widgets-v2'   => 'assets/css/lmb-user-widgets-v2.css',
+        'lmb-feed-v2'           => 'assets/js/lmb-feed-v2.js',
     ];
     foreach ($styles as $handle => $path) {
         wp_register_style($handle, LMB_CORE_URL . $path, [], LMB_CORE_VERSION);
