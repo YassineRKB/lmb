@@ -78,6 +78,7 @@ function lmb_register_all_assets() {
         'lmb-legal-ads-management-v2' => 'assets/js/lmb-legal-ads-management-v2.js',
         'lmb-my-legal-ads-v2'         => 'assets/js/lmb-my-legal-ads-v2.js',
         'lmb-feed-v2'                 => 'assets/js/lmb-feed-v2.js',
+        'lmb-auth-v2'                 => 'assets/js/lmb-auth-v2.js',
     ];
 
     foreach ($scripts as $handle => $path) {
@@ -94,6 +95,7 @@ function lmb_register_all_assets() {
         'lmb-notifications'      => 'assets/css/lmb-notifications.css',
         'lmb-admin-widgets-v2'   => 'assets/css/lmb-admin-widgets-v2.css',
         'lmb-user-widgets-v2'    => 'assets/css/lmb-user-widgets-v2.css',
+        'lmb-auth-v2'            => 'assets/css/lmb-auth-v2.css',
     ];
 
     foreach ($styles as $handle => $path) {

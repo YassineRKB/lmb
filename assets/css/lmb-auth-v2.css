@@ -1,0 +1,136 @@
+/* FILE: assets/css/lmb-auth-v2.css */
+
+.lmb-auth-v2-widget {
+    max-width: 450px;
+    margin: auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    font-family: 'Roboto', sans-serif;
+}
+
+.lmb-auth-tabs {
+    display: flex;
+    background-color: #f8f9fa;
+}
+
+.lmb-auth-tab-btn {
+    flex: 1;
+    padding: 18px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease-in-out;
+}
+
+.lmb-auth-tab-btn.active {
+    color: #fff;
+    font-weight: 700;
+    border-bottom-color: #d78808;
+    background-color: #d78808;
+}
+
+.lmb-auth-content {
+    padding: 30px 40px;
+}
+
+.lmb-auth-form {
+    display: none;
+}
+
+.lmb-auth-form.active {
+    display: block;
+}
+
+.lmb-form-group {
+    margin-bottom: 20px;
+}
+
+.lmb-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #495057;
+    font-size: 14px;
+}
+
+.lmb-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    box-sizing: border-box;
+}
+
+.lmb-input:focus {
+    border-color: #f5c469;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(215, 136, 8, .25);
+}
+
+.lmb-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-btn:hover {
+    background-color: #b87407;
+}
+
+.lmb-form-response {
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: none;
+}
+.lmb-form-response.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    display: block;
+}
+.lmb-form-response.success {
+    background-color: #d4edda;
+    color: #155724;
+    display: block;
+}
+
+/* Signup Specifics */
+.lmb-signup-toggle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 25px;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    padding: 5px;
+}
+.lmb-signup-toggle-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #495057;
+}
+.lmb-signup-toggle-btn.active {
+    background-color: #fff;
+    color: #d78808;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}

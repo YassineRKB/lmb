@@ -18,25 +18,29 @@ class LMB_Ajax_Handlers {
             'lmb_regenerate_ad_text', 'lmb_admin_generate_pdf',
             'lmb_fetch_ads_v2', 'lmb_fetch_my_ads_v2', 'lmb_submit_draft_ad_v2',
             'lmb_delete_draft_ad_v2', 'lmb_fetch_feed_v2',
+            'lmb_login_v2', 'lmb_signup_v2'
         ];
+        // --- MODIFICATION: Make auth actions public ---
+        $public_actions = ['lmb_login_v2', 'lmb_signup_v2'];
 
         foreach ($actions as $action) {
-            // Only register actions for logged-in users.
             add_action('wp_ajax_' . $action, [__CLASS__, 'handle_request']);
+            if (in_array($action, $public_actions)) {
+                add_action('wp_ajax_nopriv_' . $action, [__CLASS__, 'handle_request']);
+            }
         }
     }
 
     public static function handle_request() {
-        // Security Check 1: Verify the nonce.
         check_ajax_referer('lmb_nonce', 'nonce');
         
-        // Security Check 2: All actions registered here require a logged-in user.
-        if (!is_user_logged_in()) {
-            wp_send_json_error(['message' => 'You must be logged in to perform this action.'], 403);
+        $public_actions = ['lmb_login_v2', 'lmb_signup_v2'];
+        $action = isset($_POST['action']) ? sanitize_key($_POST['action']) : '';
+
+        if (!in_array($action, $public_actions) && !is_user_logged_in()) {
+            wp_send_json_error(['message' => 'You must be logged in.'], 403);
             return;
         }
-
-        $action = isset($_POST['action']) ? sanitize_key($_POST['action']) : '';
 
         if (method_exists(__CLASS__, $action)) {
             self::$action();
@@ -985,5 +989,91 @@ class LMB_Ajax_Handlers {
                 return ['class' => '', 'icon' => 'fas fa-info-circle'];
         }
     }
+
+    // --- NEW FUNCTION: v2 user login with status check and role-based redirect ---
+    private static function lmb_login_v2() {
+        $creds = [
+            'user_login'    => sanitize_user(wp_unslash($_POST['username'])),
+            'user_password' => $_POST['password'], // wp_signon handles password securely
+            'remember'      => true
+        ];
+
+        $user = wp_signon($creds, is_ssl());
+
+        if (is_wp_error($user)) {
+            wp_send_json_error(['message' => 'Invalid username or password.'], 401);
+            return;
+        }
+        
+        // Check if user is active
+        $status = get_user_meta($user->ID, 'lmb_user_status', true);
+        if ($status === 'inactive') {
+            wp_logout();
+            wp_send_json_error(['message' => 'Your account is pending admin approval.'], 403);
+            return;
+        }
+
+        wp_set_current_user($user->ID, $user->user_login);
+        wp_set_auth_cookie($user->ID, true, is_ssl());
+        do_action('wp_login', $user->user_login, $user);
+
+        // Redirect logic
+        $redirect_url = home_url('/'); // Default redirect
+        if (in_array('administrator', $user->roles) || in_array('employee', $user->roles)) {
+            $redirect_url = admin_url();
+        } elseif (in_array('client', $user->roles)) {
+            $dashboard_page_id = get_option('lmb_client_dashboard_page_id'); // You may need a settings page for this
+            if ($dashboard_page_id) {
+                $redirect_url = get_permalink($dashboard_page_id);
+            }
+        }
+        
+        wp_send_json_success(['redirect_url' => $redirect_url]);
+    }
+    // --- NEW FUNCTION: v2 user signup with role assignment and admin notification ---
+    private static function lmb_signup_v2() {
+        parse_str($_POST['form_data'], $data);
+        
+        $email = sanitize_email($data['email']);
+        $password = $data['password'];
+        $type = sanitize_key($data['signup_type']);
+
+        // Basic validation
+        if (!is_email($email)) wp_send_json_error(['message' => 'Invalid email address.']);
+        if (email_exists($email)) wp_send_json_error(['message' => 'This email is already registered.']);
+        if (strlen($password) < 6) wp_send_json_error(['message' => 'Password must be at least 6 characters long.']);
+
+        $user_id = wp_create_user($email, $password, $email);
+
+        if (is_wp_error($user_id)) {
+            wp_send_json_error(['message' => $user_id->get_error_message()]);
+            return;
+        }
+        
+        // Assign role and save custom meta
+        $user = new WP_User($user_id);
+        $user->set_role('client');
+        update_user_meta($user_id, 'lmb_user_status', 'inactive');
+        update_user_meta($user_id, 'lmb_client_type', $type);
+
+        if ($type === 'regular') {
+            update_user_meta($user_id, 'first_name', sanitize_text_field($data['first_name']));
+            update_user_meta($user_id, 'last_name', sanitize_text_field($data['last_name']));
+            update_user_meta($user_id, 'phone_number', sanitize_text_field($data['phone_regular']));
+            update_user_meta($user_id, 'city', sanitize_text_field($data['city_regular']));
+        } else { // Professional
+            update_user_meta($user_id, 'company_name', sanitize_text_field($data['company_name']));
+            update_user_meta($user_id, 'company_hq', sanitize_text_field($data['company_hq']));
+            update_user_meta($user_id, 'city', sanitize_text_field($data['city_professional']));
+            update_user_meta($user_id, 'company_rc', sanitize_text_field($data['company_rc']));
+            update_user_meta($user_id, 'phone_number', sanitize_text_field($data['phone_professional']));
+        }
+
+        // Notify admins of new registration
+        LMB_Notification_Manager::add(1, 'new_user', 'New User Registration', "A new user ($email) has registered and requires approval.");
+        
+        wp_send_json_success();
+    }
+
 
 }

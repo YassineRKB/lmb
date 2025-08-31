@@ -3,42 +3,40 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class LMB_User {
     public function __construct() {
-        // Actions can be added here if needed in the future
+        // Create custom roles on plugin activation
+        add_action('user_register', [$this, 'set_default_status'], 10, 1);
     }
 
-    public static function create_custom_roles() {
-        // Client Role: Can submit ads and manage their own content.
-        add_role(
-            'client',
-            'Client',
-            [
-                'read'         => true,
-                'edit_posts'   => true,
-                'delete_posts' => true,
-                'upload_files' => true,
-            ]
-        );
+    // Set default user status to 'inactive' upon registration
+    public function set_default_status($user_id) {
+        update_user_meta($user_id, 'lmb_user_status', 'inactive');
+    }
 
-        // Employee Role: Can manage ads and payments, but not plugin settings.
-        add_role(
-            'employee',
-            'Employee',
-            [
-                'read'                  => true,
-                'edit_posts'            => true,
-                'delete_posts'          => true,
-                'publish_posts'         => true,
-                'edit_others_posts'     => true,
-                'delete_others_posts'   => true,
-                'upload_files'          => true,
-                'manage_lmb_payments'   => true, // Custom capability
-            ]
-        );
-        
-        // Grant administrators all custom capabilities
-        $admin = get_role('administrator');
-        if ($admin) {
-            $admin->add_cap('manage_lmb_payments');
-        }
+    // Create custom roles: Client and Employee
+    public static function create_custom_roles() {
+        $client_caps = [
+            'read' => true,
+            'upload_files' => true,
+            'edit_posts' => false,
+            'delete_posts' => false,
+            'publish_posts' => false,
+            'edit_published_posts' => false,
+            'delete_published_posts' => false,
+            'manage_categories' => false,
+            'moderate_comments' => false,
+        ];
+
+        $employee_caps = array_merge($client_caps, [
+            'edit_posts' => true,
+            'delete_posts' => true,
+            'publish_posts' => true,
+            'edit_published_posts' => true,
+            'delete_published_posts' => true,
+            'edit_others_posts' => true,
+            'delete_others_posts' => true,
+        ]);
+
+        add_role('client', 'Client', $client_caps);
+        add_role('employee', 'Employee', $employee_caps);
     }
 }

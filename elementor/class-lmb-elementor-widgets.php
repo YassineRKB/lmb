@@ -68,6 +68,7 @@ add_action('elementor/widgets/register', function($widgets_manager) {
         'LMB_Legal_Ads_Management_V2_Widget' => __DIR__ . '/widgets/class-lmb-legal-ads-management-v2-widget.php',
         'LMB_My_Legal_Ads_V2_Widget' => __DIR__ . '/widgets/class-lmb-my-legal-ads-v2-widget.php',
         'LMB_Feed_V2_Widget' => __DIR__ . '/widgets/class-lmb-feed-v2-widget.php',
+        'LMB_Auth_V2_Widget' => __DIR__ . '/widgets/class-lmb-auth-v2-widget.php',
     ];
 
     foreach ($widgets as $class_name => $file_path) {
