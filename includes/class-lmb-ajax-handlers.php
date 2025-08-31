@@ -22,7 +22,8 @@ class LMB_Ajax_Handlers {
             'lmb_fetch_inactive_clients_v2',
             'lmb_manage_inactive_client_v2',
             'lmb_fetch_active_clients_v2',
-            'lmb_lock_active_client_v2',
+            'lmb_lock_active_client_v2','lmb_update_profile_v2',
+            'lmb_update_password_v2',
         ];
         // --- MODIFICATION: Make auth actions public ---
         $public_actions = ['lmb_login_v2', 'lmb_signup_v2'];
@@ -1311,5 +1312,82 @@ class LMB_Ajax_Handlers {
         LMB_Ad_Manager::log_activity(sprintf('Locked client account #%d.', $user_id));
         
         wp_send_json_success(['message' => 'Client account has been locked.']);
+    }
+
+    // --- NEW FUNCTION: v2 update user profile with role-based field restrictions ---
+    private static function lmb_update_profile_v2() {
+        $user_id_to_update = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        parse_str($_POST['form_data'], $data);
+
+        $current_user_id = get_current_user_id();
+        $is_admin = current_user_can('manage_options');
+
+        // Security check: Either you are an admin, or you are editing your own profile.
+        if (!$is_admin && $current_user_id !== $user_id_to_update) {
+            wp_send_json_error(['message' => 'You do not have permission to edit this profile.'], 403);
+        }
+        
+        $user_data = [];
+        // Only admins can edit these restricted fields
+        if ($is_admin) {
+            if (isset($data['first_name'])) $user_data['first_name'] = sanitize_text_field($data['first_name']);
+            if (isset($data['last_name'])) $user_data['last_name'] = sanitize_text_field($data['last_name']);
+            if (isset($data['company_name'])) update_user_meta($user_id_to_update, 'company_name', sanitize_text_field($data['company_name']));
+            if (isset($data['company_rc'])) update_user_meta($user_id_to_update, 'company_rc', sanitize_text_field($data['company_rc']));
+        }
+        
+        // Fields all users can edit
+        if (isset($data['company_hq'])) update_user_meta($user_id_to_update, 'company_hq', sanitize_text_field($data['company_hq']));
+        if (isset($data['city'])) update_user_meta($user_id_to_update, 'city', sanitize_text_field($data['city']));
+        if (isset($data['phone_number'])) update_user_meta($user_id_to_update, 'phone_number', sanitize_text_field($data['phone_number']));
+
+        // Update the user display name if it has been changed (for regular users)
+        if (!empty($user_data['first_name']) && !empty($user_data['last_name'])) {
+            $user_data['display_name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
+        }
+
+        if(!empty($user_data)){
+            $user_data['ID'] = $user_id_to_update;
+            wp_update_user($user_data);
+        }
+
+        wp_send_json_success();
+    }
+    // --- NEW FUNCTION: v2 update user password with current password verification for non-admins ---
+    private static function lmb_update_password_v2() {
+        $user_id_to_update = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        parse_str($_POST['form_data'], $data);
+
+        $current_user_id = get_current_user_id();
+        $is_admin = current_user_can('manage_options');
+
+        // Security check
+        if (!$is_admin && $current_user_id !== $user_id_to_update) {
+            wp_send_json_error(['message' => 'You do not have permission to change this password.'], 403);
+        }
+        
+        $new_pass = $data['new_password'];
+        $confirm_pass = $data['confirm_password'];
+
+        if (empty($new_pass) || empty($confirm_pass)) {
+            wp_send_json_error(['message' => 'Please fill out both new password fields.']);
+        }
+        if ($new_pass !== $confirm_pass) {
+            wp_send_json_error(['message' => 'New passwords do not match.']);
+        }
+        
+        // If a non-admin is changing their own password, we must verify their current password
+        if (!$is_admin || $current_user_id === $user_id_to_update) {
+            $current_pass = $data['current_password'];
+            $user = get_user_by('ID', $user_id_to_update);
+            if (!wp_check_password($current_pass, $user->user_pass, $user->ID)) {
+                wp_send_json_error(['message' => 'Your current password is not correct.']);
+            }
+        }
+        
+        // All checks passed, update the password
+        wp_set_password($new_pass, $user_id_to_update);
+        
+        wp_send_json_success();
     }
 }
