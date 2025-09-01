@@ -7,7 +7,7 @@ use WP_Query;
 if (!defined('ABSPATH')) exit;
 
 class LMB_User_Ads_List_Widget extends Widget_Base {
-    // ... (get_name, get_title, etc. remain the same) ...
+    
     public function get_name() { return 'lmb_user_ads_list'; }
     public function get_title() { return __('LMB User Ads List', 'lmb-core'); }
     public function get_icon() { return 'eicon-posts-grid'; }

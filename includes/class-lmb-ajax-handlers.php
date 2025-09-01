@@ -653,6 +653,7 @@ class LMB_Ajax_Handlers {
         }
     }
 
+    // Enhanced ad fetching with multiple filters
     private static function lmb_fetch_ads_v2() {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Access Denied.'], 403);
