@@ -716,9 +716,12 @@ class LMB_Ajax_Handlers {
                 $client = get_userdata(get_post_field('post_author', $post_id));
                 $approved_by_id = get_post_meta($post_id, 'approved_by', true);
                 $approved_by = $approved_by_id ? get_userdata($approved_by_id) : null;
-                $accuse_id = get_post_meta($post_id, 'lmb_accuse_attachment_id', true);
-                // Placeholder for journal logic
-                $journal_name = "Journal XYZ"; 
+                
+                // --- MODIFICATION START: Get Accuse and Journal data ---
+                $accuse_url = get_post_meta($post_id, 'lmb_accuse_pdf_url', true);
+                $temp_journal_id = get_post_meta($post_id, 'lmb_temporary_journal_id', true);
+                $final_journal_id = get_post_meta($post_id, 'lmb_final_journal_id', true);
+                // --- MODIFICATION END ---
     
                 echo '<tr class="clickable-row" data-href="' . esc_url(get_edit_post_link($post_id)) . '">';
                 echo '<td>' . esc_html($post_id) . '</td>';
@@ -729,35 +732,40 @@ class LMB_Ajax_Handlers {
                 echo '<td><span class="lmb-status-badge lmb-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td>';
                 echo '<td>' . ($approved_by ? esc_html($approved_by->display_name) : '<span class="cell-placeholder">N/A</span>') . '</td>';
                 
-                // Accuse Column
+                // --- MODIFICATION: Accuse Column Logic ---
                 echo '<td>';
-                if ($status === 'published' && $accuse_id) {
-                    echo '<a href="' . esc_url(wp_get_attachment_url($accuse_id)) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Accuse</a>';
+                if ($accuse_url) {
+                    echo '<a href="' . esc_url($accuse_url) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">View</a>';
                 } else {
                     echo '<span class="cell-placeholder">-</span>';
                 }
                 echo '</td>';
     
-                // Journal Column
+                // --- MODIFICATION: Journal Column Logic ---
                 echo '<td>';
-                // Replace with your actual journal logic
-                if ($status === 'published' && $journal_name) {
-                     echo '<a href="#" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Journal</a>';
+                if ($final_journal_id) {
+                    echo '<a href="' . esc_url(wp_get_attachment_url($final_journal_id)) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Final</a>';
+                } elseif ($temp_journal_id) {
+                    echo '<a href="' . esc_url(wp_get_attachment_url($temp_journal_id)) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Temp</a>';
                 } else {
                     echo '<span class="cell-placeholder">-</span>';
                 }
                 echo '</td>';
     
-                // Actions Column
+                // --- MODIFICATION: Actions Column Logic ---
                 echo '<td class="lmb-actions-cell">';
                 if ($status === 'pending_review') {
                     echo '<button class="lmb-btn lmb-btn-icon lmb-btn-success lmb-ad-action" data-action="approve" data-id="' . $post_id . '" title="Approve"><i class="fas fa-check-circle"></i></button>';
                     echo '<button class="lmb-btn lmb-btn-icon lmb-btn-danger lmb-ad-action" data-action="deny" data-id="' . $post_id . '" title="Deny"><i class="fas fa-times-circle"></i></button>';
                 } elseif ($status === 'published') {
-                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-info" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>';
-                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-info" title="Generate Accuse"><i class="fas fa-receipt"></i></button>';
+                    // Conditionally show Generate Accuse button
+                    if (!$accuse_url) {
+                        echo '<button class="lmb-btn lmb-btn-sm lmb-btn-info lmb-generate-accuse-btn" data-id="' . $post_id . '" title="Generate Accuse"><i class="fas fa-receipt"></i></button>';
+                    }
+                    // Show Upload Journal button
+                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-secondary lmb-upload-journal-btn" data-id="' . $post_id . '" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>';
                 } else {
-                     echo '<button class="lmb-btn lmb-btn-sm lmb-btn-view">View</button>';
+                     echo '<a href="' . esc_url(get_edit_post_link($post_id)) . '" class="lmb-btn lmb-btn-sm lmb-btn-view">View</a>';
                 }
                 echo '</td>';
     
@@ -768,8 +776,16 @@ class LMB_Ajax_Handlers {
         }
         $html = ob_get_clean();
         wp_reset_postdata();
-    
-        wp_send_json_success(['html' => $html, 'pagination' => '']); // Pagination will be added next
+        $pagination_html = paginate_links([
+            'base' => '#%#%',
+            'format' => '?paged=%#%',
+            'current' => $paged,
+            'total' => $query->max_num_pages,
+            'prev_text' => '&laquo;',
+            'next_text' => '&raquo;',
+        ]);
+        
+        wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
     }
     
     // --- NEW FUNCTION: v2 my ads management fetch with filters ---
