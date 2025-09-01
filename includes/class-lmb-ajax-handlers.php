@@ -1449,11 +1449,14 @@ class LMB_Ajax_Handlers {
             'post_title' => sanitize_text_field($_POST['newspaper_title']), 
             'post_status' => 'publish',
         ]);
-        if (is_wp_error($post_id)) wp_send_json_error(['message' => $post_id->get_error_message()]);
+        if (is_wp_error($post_id)) {
+            // If post creation fails, delete the just-uploaded PDF to avoid orphans
+            wp_delete_attachment($pdf_id, true);
+            wp_send_json_error(['message' => $post_id->get_error_message()]);
+        }
 
         update_post_meta($post_id, 'newspaper_pdf', $pdf_id);
 
-        // --- NEW LOGIC: Associate with ads in date range ---
         $start_date = sanitize_text_field($_POST['start_date']);
         $end_date = sanitize_text_field($_POST['end_date']);
         
@@ -1461,6 +1464,7 @@ class LMB_Ajax_Handlers {
             'post_type' => 'lmb_legal_ad',
             'post_status' => 'publish',
             'posts_per_page' => -1,
+            'fields' => 'ids', // More efficient, we only need the IDs
             'date_query' => [
                 [
                     'after'     => $start_date,
@@ -1470,19 +1474,36 @@ class LMB_Ajax_Handlers {
             ],
         ];
         $ads_query = new WP_Query($args);
-        $updated_count = 0;
+        
+        // --- MODIFICATION START: Logic to delete old files ---
+        $temp_journals_to_delete = [];
         if ($ads_query->have_posts()) {
-            while ($ads_query->have_posts()) {
-                $ads_query->the_post();
-                update_post_meta(get_the_ID(), 'lmb_final_journal_id', $pdf_id);
-                // Optional: remove temporary journal ID if it exists
-                // delete_post_meta(get_the_ID(), 'lmb_temporary_journal_id');
-                $updated_count++;
+            foreach ($ads_query->posts as $ad_id) {
+                $temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
+                if (!empty($temp_journal_id)) {
+                    // Collect the IDs of the temporary journals to be deleted
+                    $temp_journals_to_delete[] = $temp_journal_id;
+                }
+                
+                // Update the ad to point to the new final journal
+                update_post_meta($ad_id, 'lmb_final_journal_id', $pdf_id);
+                // Now we can safely delete the meta key for the temporary journal
+                delete_post_meta($ad_id, 'lmb_temporary_journal_id');
             }
         }
-        wp_reset_postdata();
+        
+        // After updating all ads, delete the old temporary journal files
+        if (!empty($temp_journals_to_delete)) {
+            $unique_ids_to_delete = array_unique($temp_journals_to_delete);
+            foreach ($unique_ids_to_delete as $attachment_id) {
+                wp_delete_attachment($attachment_id, true); // The 'true' forces the physical file deletion
+            }
+        }
+        // --- MODIFICATION END ---
 
-        wp_send_json_success(['message' => 'Newspaper uploaded successfully. Associated with ' . $updated_count . ' legal ads in the specified date range.']);
+        $updated_count = $ads_query->post_count;
+        
+        wp_send_json_success(['message' => 'Newspaper uploaded. Associated with ' . $updated_count . ' ads. Old temporary files have been deleted.']);
     }
 
 }

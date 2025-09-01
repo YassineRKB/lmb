@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core.
- * Version: 5.3.0
+ * Version: 5.3.88
  * Author: Yassine Rakibi
  * Requires at least: 6.0
  * Requires PHP: 7.4
