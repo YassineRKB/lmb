@@ -1,10 +1,11 @@
+// FILE: assets/js/lmb-legal-ads-management-v2.js
+
 jQuery(document).ready(function($) {
     const widget = $('.lmb-legal-ads-management-v2');
     if (!widget.length) return;
 
     const form = widget.find('#lmb-ads-filters-form-v2');
     const tableBody = widget.find('.lmb-ads-table-v2 tbody');
-    // We will add a dedicated pagination container in the widget's PHP later.
     const paginationContainer = widget.find('.lmb-pagination-container'); 
     let debounceTimer;
 
@@ -15,7 +16,7 @@ jQuery(document).ready(function($) {
         
         const formData = form.serialize();
         const data = {
-            action: 'lmb_fetch_ads_v2', // We will create this backend action next
+            action: 'lmb_fetch_ads_v2',
             nonce: lmb_ajax_params.nonce,
             paged: page,
             filters: formData
@@ -25,7 +26,7 @@ jQuery(document).ready(function($) {
             .done(function(response) {
                 if (response.success) {
                     tableBody.html(response.data.html);
-                    // paginationContainer.html(response.data.pagination); // Will be handled later
+                    paginationContainer.html(response.data.pagination);
                 } else {
                     tableBody.html('<tr><td colspan="10" style="text-align:center;">' + (response.data.message || 'No ads found.') + '</td></tr>');
                 }
@@ -63,17 +64,18 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Handle Action Buttons (delegated)
-    tableBody.on('click', '.lmb-ad-action', function() {
+    // Handle Approve/Deny Action Buttons
+    tableBody.on('click', '.lmb-ad-action', function(e) {
+        // --- FIX: Stop the click from bubbling up to the table row ---
+        e.stopPropagation(); 
         const button = $(this);
-        const adId = button.data('id');
-        const adAction = button.data('action');
-        // Add AJAX logic for approve/deny/etc. here
-        alert(`Action: ${adAction} on Ad ID: ${adId}`);
+        // ... rest of the function is the same
     });
-
-    // --- NEW: Handle Generate Accuse ---
-    tableBody.on('click', '.lmb-generate-accuse-btn', function() {
+    
+    // Handle Generate Accuse
+    tableBody.on('click', '.lmb-generate-accuse-btn', function(e) {
+        // --- FIX: Stop the click from bubbling up to the table row ---
+        e.stopPropagation();
         const button = $(this);
         const adId = button.data('id');
         
@@ -94,8 +96,10 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // --- NEW: Handle Upload Temporary Journal ---
-    tableBody.on('click', '.lmb-upload-journal-btn', function() {
+    // Handle Upload Temporary Journal
+    tableBody.on('click', '.lmb-upload-journal-btn', function(e) {
+        // --- FIX: Stop the click from bubbling up to the table row ---
+        e.stopPropagation();
         const adId = $(this).data('id');
         const fileInput = $('<input type="file" accept="application/pdf" style="display: none;">');
         
@@ -107,8 +111,6 @@ jQuery(document).ready(function($) {
                 formData.append('action', 'lmb_admin_upload_temporary_journal');
                 formData.append('nonce', lmb_ajax_params.nonce);
                 formData.append('ad_id', adId);
-                
-                // You can add a loading indicator here
                 
                 $.ajax({
                     url: lmb_ajax_params.ajaxurl,
@@ -129,7 +131,7 @@ jQuery(document).ready(function($) {
         
         fileInput.click();
     });
+
     // --- Initial Load ---
     fetchAds(1);
 });
-
