@@ -27,6 +27,7 @@ class LMB_Ajax_Handlers {
             'lmb_admin_generate_accuse', // New action
             'lmb_admin_upload_temporary_journal', // New action
             'lmb_update_password_v2',
+            
         ];
         // --- MODIFICATION: Make auth actions public ---
         $public_actions = ['lmb_login_v2', 'lmb_signup_v2'];
