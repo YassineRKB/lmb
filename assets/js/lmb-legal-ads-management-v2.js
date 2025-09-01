@@ -1,17 +1,14 @@
-// FILE: assets/js/lmb-legal-ads-management-v2.js
-
 jQuery(document).ready(function($) {
     const widget = $('.lmb-legal-ads-management-v2');
     if (!widget.length) return;
 
     const form = widget.find('#lmb-ads-filters-form-v2');
     const tableBody = widget.find('.lmb-ads-table-v2 tbody');
-    const paginationContainer = widget.find('.lmb-pagination-container'); 
+    const paginationContainer = widget.find('.lmb-pagination-container');
     let debounceTimer;
 
-    // --- Function to fetch and render ads ---
+    // --- Main function to fetch and render ads via AJAX ---
     function fetchAds(page = 1) {
-        // Show loading state
         tableBody.html('<tr><td colspan="10" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading ads...</td></tr>');
         
         const formData = form.serialize();
@@ -38,23 +35,24 @@ jQuery(document).ready(function($) {
 
     // --- Event Handlers ---
 
-    // Handle real-time filtering with debounce
+    // Handle real-time filtering with a debounce to prevent excessive AJAX calls
     form.on('input change', 'input, select', function() {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(function() {
-            fetchAds(1); // Reset to page 1 on new filter
-        }, 500); // 500ms delay after user stops typing
+            fetchAds(1); // Reset to page 1 on any new filter
+        }, 500);
     });
 
-    // Handle Reset Button
+    // Handle the filter reset button
     form.on('reset', function(e) {
         e.preventDefault();
         form.find('input[type="text"], input[type="date"], select').val('');
         fetchAds(1);
     });
 
-    // Handle Row Click (delegated)
+    // Handle clicking on a table row to navigate to the edit page
     tableBody.on('click', 'tr.clickable-row', function(e) {
+        // Prevent navigation if a button or link inside the row was the target
         if ($(e.target).closest('button, a, .lmb-actions-cell').length > 0) {
             return;
         }
@@ -63,19 +61,48 @@ jQuery(document).ready(function($) {
             window.location.href = href;
         }
     });
-
-    // Handle Approve/Deny Action Buttons
-    tableBody.on('click', '.lmb-ad-action', function(e) {
-        // --- FIX: Stop the click from bubbling up to the table row ---
-        e.stopPropagation(); 
-        const button = $(this);
-        // ... rest of the function is the same
-    });
     
-    // Handle Generate Accuse
+    // Handle pagination clicks
+    paginationContainer.on('click', 'a.page-numbers', function(e) {
+        e.preventDefault();
+        const href = $(this).attr('href');
+        const urlParams = new URLSearchParams(href.split('?')[1]);
+        const page = urlParams.get('paged') || 1;
+        fetchAds(page);
+    });
+
+    // Handle Approve/Deny action buttons
+    tableBody.on('click', '.lmb-ad-action', function(e) {
+        e.stopPropagation(); // Prevents the row click event
+        const button = $(this);
+        const adId = button.data('id');
+        const action = button.data('action');
+        const reason = (action === 'deny') ? prompt('Reason for denial:') : '';
+
+        if (action === 'deny' && reason === null) return; // User cancelled prompt
+
+        button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
+
+        $.post(lmb_ajax_params.ajaxurl, {
+            action: 'lmb_ad_status_change',
+            nonce: lmb_ajax_params.nonce,
+            ad_id: adId,
+            status: action,
+            reason: reason
+        }).done(function(response) {
+            if (response.success) {
+                showLMBModal('success', response.data.message);
+                fetchAds($('.lmb-pagination .current').text() || 1);
+            } else {
+                showLMBModal('error', response.data ? response.data.message : 'An error occurred.');
+                button.html(action === 'approve' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>').prop('disabled', false);
+            }
+        });
+    });
+
+    // Handle Generate Accuse button click
     tableBody.on('click', '.lmb-generate-accuse-btn', function(e) {
-        // --- FIX: Stop the click from bubbling up to the table row ---
-        e.stopPropagation();
+        e.stopPropagation(); // Prevents the row click event
         const button = $(this);
         const adId = button.data('id');
         
@@ -88,19 +115,30 @@ jQuery(document).ready(function($) {
         }).done(function(response) {
             if (response.success) {
                 showLMBModal('success', response.data.message);
-                fetchAds($('.lmb-pagination .current').text() || 1); // Refresh table
+                fetchAds($('.lmb-pagination .current').text() || 1);
             } else {
                 showLMBModal('error', response.data.message);
-                button.html('<i class="fas fa-receipt"></i> Generate Accuse').prop('disabled', false);
+                button.html('<i class="fas fa-receipt"></i>').prop('disabled', false);
             }
+        }).fail(function() {
+            showLMBModal('error', 'An unknown server error occurred.');
+            button.html('<i class="fas fa-receipt"></i>').prop('disabled', false);
         });
     });
 
-    // Handle Upload Temporary Journal
+    // Handle Upload Temporary Journal button click
     tableBody.on('click', '.lmb-upload-journal-btn', function(e) {
-        // --- FIX: Stop the click from bubbling up to the table row ---
-        e.stopPropagation();
-        const adId = $(this).data('id');
+        e.stopPropagation(); // Prevents the row click event
+        const button = $(this);
+        const adId = button.data('id');
+        const journalCell = button.closest('tr').find('.journal-cell');
+        
+        // Prompt for the Journal Number before opening file dialog
+        const journalNo = prompt("Please enter the Journal N° for this temporary newspaper:");
+        if (!journalNo) {
+            return; // Exit if the user cancels or enters nothing
+        }
+        
         const fileInput = $('<input type="file" accept="application/pdf" style="display: none;">');
         
         fileInput.on('change', function() {
@@ -111,6 +149,11 @@ jQuery(document).ready(function($) {
                 formData.append('action', 'lmb_admin_upload_temporary_journal');
                 formData.append('nonce', lmb_ajax_params.nonce);
                 formData.append('ad_id', adId);
+                formData.append('journal_no', journalNo); // Add journal number to the request
+                
+                const originalContent = journalCell.html();
+                journalCell.html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+                button.prop('disabled', true);
                 
                 $.ajax({
                     url: lmb_ajax_params.ajaxurl,
@@ -121,10 +164,28 @@ jQuery(document).ready(function($) {
                 }).done(function(response) {
                     if (response.success) {
                         showLMBModal('success', response.data.message);
-                        fetchAds($('.lmb-pagination .current').text() || 1);
+                        // After a successful upload, ask the admin if they want to generate the accuse
+                        if (confirm("Temporary journal uploaded. Do you want to generate the accuse now?")) {
+                            // Find the accuse button in the same row and trigger a click
+                            const accuseButton = button.closest('tr').find('.lmb-generate-accuse-btn');
+                             if (accuseButton.length) {
+                                accuseButton.click();
+                            } else {
+                                // If no button (e.g., accuse already exists), just refresh the table
+                                fetchAds($('.lmb-pagination .current').text() || 1);
+                            }
+                        } else {
+                            fetchAds($('.lmb-pagination .current').text() || 1);
+                        }
                     } else {
                         showLMBModal('error', response.data.message);
+                        journalCell.html(originalContent);
+                        button.prop('disabled', false);
                     }
+                }).fail(function() {
+                    showLMBModal('error', 'An unexpected server error occurred.');
+                    journalCell.html(originalContent);
+                    button.prop('disabled', false);
                 });
             }
         });

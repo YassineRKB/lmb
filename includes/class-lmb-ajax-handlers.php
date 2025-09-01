@@ -670,7 +670,6 @@ class LMB_Ajax_Handlers {
             'meta_query' => ['relation' => 'AND'],
         ];
     
-        // Apply filters
         if (!empty($filters['filter_ref']) && is_numeric($filters['filter_ref'])) {
             $args['post__in'] = [intval($filters['filter_ref'])];
         }
@@ -689,7 +688,7 @@ class LMB_Ajax_Handlers {
             if (!empty($user_ids)) {
                 $args['author__in'] = $user_ids;
             } else {
-                $args['author__in'] = [0]; // No results
+                $args['author__in'] = [0];
             }
         }
         if (!empty($filters['filter_status'])) {
@@ -701,7 +700,7 @@ class LMB_Ajax_Handlers {
             if(!empty($user_ids)){
                  $args['meta_query'][] = ['key' => 'approved_by', 'value' => $user_ids, 'compare' => 'IN'];
             } else {
-                 $args['meta_query'][] = ['key' => 'approved_by', 'value' => 0]; // No results
+                 $args['meta_query'][] = ['key' => 'approved_by', 'value' => 0];
             }
         }
     
@@ -716,11 +715,22 @@ class LMB_Ajax_Handlers {
                 $client = get_userdata(get_post_field('post_author', $post_id));
                 $approved_by_id = get_post_meta($post_id, 'approved_by', true);
                 $approved_by = $approved_by_id ? get_userdata($approved_by_id) : null;
-                
-                // --- MODIFICATION START: Get Accuse and Journal data ---
                 $accuse_url = get_post_meta($post_id, 'lmb_accuse_pdf_url', true);
-                $temp_journal_id = get_post_meta($post_id, 'lmb_temporary_journal_id', true);
+                
+                // --- MODIFICATION START: Get Journal Titles ---
+                $journal_display = '<span class="cell-placeholder">-</span>';
                 $final_journal_id = get_post_meta($post_id, 'lmb_final_journal_id', true);
+                $temp_journal_id = get_post_meta($post_id, 'lmb_temporary_journal_id', true);
+
+                if ($final_journal_id) {
+                    $journal_title = get_the_title($final_journal_id);
+                    $journal_url = wp_get_attachment_url($final_journal_id);
+                    $journal_display = '<a href="' . esc_url($journal_url) . '" target="_blank" class="lmb-btn-text-link">' . esc_html($journal_title) . '</a>';
+                } elseif ($temp_journal_id) {
+                    $journal_title = get_the_title($temp_journal_id);
+                    $journal_url = wp_get_attachment_url($temp_journal_id);
+                    $journal_display = '<a href="' . esc_url($journal_url) . '" target="_blank" class="lmb-btn-text-link">' . esc_html($journal_title) . '</a>';
+                }
                 // --- MODIFICATION END ---
     
                 echo '<tr class="clickable-row" data-href="' . esc_url(get_edit_post_link($post_id)) . '">';
@@ -732,7 +742,6 @@ class LMB_Ajax_Handlers {
                 echo '<td><span class="lmb-status-badge lmb-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td>';
                 echo '<td>' . ($approved_by ? esc_html($approved_by->display_name) : '<span class="cell-placeholder">N/A</span>') . '</td>';
                 
-                // --- MODIFICATION: Accuse Column Logic ---
                 echo '<td>';
                 if ($accuse_url) {
                     echo '<a href="' . esc_url($accuse_url) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">View</a>';
@@ -741,28 +750,17 @@ class LMB_Ajax_Handlers {
                 }
                 echo '</td>';
     
-                // --- MODIFICATION: Journal Column Logic ---
-                echo '<td>';
-                if ($final_journal_id) {
-                    echo '<a href="' . esc_url(wp_get_attachment_url($final_journal_id)) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Final</a>';
-                } elseif ($temp_journal_id) {
-                    echo '<a href="' . esc_url(wp_get_attachment_url($temp_journal_id)) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Temp</a>';
-                } else {
-                    echo '<span class="cell-placeholder">-</span>';
-                }
-                echo '</td>';
+                // --- MODIFICATION: Display the prepared journal title ---
+                echo '<td class="journal-cell">' . $journal_display . '</td>';
     
-                // --- MODIFICATION: Actions Column Logic ---
                 echo '<td class="lmb-actions-cell">';
                 if ($status === 'pending_review') {
                     echo '<button class="lmb-btn lmb-btn-icon lmb-btn-success lmb-ad-action" data-action="approve" data-id="' . $post_id . '" title="Approve"><i class="fas fa-check-circle"></i></button>';
                     echo '<button class="lmb-btn lmb-btn-icon lmb-btn-danger lmb-ad-action" data-action="deny" data-id="' . $post_id . '" title="Deny"><i class="fas fa-times-circle"></i></button>';
                 } elseif ($status === 'published') {
-                    // Conditionally show Generate Accuse button
                     if (!$accuse_url) {
                         echo '<button class="lmb-btn lmb-btn-sm lmb-btn-info lmb-generate-accuse-btn" data-id="' . $post_id . '" title="Generate Accuse"><i class="fas fa-receipt"></i></button>';
                     }
-                    // Show Upload Journal button
                     echo '<button class="lmb-btn lmb-btn-sm lmb-btn-secondary lmb-upload-journal-btn" data-id="' . $post_id . '" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>';
                 } else {
                      echo '<a href="' . esc_url(get_edit_post_link($post_id)) . '" class="lmb-btn lmb-btn-sm lmb-btn-view">View</a>';
@@ -776,6 +774,7 @@ class LMB_Ajax_Handlers {
         }
         $html = ob_get_clean();
         wp_reset_postdata();
+    
         $pagination_html = paginate_links([
             'base' => '#%#%',
             'format' => '?paged=%#%',
@@ -1415,8 +1414,10 @@ class LMB_Ajax_Handlers {
             wp_send_json_error(['message' => 'Permission denied.'], 403);
         }
         $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
-        if (!$ad_id || empty($_FILES['journal_file'])) {
-            wp_send_json_error(['message' => 'Missing Ad ID or file.'], 400);
+        $journal_no = isset($_POST['journal_no']) ? sanitize_text_field($_POST['journal_no']) : '';
+
+        if (!$ad_id || empty($_FILES['journal_file']) || empty($journal_no)) {
+            wp_send_json_error(['message' => 'Missing Ad ID, file, or Journal Number.'], 400);
         }
 
         require_once(ABSPATH . 'wp-admin/includes/file.php');
@@ -1425,85 +1426,95 @@ class LMB_Ajax_Handlers {
         if (is_wp_error($attachment_id)) {
             wp_send_json_error(['message' => $attachment_id->get_error_message()]);
         }
-
+        
+        // Save the attachment ID and the journal number as meta fields
+        update_post_meta($attachment_id, 'journal_no', $journal_no); // Store journal no on the attachment itself
         update_post_meta($ad_id, 'lmb_temporary_journal_id', $attachment_id);
+
         wp_send_json_success(['message' => 'Temporary journal uploaded successfully.']);
     }
 
     // --- MODIFIED FUNCTION: Upload FINAL Newspaper ---
     private static function lmb_upload_newspaper() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
-        if (empty($_POST['newspaper_title']) || empty($_FILES['newspaper_pdf']) || empty($_POST['start_date']) || empty($_POST['end_date'])) {
-            wp_send_json_error(['message' => 'Missing required fields. Title, PDF, and date range are required.']);
-        }
-        
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        require_once(ABSPATH . 'wp-admin/includes/image.php');
-        require_once(ABSPATH . 'wp-admin/includes/media.php');
-
-        $pdf_id = media_handle_upload('newspaper_pdf', 0);
-        if (is_wp_error($pdf_id)) wp_send_json_error(['message' => 'PDF Upload Error: ' . $pdf_id->get_error_message()]);
-
-        $post_id = wp_insert_post([
-            'post_type' => 'lmb_newspaper', 
-            'post_title' => sanitize_text_field($_POST['newspaper_title']), 
-            'post_status' => 'publish',
-        ]);
-        if (is_wp_error($post_id)) {
-            // If post creation fails, delete the just-uploaded PDF to avoid orphans
-            wp_delete_attachment($pdf_id, true);
-            wp_send_json_error(['message' => $post_id->get_error_message()]);
-        }
-
-        update_post_meta($post_id, 'newspaper_pdf', $pdf_id);
-
-        $start_date = sanitize_text_field($_POST['start_date']);
-        $end_date = sanitize_text_field($_POST['end_date']);
-        
-        $args = [
-            'post_type' => 'lmb_legal_ad',
-            'post_status' => 'publish',
-            'posts_per_page' => -1,
-            'fields' => 'ids', // More efficient, we only need the IDs
-            'date_query' => [
-                [
-                    'after'     => $start_date,
-                    'before'    => $end_date,
-                    'inclusive' => true,
-                ],
-            ],
-        ];
-        $ads_query = new WP_Query($args);
-        
-        // --- MODIFICATION START: Logic to delete old files ---
-        $temp_journals_to_delete = [];
-        if ($ads_query->have_posts()) {
-            foreach ($ads_query->posts as $ad_id) {
-                $temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
-                if (!empty($temp_journal_id)) {
-                    // Collect the IDs of the temporary journals to be deleted
-                    $temp_journals_to_delete[] = $temp_journal_id;
-                }
-                
-                // Update the ad to point to the new final journal
-                update_post_meta($ad_id, 'lmb_final_journal_id', $pdf_id);
-                // Now we can safely delete the meta key for the temporary journal
-                delete_post_meta($ad_id, 'lmb_temporary_journal_id');
-            }
-        }
-        
-        // After updating all ads, delete the old temporary journal files
-        if (!empty($temp_journals_to_delete)) {
-            $unique_ids_to_delete = array_unique($temp_journals_to_delete);
-            foreach ($unique_ids_to_delete as $attachment_id) {
-                wp_delete_attachment($attachment_id, true); // The 'true' forces the physical file deletion
-            }
-        }
-        // --- MODIFICATION END ---
-
-        $updated_count = $ads_query->post_count;
-        
-        wp_send_json_success(['message' => 'Newspaper uploaded. Associated with ' . $updated_count . ' ads. Old temporary files have been deleted.']);
+    if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
+    if (empty($_POST['newspaper_title']) || empty($_FILES['newspaper_pdf']) || empty($_POST['start_date']) || empty($_POST['end_date']) || empty($_POST['journal_no'])) {
+        wp_send_json_error(['message' => 'Missing required fields. Title, PDF, Journal N°, and date range are required.']);
     }
+    
+    require_once(ABSPATH . 'wp-admin/includes/file.php');
+    require_once(ABSPATH . 'wp-admin/includes/image.php');
+    require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+    // Handle the file upload first
+    $pdf_id = media_handle_upload('newspaper_pdf', 0);
+    if (is_wp_error($pdf_id)) {
+        wp_send_json_error(['message' => 'PDF Upload Error: ' . $pdf_id->get_error_message()]);
+    }
+
+    // Create the 'lmb_newspaper' post
+    $post_id = wp_insert_post([
+        'post_type'    => 'lmb_newspaper', 
+        'post_title'   => sanitize_text_field($_POST['newspaper_title']), 
+        'post_status'  => 'publish',
+    ]);
+
+    // Error handling: if post creation fails, delete the uploaded PDF to prevent orphaned files
+    if (is_wp_error($post_id)) {
+        wp_delete_attachment($pdf_id, true);
+        wp_send_json_error(['message' => $post_id->get_error_message()]);
+    }
+
+    // Store the PDF ID and the new Journal Number on the lmb_newspaper post
+    update_post_meta($post_id, 'newspaper_pdf', $pdf_id);
+    update_post_meta($post_id, 'journal_no', sanitize_text_field($_POST['journal_no']));
+
+    // Prepare to find and update legal ads within the specified date range
+    $start_date = sanitize_text_field($_POST['start_date']);
+    $end_date = sanitize_text_field($_POST['end_date']);
+    
+    $args = [
+        'post_type'      => 'lmb_legal_ad',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+        'fields'         => 'ids', // Fetch only the post IDs for better performance
+        'date_query'     => [
+            [
+                'after'     => $start_date,
+                'before'    => $end_date,
+                'inclusive' => true,
+            ],
+        ],
+    ];
+    $ads_query = new WP_Query($args);
+    
+    $temp_journals_to_delete = [];
+    if ($ads_query->have_posts()) {
+        foreach ($ads_query->posts as $ad_id) {
+            // Collect the ID of the old temporary journal, if it exists
+            $temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
+            if (!empty($temp_journal_id)) {
+                $temp_journals_to_delete[] = $temp_journal_id;
+            }
+            
+            // Update the ad to point to the new final newspaper post
+            update_post_meta($ad_id, 'lmb_final_journal_id', $post_id); 
+            // Remove the reference to the old temporary journal
+            delete_post_meta($ad_id, 'lmb_temporary_journal_id');
+        }
+    }
+    
+    // Clean up: delete the old temporary journal files from the media library
+    if (!empty($temp_journals_to_delete)) {
+        $unique_ids_to_delete = array_unique($temp_journals_to_delete);
+        foreach ($unique_ids_to_delete as $attachment_id) {
+            wp_delete_attachment($attachment_id, true); // 'true' forces physical file deletion
+        }
+    }
+
+    $updated_count = $ads_query->post_count;
+    wp_reset_postdata();
+    
+    wp_send_json_success(['message' => 'Newspaper uploaded. Associated with ' . $updated_count . ' ads. Old temporary files have been deleted.']);
+}
 
 }

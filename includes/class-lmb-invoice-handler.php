@@ -106,23 +106,35 @@ class LMB_Invoice_Handler {
             return false;
         }
 
-        $user = get_userdata($ad->post_author);
-        if (!$user) {
-            return false;
+        $template = get_option('lmb_accuse_template_html', 'Template not found.');
+
+        // Get Journal Number (check for final, then fallback to temporary)
+        $journal_no = '';
+        $final_journal_id = get_post_meta($ad_id, 'lmb_final_journal_id', true);
+        $temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
+        if ($final_journal_id) {
+            $journal_no = get_post_meta($final_journal_id, 'journal_no', true);
+        } elseif ($temp_journal_id) {
+            $journal_no = get_post_meta($temp_journal_id, 'journal_no', true);
         }
 
-        $template = get_option('lmb_accuse_template_html', '<h1>Accuse de Réception</h1><p>Ad Réf: {{ad_id}}</p>');
+        if (empty($journal_no)) {
+            // Important: We cannot generate an accuse without a journal number.
+            return false; 
+        }
 
-        $client_name = get_user_meta($user->ID, 'company_name', true) ?: $user->display_name;
+        // Get other data for placeholders
+        $ad_object = get_post_meta($ad_id, 'ad_type', true);
+        $announces_page = get_page_by_path('announces');
+        $legal_ad_link = $announces_page ? add_query_arg('legal-ad', $ad->ID . '-' . $ad->post_name, get_permalink($announces_page)) : home_url();
 
         // --- Placeholder replacements ---
         $vars = [
-            'ad_id'            => $ad_id,
-            'ad_title'         => $ad->post_title,
-            'publication_date' => get_the_modified_date('Y-m-d', $ad_id),
-            'client_name'      => $client_name,
-            'client_email'     => $user->user_email,
-            'ad_cost'          => get_post_meta($ad_id, 'ad_cost_points', true) ?: LMB_Points::get_cost_per_ad($user->ID),
+            'lmb_logo_url'    => get_option('lmb_logo_url'),
+            'journal_no'      => $journal_no,
+            'ad_object'       => $ad_object,
+            'legal_ad_link'   => $legal_ad_link,
+            'signature_url'   => get_option('lmb_signature_url'),
         ];
 
         foreach ($vars as $key => $value) {
@@ -130,7 +142,7 @@ class LMB_Invoice_Handler {
         }
 
         $filename = 'accuse-ad-' . $ad_id . '.pdf';
-        $title = 'Accuse de Réception - ' . $ad->post_title;
+        $title = 'Accuse de Publication - ' . $ad->post_title;
 
         return LMB_PDF_Generator::generate_html_pdf($filename, $template, $title);
     }

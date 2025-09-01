@@ -89,7 +89,10 @@ class LMB_Form_Handler {
         if (isset($form_data['ad_type'])) {
             update_post_meta($post_id, 'ad_type', $form_data['ad_type']);
         }
-
+        // --- MODIFICATION: Save company_name separately if it exists ---
+        if (!empty($company_name)) {
+            update_post_meta($post_id, 'company_name', $company_name);
+        }
         update_post_meta($post_id, 'lmb_status', 'draft');
         update_post_meta($post_id, 'lmb_client_id', $user_id);
 

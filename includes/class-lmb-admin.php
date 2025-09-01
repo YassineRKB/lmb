@@ -117,8 +117,11 @@ class LMB_Admin {
 
         // --- FIX: Register ONE option to hold an array of all ad templates ---
         register_setting('lmb_legal_ads_settings', 'lmb_legal_ad_templates');
-        // accuse and newspaper templates
+
+        // --- MODIFICATION: Register new settings for the accuse template ---
         register_setting('lmb_accuse_newspaper_settings', 'lmb_accuse_template_html');
+        register_setting('lmb_accuse_newspaper_settings', 'lmb_logo_url');
+        register_setting('lmb_accuse_newspaper_settings', 'lmb_signature_url');
     
     }
 
@@ -439,44 +442,72 @@ class LMB_Admin {
     }
 
 
-// --- NEW FUNCTION for the Accuse & Newspaper tab ---
+    // --- NEW FUNCTION for the Accuse & Newspaper tab ---
     private static function render_accuse_newspaper_tab() {
         ?>
         <form method="post" action="options.php">
             <?php settings_fields('lmb_accuse_newspaper_settings'); ?>
-            <h3><?php esc_html_e('Accuse (Receipt) Template', 'lmb-core'); ?></h3>
+            <h3><?php esc_html_e('Accuse (Receipt) Template Settings', 'lmb-core'); ?></h3>
             <p class="description">
-                <?php esc_html_e('This template is used to automatically generate the accuse/receipt PDF when an ad is approved. Use the placeholders below to insert dynamic data.', 'lmb-core'); ?>
+                <?php esc_html_e('Configure the template and assets for the automatically generated accuse/receipt PDF.', 'lmb-core'); ?>
             </p>
-            <textarea name="lmb_accuse_template_html" rows="15" style="width:100%; font-family: monospace;"><?php echo esc_textarea(get_option('lmb_accuse_template_html', self::get_default_accuse_template())); ?></textarea>
+
+            <table class="form-table">
+                <tr valign="top">
+                    <th scope="row"><label for="lmb_logo_url"><?php esc_html_e('Logo Image URL', 'lmb-core'); ?></label></th>
+                    <td>
+                        <input type="text" id="lmb_logo_url" name="lmb_logo_url" value="<?php echo esc_attr(get_option('lmb_logo_url')); ?>" class="regular-text" />
+                        <p class="description"><?php esc_html_e('Enter the full URL for the logo to display at the top of the accuse.', 'lmb-core'); ?></p>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row"><label for="lmb_signature_url"><?php esc_html_e('Signature Image URL', 'lmb-core'); ?></label></th>
+                    <td>
+                        <input type="text" id="lmb_signature_url" name="lmb_signature_url" value="<?php echo esc_attr(get_option('lmb_signature_url')); ?>" class="regular-text" />
+                        <p class="description"><?php esc_html_e('Enter the full URL for the signature image.', 'lmb-core'); ?></p>
+                    </td>
+                </tr>
+            </table>
+
+            <h3><?php esc_html_e('Accuse HTML Template', 'lmb-core'); ?></h3>
+            <textarea name="lmb_accuse_template_html" rows="20" style="width:100%; font-family: monospace;"><?php echo esc_textarea(get_option('lmb_accuse_template_html', self::get_default_accuse_template())); ?></textarea>
             
             <h4><?php esc_html_e('Available Placeholders:', 'lmb-core'); ?></h4>
             <ul style="list-style: inside; margin-left: 20px;">
-                <li><code>{{ad_id}}</code> - The ID of the legal ad.</li>
-                <li><code>{{ad_title}}</code> - The title of the legal ad.</li>
-                <li><code>{{publication_date}}</code> - The date the ad was approved/published.</li>
-                <li><code>{{client_name}}</code> - The client's display name or company name.</li>
-                <li><code>{{client_email}}</code> - The client's email address.</li>
-                <li><code>{{ad_cost}}</code> - The cost of the ad in points.</li>
+                <li><code>{{lmb_logo_url}}</code> - The Logo Image URL defined above.</li>
+                <li><code>{{journal_no}}</code> - The number of the associated journal (temp or final).</li>
+                <li><code>{{ad_object}}</code> - The "objet" or "ad_type" of the legal ad.</li>
+                <li><code>{{legal_ad_link}}</code> - A public link to the legal ad.</li>
+                <li><code>{{signature_url}}</code> - The Signature Image URL defined above.</li>
             </ul>
             
             <?php submit_button(); ?>
         </form>
         <?php
     }
-
-    // --- NEW HELPER FUNCTION for default template ---
+    // --- NEW DEFAULT TEMPLATE FUNCTION ---
     private static function get_default_accuse_template() {
-        return '<h1>Accuse de Réception</h1>
-<p><strong>Annonce Légale Réf:</strong> {{ad_id}}</p>
-<p><strong>Titre:</strong> {{ad_title}}</p>
-<hr>
-<p>Ceci est pour confirmer que votre annonce légale a été reçue et publiée avec succès.</p>
-<p><strong>Date de Publication:</strong> {{publication_date}}</p>
-<p><strong>Client:</strong> {{client_name}} ({{client_email}})</p>
-<p><strong>Coût:</strong> {{ad_cost}} points</p>
-<br>
-<p>Merci pour votre confiance.</p>';
+        // Updated default template based on user's structure
+        return '<div style="text-align: center;">
+    <img src="{{lmb_logo_url}}" alt="Logo" width="150">
+</div>
+<p><strong>Journal N°:</strong> {{journal_no}}</p>
+<h1 style="text-align: center;">ACCUSE DE PUBLICATION</h1>
+<p><strong>Objet:</strong> avis de {{ad_object}}</p>
+<p>Pour consulter votre annonce, veuillez cliquer sur le lien suivant :<br><a href="{{legal_ad_link}}">{{legal_ad_link}}</a></p>
+<div style="margin-top: 40px;">
+    <img src="{{signature_url}}" alt="Signature" width="200">
+    <p>
+        <strong>Directeur de publication : MOHAMED ELBACHIR LANSAR</strong><br>
+        2022/23/01ص : License<br>
+        RUE AHL LKHALIL OULD MHAMED N°08 ES-SEMARA<br>
+        ICE :002924841000097-TP :77402556-IF :50611382-CNSS :4319969<br>
+        RIB : 007260000899200000033587<br>
+        lmbannonceslegales.com<br>
+        ste.lmbgroup@gmail.com<br>
+        06 61 83 82 11 / 06 74 40 61 97 / 06 05 28 98 04 / 08 08 61 04 87
+    </p>
+</div>';
     }
 
 }

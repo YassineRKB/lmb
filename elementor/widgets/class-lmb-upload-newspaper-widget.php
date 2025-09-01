@@ -1,11 +1,13 @@
 <?php
+// FILE: elementor/widgets/class-lmb-upload-newspaper-widget.php
+
 use Elementor\Widget_Base;
 
 if (!defined('ABSPATH')) exit;
 
 class LMB_Upload_Newspaper_Widget extends Widget_Base {
     public function get_name() { return 'lmb_upload_newspaper'; }
-    public function get_title(){ return __('LMB Upload Final Newspaper','lmb-core'); } // Title updated
+    public function get_title(){ return __('LMB Upload Final Newspaper','lmb-core'); }
     public function get_icon() { return 'eicon-upload'; }
     public function get_categories(){ return ['lmb-admin-widgets']; }
 
@@ -33,11 +35,10 @@ class LMB_Upload_Newspaper_Widget extends Widget_Base {
                             <input type="text" name="newspaper_title" id="newspaper_title" required class="lmb-input">
                         </div>
                         <div class="lmb-form-group">
-                            <label for="newspaper_pdf"><?php esc_html_e('Newspaper PDF','lmb-core'); ?></label>
-                            <input type="file" name="newspaper_pdf" id="newspaper_pdf" accept="application/pdf" required class="lmb-input">
-                            <small><?php esc_html_e('Maximum file size: 10MB.','lmb-core'); ?></small>
+                            <label for="journal_no"><?php esc_html_e('Journal N°','lmb-core'); ?></label>
+                            <input type="text" name="journal_no" id="journal_no" required class="lmb-input">
                         </div>
-                    </div>
+                        </div>
                     <div class="lmb-form-row">
                         <div class="lmb-form-group">
                             <label for="start_date"><?php esc_html_e('Start Date for Ad Association','lmb-core'); ?></label>
@@ -47,6 +48,11 @@ class LMB_Upload_Newspaper_Widget extends Widget_Base {
                             <label for="end_date"><?php esc_html_e('End Date for Ad Association','lmb-core'); ?></label>
                             <input type="date" name="end_date" id="end_date" required class="lmb-input">
                         </div>
+                    </div>
+                    <div class="lmb-form-group">
+                        <label for="newspaper_pdf"><?php esc_html_e('Newspaper PDF','lmb-core'); ?></label>
+                        <input type="file" name="newspaper_pdf" id="newspaper_pdf" accept="application/pdf" required class="lmb-input">
+                        <small><?php esc_html_e('Maximum file size: 10MB.','lmb-core'); ?></small>
                     </div>
                     <div class="lmb-form-actions">
                         <button type="submit" class="lmb-btn lmb-btn-primary lmb-btn-large"><i class="fas fa-upload"></i> <?php esc_html_e('Upload and Associate Newspaper','lmb-core'); ?></button>
