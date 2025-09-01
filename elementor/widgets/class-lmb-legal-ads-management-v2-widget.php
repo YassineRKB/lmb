@@ -84,6 +84,31 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
 
             </div>
         </div>
+
+        <div id="lmb-upload-journal-modal" class="lmb-modal-overlay" style="display:none;">
+            <div class="lmb-modal-content">
+                <div class="lmb-modal-header">
+                    <h3><?php esc_html_e('Upload Temporary Journal', 'lmb-core'); ?></h3>
+                    <button class="lmb-modal-close">&times;</button>
+                </div>
+                <div class="lmb-modal-body">
+                    <form id="lmb-upload-journal-form">
+                        <input type="hidden" name="ad_id" id="lmb-journal-ad-id">
+                        <div class="lmb-form-group">
+                            <label for="lmb-journal-no"><?php esc_html_e('Journal N°', 'lmb-core'); ?></label>
+                            <input type="text" id="lmb-journal-no" name="journal_no" class="lmb-input" required>
+                        </div>
+                        <div class="lmb-form-group">
+                            <label for="lmb-journal-file"><?php esc_html_e('Journal PDF File', 'lmb-core'); ?></label>
+                            <input type="file" id="lmb-journal-file" name="journal_file" class="lmb-input" accept="application/pdf" required>
+                        </div>
+                        <div class="lmb-form-actions">
+                            <button type="submit" class="lmb-btn lmb-btn-primary"><?php esc_html_e('Upload', 'lmb-core'); ?></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
         <?php
     }
 }

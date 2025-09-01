@@ -5,12 +5,18 @@ jQuery(document).ready(function($) {
     const form = widget.find('#lmb-ads-filters-form-v2');
     const tableBody = widget.find('.lmb-ads-table-v2 tbody');
     const paginationContainer = widget.find('.lmb-pagination-container');
+
+    // --- Modal elements ---
+    const uploadModal = widget.find('#lmb-upload-journal-modal');
+    const uploadForm = uploadModal.find('#lmb-upload-journal-form');
+    const adIdInput = uploadModal.find('#lmb-journal-ad-id');
+
     let debounceTimer;
 
     // --- Main function to fetch and render ads via AJAX ---
     function fetchAds(page = 1) {
         tableBody.html('<tr><td colspan="10" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading ads...</td></tr>');
-        
+
         const formData = form.serialize();
         const data = {
             action: 'lmb_fetch_ads_v2',
@@ -26,10 +32,12 @@ jQuery(document).ready(function($) {
                     paginationContainer.html(response.data.pagination);
                 } else {
                     tableBody.html('<tr><td colspan="10" style="text-align:center;">' + (response.data.message || 'No ads found.') + '</td></tr>');
+                    paginationContainer.html(''); // Clear pagination on error
                 }
             })
             .fail(function() {
                 tableBody.html('<tr><td colspan="10" style="text-align:center;">An error occurred while fetching data.</td></tr>');
+                paginationContainer.html('');
             });
     }
 
@@ -61,15 +69,29 @@ jQuery(document).ready(function($) {
             window.location.href = href;
         }
     });
-    
-    // Handle pagination clicks
+
+    // --- PAGINATION FIX ---
+    // Handle pagination clicks (delegated from the container)
     paginationContainer.on('click', 'a.page-numbers', function(e) {
         e.preventDefault();
         const href = $(this).attr('href');
+        if (!href) return;
+
+        let page = 1;
+        // Standard WordPress pagination links use a query string
         const urlParams = new URLSearchParams(href.split('?')[1]);
-        const page = urlParams.get('paged') || 1;
+        if (urlParams.has('paged')) {
+            page = urlParams.get('paged');
+        } else {
+            // Fallback for pretty permalinks which might have /page/2/
+            const pageNumMatch = href.match(/\/page\/(\d+)/);
+            if (pageNumMatch && pageNumMatch[1]) {
+                page = pageNumMatch[1];
+            }
+        }
         fetchAds(page);
     });
+
 
     // Handle Approve/Deny action buttons
     tableBody.on('click', '.lmb-ad-action', function(e) {
@@ -100,12 +122,12 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Handle Generate Accuse button click
+    // Handle Generate Accuse button (now used for manual generation if needed)
     tableBody.on('click', '.lmb-generate-accuse-btn', function(e) {
-        e.stopPropagation(); // Prevents the row click event
+        e.stopPropagation();
         const button = $(this);
         const adId = button.data('id');
-        
+
         button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
 
         $.post(lmb_ajax_params.ajaxurl, {
@@ -126,71 +148,52 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Handle Upload Temporary Journal button click
+    // Handle Upload Temporary Journal button (opens the modal)
     tableBody.on('click', '.lmb-upload-journal-btn', function(e) {
-        e.stopPropagation(); // Prevents the row click event
-        const button = $(this);
-        const adId = button.data('id');
-        const journalCell = button.closest('tr').find('.journal-cell');
-        
-        // Prompt for the Journal Number before opening file dialog
-        const journalNo = prompt("Please enter the Journal N° for this temporary newspaper:");
-        if (!journalNo) {
-            return; // Exit if the user cancels or enters nothing
+        e.stopPropagation();
+        const adId = $(this).data('id');
+        adIdInput.val(adId);
+        uploadModal.show();
+    });
+
+    // Handle closing the modal
+    uploadModal.on('click', '.lmb-modal-close, .lmb-modal-overlay', function(e) {
+        if ($(e.target).is('.lmb-modal-close, .lmb-modal-overlay')) {
+            uploadModal.hide();
+            uploadForm[0].reset();
         }
-        
-        const fileInput = $('<input type="file" accept="application/pdf" style="display: none;">');
-        
-        fileInput.on('change', function() {
-            if (this.files.length > 0) {
-                const file = this.files[0];
-                const formData = new FormData();
-                formData.append('journal_file', file);
-                formData.append('action', 'lmb_admin_upload_temporary_journal');
-                formData.append('nonce', lmb_ajax_params.nonce);
-                formData.append('ad_id', adId);
-                formData.append('journal_no', journalNo); // Add journal number to the request
-                
-                const originalContent = journalCell.html();
-                journalCell.html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
-                button.prop('disabled', true);
-                
-                $.ajax({
-                    url: lmb_ajax_params.ajaxurl,
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                }).done(function(response) {
-                    if (response.success) {
-                        showLMBModal('success', response.data.message);
-                        // After a successful upload, ask the admin if they want to generate the accuse
-                        if (confirm("Temporary journal uploaded. Do you want to generate the accuse now?")) {
-                            // Find the accuse button in the same row and trigger a click
-                            const accuseButton = button.closest('tr').find('.lmb-generate-accuse-btn');
-                             if (accuseButton.length) {
-                                accuseButton.click();
-                            } else {
-                                // If no button (e.g., accuse already exists), just refresh the table
-                                fetchAds($('.lmb-pagination .current').text() || 1);
-                            }
-                        } else {
-                            fetchAds($('.lmb-pagination .current').text() || 1);
-                        }
-                    } else {
-                        showLMBModal('error', response.data.message);
-                        journalCell.html(originalContent);
-                        button.prop('disabled', false);
-                    }
-                }).fail(function() {
-                    showLMBModal('error', 'An unexpected server error occurred.');
-                    journalCell.html(originalContent);
-                    button.prop('disabled', false);
-                });
+    });
+
+    // Handle the modal form submission for temporary journal upload
+    uploadForm.on('submit', function(e) {
+        e.preventDefault();
+        const submitButton = $(this).find('button[type="submit"]');
+        const formData = new FormData(this);
+        formData.append('action', 'lmb_admin_upload_temporary_journal');
+        formData.append('nonce', lmb_ajax_params.nonce);
+
+        submitButton.html('<i class="fas fa-spinner fa-spin"></i> Uploading...').prop('disabled', true);
+
+        $.ajax({
+            url: lmb_ajax_params.ajaxurl,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+        }).done(function(response) {
+            if (response.success) {
+                showLMBModal('success', response.data.message);
+                uploadModal.hide();
+                uploadForm[0].reset();
+                fetchAds($('.lmb-pagination .current').text() || 1);
+            } else {
+                alert('Upload Failed: ' + response.data.message); // Use a simple alert for errors within the modal context
             }
+        }).fail(function() {
+            alert('An unexpected server error occurred during the upload.');
+        }).always(function() {
+            submitButton.html('Upload').prop('disabled', false);
         });
-        
-        fileInput.click();
     });
 
     // --- Initial Load ---

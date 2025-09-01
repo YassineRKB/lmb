@@ -3,14 +3,24 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Admin {
     private static $settings_tabs = [];
+    private static $settings_sub_tabs = []; // New property for sub-tabs
 
     public static function init() {
+        // --- MODIFICATION: Removed 'accuse_newspaper' from main tabs ---
         self::$settings_tabs = [
             'general'        => __('General', 'lmb-core'),
             'templates'      => __('Templates', 'lmb-core'),
             'notifications'  => __('Notifications', 'lmb-core'),
             'security'       => __('Security', 'lmb-core'),
             'roles'          => __('Roles & Users', 'lmb-core'),
+        ];
+
+        // --- NEW: Define the sub-tabs for the 'templates' main tab ---
+        self::$settings_sub_tabs = [
+            'templates' => [
+                'legal_ads'        => __('Legal Ad Templates', 'lmb-core'),
+                'accuse_newspaper' => __('Accuse & Newspaper', 'lmb-core'),
+            ]
         ];
 
         add_action('admin_menu', [__CLASS__, 'add_admin_menu']);
@@ -172,32 +182,61 @@ class LMB_Admin {
 
     // --- REVISED FUNCTION to include sub-tabs ---
     public static function render_settings_page() {
-        if (!current_user_can(apply_filters('lmb_admin_capability', 'manage_options'))) {
-            wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
-        }
-
-        $current_main_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
+        $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('LMB Core Settings', 'lmb-core'); ?></h1>
-
-            <nav class="nav-tab-wrapper">
-                <?php foreach (self::$settings_tabs as $tab_id => $tab_name): ?>
-                    <a href="?page=lmb-settings&tab=<?php echo esc_attr($tab_id); ?>" class="nav-tab<?php echo $current_main_tab === $tab_id ? ' nav-tab-active' : ''; ?>">
-                        <?php echo esc_html($tab_name); ?>
-                    </a>
-                <?php endforeach; ?>
-            </nav>
-
-            <div class="tab-content" style="background:#fff;padding:16px;border:1px solid #e5e7eb;border-top:0;">
+            <h2><?php esc_html_e('LMB Core Settings', 'lmb-core'); ?></h2>
+            <h2 class="nav-tab-wrapper">
                 <?php
-                // Call the correct render function based on the main tab
-                $method = 'render_' . $current_main_tab . '_tab';
-                if (method_exists(__CLASS__, $method)) {
-                    call_user_func([__CLASS__, $method]);
+                foreach (self::$settings_tabs as $tab_key => $tab_name) {
+                    $active_class = ($current_tab === $tab_key) ? 'nav-tab-active' : '';
+                    echo '<a href="?page=lmb-core-settings&tab=' . esc_attr($tab_key) . '" class="nav-tab ' . esc_attr($active_class) . '">' . esc_html($tab_name) . '</a>';
                 }
                 ?>
-            </div>
+            </h2>
+
+            <?php
+            // --- NEW: Sub-tab navigation logic ---
+            if (isset(self::$settings_sub_tabs[$current_tab])) {
+                $current_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : key(self::$settings_sub_tabs[$current_tab]);
+                echo '<ul class="subsubsub">';
+                foreach (self::$settings_sub_tabs[$current_tab] as $sub_tab_key => $sub_tab_name) {
+                    $active_class = ($current_sub_tab === $sub_tab_key) ? 'current' : '';
+                    $separator = next(self::$settings_sub_tabs[$current_tab]) ? ' |' : '';
+                    $url = '?page=lmb-core-settings&tab=' . esc_attr($current_tab) . '&sub_tab=' . esc_attr($sub_tab_key);
+                    echo '<li><a href="' . esc_url($url) . '" class="' . esc_attr($active_class) . '">' . esc_html($sub_tab_name) . '</a>' . $separator . '</li>';
+                }
+                 echo '</ul><br class="clear">';
+            }
+            // --- END NEW ---
+
+            // --- MODIFICATION: Updated switch to handle sub-tabs ---
+            switch ($current_tab) {
+                case 'general':
+                    self::render_general_tab();
+                    break;
+                case 'templates':
+                    $current_sub_tab = isset($_GET['sub_tab']) ? sanitize_key($_GET['sub_tab']) : 'legal_ads';
+                    if ($current_sub_tab === 'accuse_newspaper') {
+                        self::render_accuse_newspaper_tab();
+                    } else {
+                        self::render_legal_ads_tab();
+                    }
+                    break;
+                case 'notifications':
+                    self::render_notifications_tab();
+                    break;
+                case 'security':
+                    self::render_security_tab();
+                    break;
+                case 'roles':
+                    self::render_roles_tab();
+                    break;
+                default:
+                    self::render_general_tab();
+                    break;
+            }
+            ?>
         </div>
         <?php
     }
