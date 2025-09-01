@@ -1427,7 +1427,6 @@ class LMB_Ajax_Handlers {
             wp_send_json_error(['message' => $attachment_id->get_error_message()]);
         }
         
-        // Store the journal number on the attachment itself for future reference
         update_post_meta($attachment_id, 'journal_no', $journal_no);
         update_post_meta($ad_id, 'lmb_temporary_journal_id', $attachment_id);
 
@@ -1437,7 +1436,7 @@ class LMB_Ajax_Handlers {
             update_post_meta($ad_id, 'lmb_accuse_pdf_url', $accuse_url);
             $message = 'Temporary journal uploaded and Accuse PDF generated successfully.';
         } else {
-            $message = 'Temporary journal uploaded, but failed to generate Accuse PDF. Please try generating it manually.';
+            $message = 'Temporary journal uploaded, but failed to generate Accuse PDF. A journal number might be missing or another error occurred.';
         }
 
         wp_send_json_success(['message' => $message]);
@@ -1445,41 +1444,24 @@ class LMB_Ajax_Handlers {
 
     // --- MODIFIED FUNCTION: Upload FINAL Newspaper ---
     private static function lmb_upload_newspaper() {
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Permission denied.']);
-        }
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
         if (empty($_POST['newspaper_title']) || empty($_FILES['newspaper_pdf']) || empty($_POST['journal_no'])) {
             wp_send_json_error(['message' => 'Missing required fields. Title, PDF, and Journal N° are required.']);
         }
-
+        
         require_once(ABSPATH . 'wp-admin/includes/file.php');
         require_once(ABSPATH . 'wp-admin/includes/image.php');
         require_once(ABSPATH . 'wp-admin/includes/media.php');
 
-        // Handle the file upload first
         $pdf_id = media_handle_upload('newspaper_pdf', 0);
-        if (is_wp_error($pdf_id)) {
-            wp_send_json_error(['message' => 'PDF Upload Error: ' . $pdf_id->get_error_message()]);
-        }
+        if (is_wp_error($pdf_id)) wp_send_json_error(['message' => 'PDF Upload Error: ' . $pdf_id->get_error_message()]);
 
-        // Create the 'lmb_newspaper' post to represent the final newspaper
-        $post_id = wp_insert_post([
-            'post_type'    => 'lmb_newspaper',
-            'post_title'   => sanitize_text_field($_POST['newspaper_title']),
-            'post_status'  => 'publish',
-        ]);
-
-        // Error handling: if post creation fails, delete the uploaded PDF to prevent orphaned files
-        if (is_wp_error($post_id)) {
-            wp_delete_attachment($pdf_id, true);
-            wp_send_json_error(['message' => $post_id->get_error_message()]);
-        }
-
-        // Store the PDF attachment ID and the Journal Number on the new lmb_newspaper post
+        $post_id = wp_insert_post(['post_type' => 'lmb_newspaper', 'post_title' => sanitize_text_field($_POST['newspaper_title']), 'post_status' => 'publish']);
+        if (is_wp_error($post_id)) { wp_delete_attachment($pdf_id, true); wp_send_json_error(['message' => $post_id->get_error_message()]); }
+        
         update_post_meta($post_id, 'newspaper_pdf', $pdf_id);
         update_post_meta($post_id, 'journal_no', sanitize_text_field($_POST['journal_no']));
 
-        // Prepare for the main query to find the ads to update
         $start_date = !empty($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : null;
         $end_date = !empty($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : null;
         $journal_no = sanitize_text_field($_POST['journal_no']);
@@ -1488,74 +1470,46 @@ class LMB_Ajax_Handlers {
             'post_type'      => 'lmb_legal_ad',
             'post_status'    => 'publish',
             'posts_per_page' => -1,
-            'fields'         => 'ids', // Fetch only post IDs for better performance
+            'fields'         => 'ids',
             'meta_query'     => ['relation' => 'AND'],
         ];
 
-        // Conditional logic: find ads by date range OR by matching temporary journal number
+        // --- NEW: Conditional logic for finding ads ---
         if ($start_date && $end_date) {
-            // Logic 1: If a date range is provided, use it to find the ads
             $args['date_query'] = [['after' => $start_date, 'before' => $end_date, 'inclusive' => true]];
         } else {
-            // Logic 2: If no date range, find ads by matching the Journal N° on their temporary journals
-            // First, find all temporary journal attachment IDs that have the matching journal number
             $attachment_query_args = [
-                'post_type'      => 'attachment',
-                'post_status'    => 'inherit',
-                'posts_per_page' => -1,
-                'fields'         => 'ids',
-                'meta_query'     => [
-                    [
-                        'key'   => 'journal_no',
-                        'value' => $journal_no,
-                    ]
-                ]
+                'post_type' => 'attachment', 'post_status' => 'inherit', 'posts_per_page' => -1,
+                'fields' => 'ids', 'meta_query' => [['key' => 'journal_no', 'value' => $journal_no]]
             ];
             $attachment_ids = get_posts($attachment_query_args);
 
             if (empty($attachment_ids)) {
-                // If no temporary journals are found, there's nothing to replace.
-                wp_send_json_success(['message' => 'Newspaper uploaded, but no temporary journals with N° ' . esc_html($journal_no) . ' were found to replace.']);
-                return;
+                 wp_send_json_success(['message' => 'Newspaper uploaded, but no temporary journals with N° ' . esc_html($journal_no) . ' were found to replace.']);
+                 return;
             }
-            // Now find all legal ads that are linked to one of these temporary journals
-            $args['meta_query'][] = [
-                'key'     => 'lmb_temporary_journal_id',
-                'value'   => $attachment_ids,
-                'compare' => 'IN',
-            ];
+            $args['meta_query'][] = ['key' => 'lmb_temporary_journal_id', 'value' => $attachment_ids, 'compare' => 'IN'];
         }
 
         $ads_query = new WP_Query($args);
-
+        
         $temp_journals_to_delete = [];
         if ($ads_query->have_posts()) {
             foreach ($ads_query->posts as $ad_id) {
-                // Collect the ID of the old temporary journal for later deletion
                 $temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
-                if (!empty($temp_journal_id)) {
-                    $temp_journals_to_delete[] = $temp_journal_id;
-                }
-
-                // Update the ad to point to the new final newspaper post
+                if (!empty($temp_journal_id)) { $temp_journals_to_delete[] = $temp_journal_id; }
                 update_post_meta($ad_id, 'lmb_final_journal_id', $post_id);
-                // Remove the reference to the old temporary journal
                 delete_post_meta($ad_id, 'lmb_temporary_journal_id');
             }
         }
-
-        // Clean up: delete all the old temporary journal files from the media library
         if (!empty($temp_journals_to_delete)) {
-            // Ensure we only try to delete each file once
             $unique_ids_to_delete = array_unique($temp_journals_to_delete);
-            foreach ($unique_ids_to_delete as $attachment_id) {
-                wp_delete_attachment($attachment_id, true); // 'true' forces physical file deletion
-            }
+            foreach ($unique_ids_to_delete as $attachment_id) { wp_delete_attachment($attachment_id, true); }
         }
-
+        
         $updated_count = $ads_query->post_count;
         wp_reset_postdata();
-
+        
         wp_send_json_success(['message' => 'Newspaper uploaded. Associated with ' . $updated_count . ' ads. Old temporary files have been deleted.']);
     }
 

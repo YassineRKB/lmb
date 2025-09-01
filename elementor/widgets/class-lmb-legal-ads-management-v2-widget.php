@@ -6,29 +6,12 @@ use Elementor\Widget_Base;
 if (!defined('ABSPATH')) exit;
 
 class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
-    public function get_name() {
-        return 'lmb_legal_ads_management_v2';
-    }
-
-    public function get_title() {
-        return __('LMB Legal Ads Management V2', 'lmb-core');
-    }
-
-    public function get_icon() {
-        return 'eicon-table';
-    }
-
-    public function get_categories() {
-        return ['lmb-admin-widgets-v2'];
-    }
-
-    public function get_script_depends() {
-        return ['lmb-legal-ads-management-v2'];
-    }
-
-    public function get_style_depends() {
-        return ['lmb-admin-widgets-v2'];
-    }
+    public function get_name() { return 'lmb_legal_ads_management_v2'; }
+    public function get_title() { return __('LMB Legal Ads Management V2', 'lmb-core'); }
+    public function get_icon() { return 'eicon-table'; }
+    public function get_categories() { return ['lmb-admin-widgets-v2']; }
+    public function get_script_depends() { return ['lmb-legal-ads-management-v2']; }
+    public function get_style_depends() { return ['lmb-admin-widgets-v2']; }
 
     protected function render() {
         ?>
@@ -103,7 +86,7 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                             <input type="file" id="lmb-journal-file" name="journal_file" class="lmb-input" accept="application/pdf" required>
                         </div>
                         <div class="lmb-form-actions">
-                            <button type="submit" class="lmb-btn lmb-btn-primary"><?php esc_html_e('Upload', 'lmb-core'); ?></button>
+                            <button type="submit" class="lmb-btn lmb-btn-primary"><?php esc_html_e('Upload & Generate Accuse', 'lmb-core'); ?></button>
                         </div>
                     </form>
                 </div>

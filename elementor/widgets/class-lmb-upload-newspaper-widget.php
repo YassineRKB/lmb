@@ -9,15 +9,9 @@ class LMB_Upload_Newspaper_Widget extends Widget_Base {
     public function get_name() { return 'lmb_upload_newspaper'; }
     public function get_title(){ return __('LMB Upload Final Newspaper','lmb-core'); }
     public function get_icon() { return 'eicon-upload'; }
-    public function get_categories(){ return ['lmb-admin-widgets']; }
-
-    public function get_script_depends() {
-        return ['lmb-upload-newspaper'];
-    }
-
-    public function get_style_depends() {
-        return ['lmb-admin-widgets'];
-    }
+    public function get_categories(){ return ['lmb-admin-widgets-v2']; }
+    public function get_script_depends() { return ['lmb-upload-newspaper']; }
+    public function get_style_depends() { return ['lmb-admin-widgets-v2']; }
     
     protected function render() {
         if (!current_user_can('manage_options')) {
@@ -38,21 +32,21 @@ class LMB_Upload_Newspaper_Widget extends Widget_Base {
                             <label for="journal_no"><?php esc_html_e('Journal N°','lmb-core'); ?></label>
                             <input type="text" name="journal_no" id="journal_no" required class="lmb-input">
                         </div>
-                        </div>
+                    </div>
                     <div class="lmb-form-row">
                         <div class="lmb-form-group">
-                            <label for="start_date"><?php esc_html_e('Start Date for Ad Association','lmb-core'); ?></label>
-                            <input type="date" name="start_date" id="start_date" required class="lmb-input">
+                            <label for="start_date"><?php esc_html_e('Start Date (Optional)','lmb-core'); ?></label>
+                            <input type="date" name="start_date" id="start_date" class="lmb-input">
                         </div>
                         <div class="lmb-form-group">
-                            <label for="end_date"><?php esc_html_e('End Date for Ad Association','lmb-core'); ?></label>
-                            <input type="date" name="end_date" id="end_date" required class="lmb-input">
+                            <label for="end_date"><?php esc_html_e('End Date (Optional)','lmb-core'); ?></label>
+                            <input type="date" name="end_date" id="end_date" class="lmb-input">
                         </div>
                     </div>
+                    <p class="description"><?php esc_html_e('If no date range is selected, all ads with temporary journals matching the above Journal N° will be updated.', 'lmb-core'); ?></p>
                     <div class="lmb-form-group">
                         <label for="newspaper_pdf"><?php esc_html_e('Newspaper PDF','lmb-core'); ?></label>
                         <input type="file" name="newspaper_pdf" id="newspaper_pdf" accept="application/pdf" required class="lmb-input">
-                        <small><?php esc_html_e('Maximum file size: 10MB.','lmb-core'); ?></small>
                     </div>
                     <div class="lmb-form-actions">
                         <button type="submit" class="lmb-btn lmb-btn-primary lmb-btn-large"><i class="fas fa-upload"></i> <?php esc_html_e('Upload and Associate Newspaper','lmb-core'); ?></button>
