@@ -78,13 +78,13 @@ jQuery(document).ready(function($) {
         if (!href) return;
 
         let page = 1;
-        // Standard WordPress pagination links use a query string
-        const urlParams = new URLSearchParams(href.split('?')[1]);
-        if (urlParams.has('paged')) {
-            page = urlParams.get('paged');
-        } else {
-            // Fallback for pretty permalinks which might have /page/2/
-            const pageNumMatch = href.match(/\/page\/(\d+)/);
+        try {
+            // Create a full URL to easily parse the parameters
+            const url = new URL(href, window.location.origin);
+            page = url.searchParams.get('paged') || 1;
+        } catch (error) {
+            // Fallback for older browsers or unexpected URL formats
+            const pageNumMatch = href.match(/paged=(\d+)/);
             if (pageNumMatch && pageNumMatch[1]) {
                 page = pageNumMatch[1];
             }

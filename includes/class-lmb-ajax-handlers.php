@@ -658,10 +658,10 @@ class LMB_Ajax_Handlers {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Access Denied.'], 403);
         }
-    
+
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
         parse_str($_POST['filters'] ?? '', $filters);
-    
+
         $args = [
             'post_type' => 'lmb_legal_ad',
             'post_status' => ['publish', 'draft', 'pending'],
@@ -669,7 +669,7 @@ class LMB_Ajax_Handlers {
             'paged' => $paged,
             'meta_query' => ['relation' => 'AND'],
         ];
-    
+
         if (!empty($filters['filter_ref']) && is_numeric($filters['filter_ref'])) {
             $args['post__in'] = [intval($filters['filter_ref'])];
         }
@@ -695,17 +695,17 @@ class LMB_Ajax_Handlers {
             $args['meta_query'][] = ['key' => 'lmb_status', 'value' => sanitize_key($filters['filter_status'])];
         }
         if (!empty($filters['filter_approved_by'])) {
-             $user_query = new WP_User_Query(['search' => '*' . esc_attr(sanitize_text_field($filters['filter_approved_by'])) . '*', 'search_columns' => ['user_login', 'display_name'], 'fields' => 'ID']);
+            $user_query = new WP_User_Query(['search' => '*' . esc_attr(sanitize_text_field($filters['filter_approved_by'])) . '*', 'search_columns' => ['user_login', 'display_name'], 'fields' => 'ID']);
             $user_ids = $user_query->get_results();
             if(!empty($user_ids)){
-                 $args['meta_query'][] = ['key' => 'approved_by', 'value' => $user_ids, 'compare' => 'IN'];
+                $args['meta_query'][] = ['key' => 'approved_by', 'value' => $user_ids, 'compare' => 'IN'];
             } else {
-                 $args['meta_query'][] = ['key' => 'approved_by', 'value' => 0];
+                $args['meta_query'][] = ['key' => 'approved_by', 'value' => 0];
             }
         }
-    
+
         $query = new WP_Query($args);
-    
+
         ob_start();
         if ($query->have_posts()) {
             while ($query->have_posts()) {
@@ -732,7 +732,7 @@ class LMB_Ajax_Handlers {
                     $journal_display = '<a href="' . esc_url($journal_url) . '" target="_blank" class="lmb-btn-text-link">' . esc_html($journal_title) . '</a>';
                 }
                 // --- MODIFICATION END ---
-    
+
                 echo '<tr class="clickable-row" data-href="' . esc_url(get_edit_post_link($post_id)) . '">';
                 echo '<td>' . esc_html($post_id) . '</td>';
                 echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
@@ -749,10 +749,10 @@ class LMB_Ajax_Handlers {
                     echo '<span class="cell-placeholder">-</span>';
                 }
                 echo '</td>';
-    
+
                 // --- MODIFICATION: Display the prepared journal title ---
                 echo '<td class="journal-cell">' . $journal_display . '</td>';
-    
+
                 echo '<td class="lmb-actions-cell">';
                 if ($status === 'pending_review') {
                     echo '<button class="lmb-btn lmb-btn-icon lmb-btn-success lmb-ad-action" data-action="approve" data-id="' . $post_id . '" title="Approve"><i class="fas fa-check-circle"></i></button>';
@@ -763,10 +763,10 @@ class LMB_Ajax_Handlers {
                     }
                     echo '<button class="lmb-btn lmb-btn-sm lmb-btn-secondary lmb-upload-journal-btn" data-id="' . $post_id . '" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>';
                 } else {
-                     echo '<a href="' . esc_url(get_edit_post_link($post_id)) . '" class="lmb-btn lmb-btn-sm lmb-btn-view">View</a>';
+                    echo '<a href="' . esc_url(get_edit_post_link($post_id)) . '" class="lmb-btn lmb-btn-sm lmb-btn-view">View</a>';
                 }
                 echo '</td>';
-    
+
                 echo '</tr>';
             }
         } else {
@@ -774,10 +774,10 @@ class LMB_Ajax_Handlers {
         }
         $html = ob_get_clean();
         wp_reset_postdata();
-    
+
         $pagination_html = paginate_links([
-            'base' => '#%#%',
-            'format' => '?paged=%#%',
+            'base' => add_query_arg('paged', '%#%'),
+            'format' => '',
             'current' => $paged,
             'total' => $query->max_num_pages,
             'prev_text' => '&laquo;',
