@@ -717,53 +717,55 @@ class LMB_Ajax_Handlers {
                 $approved_by = $approved_by_id ? get_userdata($approved_by_id) : null;
                 $accuse_url = get_post_meta($post_id, 'lmb_accuse_pdf_url', true);
                 
-                // --- MODIFICATION START: Get Journal Titles ---
-                $journal_display = '<span class="cell-placeholder">-</span>';
+                $journal_display = '<span class="lamv2-cell-placeholder">-</span>';
                 $final_journal_id = get_post_meta($post_id, 'lmb_final_journal_id', true);
                 $temp_journal_id = get_post_meta($post_id, 'lmb_temporary_journal_id', true);
 
                 if ($final_journal_id) {
                     $journal_title = get_the_title($final_journal_id);
-                    $journal_url = wp_get_attachment_url($final_journal_id);
-                    $journal_display = '<a href="' . esc_url($journal_url) . '" target="_blank" class="lmb-btn-text-link">' . esc_html($journal_title) . '</a>';
+                    $journal_url = wp_get_attachment_url(get_post_meta($final_journal_id, 'newspaper_pdf', true)); // Get PDF url
+                    if ($journal_url) {
+                       $journal_display = '<a href="' . esc_url($journal_url) . '" target="_blank" class="lamv2-btn lamv2-btn-sm lamv2-btn-text-link">' . esc_html($journal_title) . '</a>';
+                    }
                 } elseif ($temp_journal_id) {
                     $journal_title = get_the_title($temp_journal_id);
-                    $journal_url = wp_get_attachment_url($temp_journal_id);
-                    $journal_display = '<a href="' . esc_url($journal_url) . '" target="_blank" class="lmb-btn-text-link">' . esc_html($journal_title) . '</a>';
+                    $journal_url = wp_get_attachment_url($temp_journal_id); // Attachments are posts
+                     if ($journal_url) {
+                        $journal_display = '<a href="' . esc_url($journal_url) . '" target="_blank" class="lamv2-btn lamv2-btn-sm lamv2-btn-text-link">' . esc_html($journal_title) . '</a>';
+                    }
                 }
-                // --- MODIFICATION END ---
 
-                echo '<tr class="clickable-row" data-href="' . esc_url(get_edit_post_link($post_id)) . '">';
+                echo '<tr class="lamv2-clickable-row" data-href="' . esc_url(get_edit_post_link($post_id)) . '">';
                 echo '<td>' . esc_html($post_id) . '</td>';
                 echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
                 echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
                 echo '<td>' . get_the_date('Y-m-d') . '</td>';
                 echo '<td>' . ($client ? esc_html($client->display_name) : 'N/A') . '</td>';
-                echo '<td><span class="lmb-status-badge lmb-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td>';
-                echo '<td>' . ($approved_by ? esc_html($approved_by->display_name) : '<span class="cell-placeholder">N/A</span>') . '</td>';
+                echo '<td><span class="lamv2-status-badge lamv2-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td>';
+                echo '<td>' . ($approved_by ? esc_html($approved_by->display_name) : '<span class="lamv2-cell-placeholder">N/A</span>') . '</td>';
                 
                 echo '<td>';
                 if ($accuse_url) {
-                    echo '<a href="' . esc_url($accuse_url) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">View</a>';
+                    echo '<a href="' . esc_url($accuse_url) . '" target="_blank" class="lamv2-btn lamv2-btn-sm lamv2-btn-text-link">View</a>';
                 } else {
-                    echo '<span class="cell-placeholder">-</span>';
+                    echo '<span class="lamv2-cell-placeholder">-</span>';
                 }
                 echo '</td>';
+                
+                echo '<td>' . $journal_display . '</td>';
 
-                // --- MODIFICATION: Display the prepared journal title ---
-                echo '<td class="journal-cell">' . $journal_display . '</td>';
-
-                echo '<td class="lmb-actions-cell">';
+                echo '<td class="lamv2-actions-cell">';
                 if ($status === 'pending_review') {
-                    echo '<button class="lmb-btn lmb-btn-icon lmb-btn-success lmb-ad-action" data-action="approve" data-id="' . $post_id . '" title="Approve"><i class="fas fa-check-circle"></i></button>';
-                    echo '<button class="lmb-btn lmb-btn-icon lmb-btn-danger lmb-ad-action" data-action="deny" data-id="' . $post_id . '" title="Deny"><i class="fas fa-times-circle"></i></button>';
+                    // --- CORRECTED CLASS HERE ---
+                    echo '<button class="lamv2-btn lamv2-btn-icon lamv2-btn-success lamv2-ad-action" data-action="approve" data-id="' . $post_id . '" title="Approve"><i class="fas fa-check-circle"></i></button>';
+                    echo '<button class="lamv2-btn lamv2-btn-icon lamv2-btn-danger lamv2-ad-action" data-action="deny" data-id="' . $post_id . '" title="Deny"><i class="fas fa-times-circle"></i></button>';
                 } elseif ($status === 'published') {
                     if (!$accuse_url) {
-                        echo '<button class="lmb-btn lmb-btn-sm lmb-btn-info lmb-generate-accuse-btn" data-id="' . $post_id . '" title="Generate Accuse"><i class="fas fa-receipt"></i></button>';
+                        echo '<button class="lamv2-btn lamv2-btn-sm lamv2-btn-info lmb-generate-accuse-btn" data-id="' . $post_id . '" title="Generate Accuse"><i class="fas fa-receipt"></i></button>';
                     }
-                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-secondary lmb-upload-journal-btn" data-id="' . $post_id . '" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>';
+                    echo '<button class="lamv2-btn lamv2-btn-sm lamv2-btn-secondary lmb-upload-journal-btn" data-id="' . $post_id . '" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>';
                 } else {
-                    echo '<a href="' . esc_url(get_edit_post_link($post_id)) . '" class="lmb-btn lmb-btn-sm lmb-btn-view">View</a>';
+                    echo '<a href="' . esc_url(get_edit_post_link($post_id)) . '" class="lamv2-btn lamv2-btn-sm lamv2-btn-view">View</a>';
                 }
                 echo '</td>';
 
@@ -782,6 +784,7 @@ class LMB_Ajax_Handlers {
             'total' => $query->max_num_pages,
             'prev_text' => '&laquo;',
             'next_text' => '&raquo;',
+            'add_args' => false
         ]);
         
         wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);

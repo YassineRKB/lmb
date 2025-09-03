@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core.
- * Version: 5.3.88
+ * Version: 5.3.89
  * Author: Yassine Rakibi
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -55,9 +55,8 @@ register_activation_hook(__FILE__, function () {
 });
 
 /**
- * --- CORRECTED AND UNIFIED ASSET REGISTRATION ---
- * This single function now handles registering all scripts and styles for the plugin.
- * Elementor's dependency system will then enqueue them only when a widget is used.
+ * --- UNIFIED ASSET REGISTRATION ---
+ * This function handles registering all scripts and styles for the plugin.
  */
 function lmb_register_all_assets() {
     // --- SCRIPTS ---
@@ -79,7 +78,6 @@ function lmb_register_all_assets() {
     ];
 
     foreach ($scripts as $handle => $path) {
-        // Register all scripts. Use 'lmb-core' as a dependency for widget scripts.
         $dependency = ($handle === 'lmb-core') ? ['jquery'] : ['lmb-core'];
         wp_register_script($handle, LMB_CORE_URL . $path, $dependency, LMB_CORE_VERSION, true);
     }
@@ -94,33 +92,24 @@ function lmb_register_all_assets() {
         'lmb-user-widgets-v2'    => 'assets/css/lmb-user-widgets-v2.css',
         'lmb-auth-v2'            => 'assets/css/lmb-auth-v2.css',
         'lmb-profile-v2'         => 'assets/css/lmb-profile-v2.css',
+        // --- NEW: Register the dedicated stylesheet for our widget ---
+        'lmb-legal-ads-management-v2' => 'assets/css/lmb-legal-ads-management-v2.css',
     ];
 
     foreach ($styles as $handle => $path) {
         wp_register_style($handle, LMB_CORE_URL . $path, [], LMB_CORE_VERSION);
     }
 
-    // --- CENTRALIZE AJAX PARAMS (CRITICAL) ---
-    // This makes 'lmb_ajax_params' available to 'lmb-core.js' and any other script that depends on it.
     wp_localize_script('lmb-core', 'lmb_ajax_params', [
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce'   => wp_create_nonce('lmb_nonce'),
     ]);
 
-    // Localize other specific params
-    wp_localize_script('lmb-admin-actions', 'lmb_admin_settings', [
-        'refresh_interval' => (int) get_option('lmb_admin_feed_refresh_interval', 30) * 1000,
-    ]);
-
-    // --- ENQUEUE CORE ASSETS ---
-    // Enqueue assets that should be loaded on every page (frontend and backend).
     wp_enqueue_script('lmb-core');
     wp_enqueue_style('lmb-core');
     wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
     wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], '3.7.0', true);
 
-
-    // Conditionally enqueue assets for specific admin pages if needed
     if (is_admin()) {
         $screen = get_current_screen();
         if ($screen && $screen->post_type === 'lmb_legal_ad' && $screen->base === 'post') {
@@ -128,8 +117,5 @@ function lmb_register_all_assets() {
         }
     }
 }
-// Use the standard WordPress hooks to register all assets. Elementor will now correctly find and enqueue them when its widgets are used.
 add_action('wp_enqueue_scripts', 'lmb_register_all_assets');
 add_action('admin_enqueue_scripts', 'lmb_register_all_assets');
-
-// We no longer need the separate lmb_register_widget_assets() function or its hooks.
