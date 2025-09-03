@@ -16,7 +16,7 @@ define('LMB_CORE_FILE', __FILE__);
 define('LMB_CORE_PATH', plugin_dir_path(__FILE__));
 define('LMB_CORE_URL', plugin_dir_url(__FILE__));
 
-// Autoloader
+// The autoloader is still useful for widgets and other non-critical classes.
 spl_autoload_register(function($class) {
     if (strpos($class, 'LMB_') !== 0) return;
     $dirs = ['includes/', 'elementor/widgets/'];
@@ -27,11 +27,29 @@ spl_autoload_register(function($class) {
     }
 });
 
-// Initialize all plugin components
-add_action('plugins_loaded', function() {
+// Main Initialization Function to control load order
+function lmb_core_init() {
+    // Manually load core classes in the correct dependency order
+    require_once LMB_CORE_PATH . 'includes/class-lmb-error-handler.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-database-manager.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-access-control.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-cpt.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-points.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-pdf-generator.php'; // Must be loaded before Invoice_Handler
+    require_once LMB_CORE_PATH . 'includes/class-lmb-invoice-handler.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-notification-manager.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-ad-manager.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-form-handler.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-payment-verifier.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-admin.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-user-dashboard.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-ajax-handlers.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-user.php';
+    require_once LMB_CORE_PATH . 'elementor/class-lmb-elementor-widgets.php';
+
+    // Now, initialize the classes
     LMB_Error_Handler::init();
     LMB_Access_Control::init();
-    require_once LMB_CORE_PATH . 'elementor/class-lmb-elementor-widgets.php';
     LMB_CPT::init();
     LMB_Form_Handler::init();
     LMB_Ad_Manager::init();
@@ -43,10 +61,17 @@ add_action('plugins_loaded', function() {
     LMB_Ajax_Handlers::init();
     LMB_Notification_Manager::init();
     new LMB_User();
-});
+}
+add_action('plugins_loaded', 'lmb_core_init');
+
 
 // Activation Hook
 register_activation_hook(__FILE__, function () {
+    // We need to include files here too for activation to work
+    require_once LMB_CORE_PATH . 'includes/class-lmb-cpt.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-user.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-database-manager.php';
+    
     LMB_CPT::init();
     LMB_User::create_custom_roles();
     LMB_Database_Manager::create_custom_tables();
@@ -54,9 +79,9 @@ register_activation_hook(__FILE__, function () {
     add_option('lmb_admin_feed_refresh_interval', 30);
 });
 
+
 /**
- * --- UNIFIED ASSET REGISTRATION ---
- * This function handles registering all scripts and styles for the plugin.
+ * UNIFIED ASSET REGISTRATION
  */
 function lmb_register_all_assets() {
     // --- SCRIPTS ---
@@ -78,7 +103,6 @@ function lmb_register_all_assets() {
     ];
 
     foreach ($scripts as $handle => $path) {
-        // --- FIX: Add 'elementor-frontend' as a dependency for all widget scripts ---
         $dependency = ($handle === 'lmb-core') ? ['jquery'] : ['lmb-core', 'elementor-frontend'];
         wp_register_script($handle, LMB_CORE_URL . $path, $dependency, LMB_CORE_VERSION, true);
     }
