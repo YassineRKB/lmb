@@ -2,6 +2,7 @@
 // FILE: includes/class-lmb-invoice-handler.php
 
 if (!defined('ABSPATH')) exit;
+require_once LMB_CORE_PATH . 'includes/class-lmb-pdf-generator.php';
 
 class LMB_Invoice_Handler {
     public static function init() {
@@ -106,57 +107,69 @@ class LMB_Invoice_Handler {
             return false;
         }
 
-        $template = get_option('lmb_accuse_template_html', 'Template not found.');
-
-        // Get Journal Number (check for final, then fallback to temporary)
+        // --- 1. GATHER ALL DATA ---
         $journal_no = '';
-        $final_journal_id = get_post_meta($ad_id, 'lmb_final_journal_id', true);
         $temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
-        if ($final_journal_id) {
-            $journal_no = get_post_meta($final_journal_id, 'journal_no', true);
-        } elseif ($temp_journal_id) {
+        if ($temp_journal_id) {
             $journal_no = get_post_meta($temp_journal_id, 'journal_no', true);
+        } else {
+            $final_journal_id = get_post_meta($ad_id, 'lmb_final_journal_id', true);
+            if($final_journal_id) {
+                 $journal_no = get_post_meta($final_journal_id, 'journal_no', true);
+            }
         }
 
-        if (empty($journal_no)) {
-            return false; 
-        }
+        if (empty($journal_no)) return false;
 
-        $ad_object = get_post_meta($ad_id, 'ad_type', true);
+        $client_id = $ad->post_author;
+        $client_info = get_userdata($client_id);
+        $client_type = get_user_meta($client_id, 'lmb_client_type', true);
+        
+        $client_label = ($client_type === 'professional') ? 'Bureau' : 'Nom Complet';
+        $client_value = ($client_type === 'professional') ? get_user_meta($client_id, 'company_name', true) : $client_info->first_name . ' ' . $client_info->last_name;
+
+        $form_data = json_decode(get_post_meta($ad_id, '_lmb_form_data_json', true), true);
+
         $announces_page = get_page_by_path('announces');
-        $legal_ad_link = $announces_page ? add_query_arg('legal-ad', $ad->ID . '-' . $ad->post_name, get_permalink($announces_page)) : home_url();
+        $legal_ad_link = $announces_page ? get_permalink($announces_page) . '?legal-ad=' . $ad_id . '-' . $ad->post_name : home_url();
 
-        // --- START: NEW LOGIC TO CONVERT URLS TO PATHS ---
+        // --- 2. GENERATE QR CODE ---
         $upload_dir = wp_upload_dir();
-        $base_url = $upload_dir['baseurl'];
-        $base_dir = $upload_dir['basedir'];
+        $qr_temp_dir = $upload_dir['basedir'] . '/lmb-temp-qr/';
+        if (!file_exists($qr_temp_dir)) {
+            wp_mkdir_p($qr_temp_dir);
+        }
+        $qr_code_path = $qr_temp_dir . 'qr-' . $ad_id . '.png';
+        $qr_api_url = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($legal_ad_link);
+        file_put_contents($qr_code_path, file_get_contents($qr_api_url));
 
-        $logo_url = get_option('lmb_logo_url');
-        $signature_url = get_option('lmb_signature_url');
-
-        // Convert URL to a server path
-        $logo_path = str_replace($base_url, $base_dir, $logo_url);
-        $signature_path = str_replace($base_url, $base_dir, $signature_url);
-        // --- END: NEW LOGIC ---
-
-        // --- Placeholder replacements ---
-        $vars = [
-            // Use the new local paths for the images
-            'lmb_logo_url'    => $logo_path,
-            'signature_url'   => $signature_path,
-            // Other variables remain the same
-            'journal_no'      => $journal_no,
-            'ad_object'       => $ad_object,
-            'legal_ad_link'   => $legal_ad_link,
+        // --- 3. PREPARE DATA ARRAY FOR PDF CLASS ---
+        $pdf_data = [
+            'publication_date' => date_i18n('d F Y', current_time('timestamp')),
+            'client_label'     => $client_label,
+            'client_value'     => $client_value,
+            'companyName'      => isset($form_data['companyname']) ? $form_data['companyname'] : 'N/A',
+            'ad_object'        => get_post_meta($ad_id, 'ad_type', true),
+            'ad_id'            => $ad_id,
+            'journal_no'       => $journal_no,
+            'legal_ad_link'    => $legal_ad_link,
+            'logo_path'        => str_replace(content_url(), WP_CONTENT_DIR, get_option('lmb_logo_url')),
+            'signature_path'   => str_replace(content_url(), WP_CONTENT_DIR, get_option('lmb_signature_url')),
+            'qr_code_path'     => $qr_code_path,
         ];
 
-        foreach ($vars as $key => $value) {
-            $template = str_replace('{{'.$key.'}}', esc_html($value), $template);
+        // --- 4. GENERATE AND SAVE THE PDF ---
+        $pdf = new LMB_Accuse_PDF($pdf_data);
+        $pdf->BuildPDF();
+        
+        $pdf_dir = $upload_dir['basedir'] . '/lmb-pdfs/';
+        if (!file_exists($pdf_dir)) {
+            wp_mkdir_p($pdf_dir);
         }
-
         $filename = 'accuse-ad-' . $ad_id . '.pdf';
-        $title = 'Accuse de Publication - ' . $ad->post_title;
+        $filepath = $pdf_dir . $filename;
+        $pdf->Output('F', $filepath);
 
-        return LMB_PDF_Generator::generate_html_pdf($filename, $template, $title);
+        return $upload_dir['baseurl'] . '/lmb-pdfs/' . $filename;
     }
 }

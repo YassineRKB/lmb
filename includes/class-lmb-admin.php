@@ -364,26 +364,94 @@ class LMB_Admin {
         ];
     }
 
-    private static function get_default_accuse_template() {
-        return '<div style="text-align: center;">
-    <img src="{{lmb_logo_url}}" alt="Logo" width="150">
-</div>
-<p><strong>Journal N°:</strong> {{journal_no}}</p>
-<h1 style="text-align: center;">ACCUSE DE PUBLICATION</h1>
-<p><strong>Objet:</strong> avis de {{ad_object}}</p>
-<p>Pour consulter votre annonce, veuillez cliquer sur le lien suivant :<br><a href="{{legal_ad_link}}">{{legal_ad_link}}</a></p>
-<div style="margin-top: 40px;">
-    <img src="{{signature_url}}" alt="Signature" width="200">
-    <p>
-        <strong>Directeur de publication : MOHAMED ELBACHIR LANSAR</strong><br>
-        2022/23/01ص : License<br>
-        RUE AHL LKHALIL OULD MHAMED N°08 ES-SEMARA<br>
-        ICE :002924841000097-TP :77402556-IF :50611382-CNSS :4319969<br>
-        RIB : 007260000899200000033587<br>
-        lmbannonceslegales.com<br>
-        ste.lmbgroup@gmail.com<br>
-        06 61 83 82 11 / 06 74 40 61 97 / 06 05 28 98 04 / 08 08 61 04 87
-    </p>
-</div>';
-    }
+    public static function get_default_accuse_template() {
+        // --- REPLACED: The entire return statement is now the new HTML design ---
+        return '<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Accuse de Publication</title>
+        <style>
+            /* Basic styles for PDF rendering */
+            body { font-family: \'Roboto\', sans-serif; font-size: 12px; color: #333; }
+            .container { max-width: 800px; margin: auto; background: #fff; }
+            .header { display: table; width: 100%; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+            .header-left, .header-right { display: table-cell; vertical-align: top; }
+            .header-right { text-align: right; }
+            .main-content { margin-top: 40px; }
+            .details-grid { display: table; width: 100%; }
+            .details-left, .details-right { display: table-cell; width: 50%; vertical-align: top; }
+            .details-right { text-align: right; }
+            .footer { margin-top: 80px; text-align: center; font-size: 9px; color: #555; position: relative; }
+            .signature-img { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0.9; }
+            p { margin: 0 0 10px 0; }
+            .detail-item { margin-bottom: 15px; }
+            .detail-label { font-size: 10px; font-weight: bold; color: #777; text-transform: uppercase; }
+            .detail-value { font-size: 14px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <img src="{{lmb_logo_url}}" alt="Logo" width="150">
+                </div>
+                <div class="header-right">
+                    <h1 style="font-size: 28px; margin: 0;">ACCUSE DE PUBLICATION</h1>
+                    <p>Date: {{publication_date}}</p>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="details-grid">
+                    <!-- Left Column: Ad Details -->
+                    <div class="details-left">
+                        {{client_specific_info}}
+                        <div class="detail-item">
+                            <p class="detail-label">Société / Nom</p>
+                            <p class="detail-value">{{companyName}}</p>
+                        </div>
+                        <div class="detail-item">
+                            <p class="detail-label">Objet</p>
+                            <p class="detail-value">Avis de {{ad_object}}</p>
+                        </div>
+                        <div class="detail-item">
+                            <p class="detail-label">Réf. Annonce</p>
+                            <p class="detail-value">{{ad_id}}</p>
+                        </div>
+                        <div class="detail-item">
+                            <p class="detail-label">Journal N°</p>
+                            <p class="detail-value">{{journal_no}}</p>
+                        </div>
+                        <div class="detail-item">
+                            <p class="detail-label">Consulter Votre Annonce</p>
+                            <a href="{{legal_ad_link}}">{{legal_ad_link}}</a>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: QR Code -->
+                    <div class="details-right">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{legal_ad_link}}" alt="QR Code">
+                        <p style="font-size: 10px; font-weight: bold;">SCAN ME TO READ</p>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <img src="{{signature_url}}" alt="Signature" width="200" class="signature-img">
+                <br><br><br>
+                <p>Directeur de publication : MOHAMED ELBACHIR LANSAR | License : 2022/23/01ص</p>
+                <p>Adresse : RUE AHL LKHALIL OULD MHAMED N°08 ES-SEMARA</p>
+                <p>ICE : 002924841000097 | TP : 77402556 | IF : 50611382 | CNSS : 4319969</p>
+                <p>06 61 83 82 11 | 06 74 40 61 97 | 06 05 28 98 04 | 08 08 61 04 87</p>
+                <p>lmbannonceslegales.com | ste.lmbgroup@gmail.com</p>
+            </footer>
+        </div>
+    </body>
+    </html>';
+        }
 }
