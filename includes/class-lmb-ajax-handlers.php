@@ -1422,7 +1422,13 @@ class LMB_Ajax_Handlers {
         if (!$ad_id || empty($_FILES['journal_file']) || empty($journal_no)) {
             wp_send_json_error(['message' => 'Missing Ad ID, file, or Journal Number.'], 400);
         }
-
+        // Clean up old journal associations to ensure a clean slate.
+        $old_temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
+        if ($old_temp_journal_id) {
+            wp_delete_attachment($old_temp_journal_id, true);
+        }
+        delete_post_meta($ad_id, 'lmb_temporary_journal_id');
+        delete_post_meta($ad_id, 'lmb_final_journal_id');
         require_once(ABSPATH . 'wp-admin/includes/file.php');
         $attachment_id = media_handle_upload('journal_file', $ad_id);
 

@@ -119,22 +119,35 @@ class LMB_Invoice_Handler {
         }
 
         if (empty($journal_no)) {
-            // Important: We cannot generate an accuse without a journal number.
             return false; 
         }
 
-        // Get other data for placeholders
         $ad_object = get_post_meta($ad_id, 'ad_type', true);
         $announces_page = get_page_by_path('announces');
         $legal_ad_link = $announces_page ? add_query_arg('legal-ad', $ad->ID . '-' . $ad->post_name, get_permalink($announces_page)) : home_url();
 
+        // --- START: NEW LOGIC TO CONVERT URLS TO PATHS ---
+        $upload_dir = wp_upload_dir();
+        $base_url = $upload_dir['baseurl'];
+        $base_dir = $upload_dir['basedir'];
+
+        $logo_url = get_option('lmb_logo_url');
+        $signature_url = get_option('lmb_signature_url');
+
+        // Convert URL to a server path
+        $logo_path = str_replace($base_url, $base_dir, $logo_url);
+        $signature_path = str_replace($base_url, $base_dir, $signature_url);
+        // --- END: NEW LOGIC ---
+
         // --- Placeholder replacements ---
         $vars = [
-            'lmb_logo_url'    => get_option('lmb_logo_url'),
+            // Use the new local paths for the images
+            'lmb_logo_url'    => $logo_path,
+            'signature_url'   => $signature_path,
+            // Other variables remain the same
             'journal_no'      => $journal_no,
             'ad_object'       => $ad_object,
             'legal_ad_link'   => $legal_ad_link,
-            'signature_url'   => get_option('lmb_signature_url'),
         ];
 
         foreach ($vars as $key => $value) {
