@@ -11,7 +11,7 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
     public function get_icon() { return 'eicon-table'; }
     public function get_categories() { return ['lmb-admin-widgets-v2']; }
     
-    // Point to the dedicated JS and CSS files for this widget
+    // Correctly point to the dedicated JS and CSS files for this widget
     public function get_script_depends() { return ['lmb-legal-ads-management-v2']; }
     public function get_style_depends() { return ['lmb-legal-ads-management-v2']; }
 
@@ -26,7 +26,6 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                 <h3><i class="fas fa-gavel"></i> <?php esc_html_e('Legal Ads Management V2', 'lmb-core'); ?></h3>
             </div>
             <div class="lamv2-widget-content">
-                <!-- Filter Section -->
                 <div class="lamv2-filters-box">
                     <form id="lamv2-ads-filters-form">
                         <div class="lamv2-filter-grid">
@@ -48,7 +47,6 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                     </form>
                 </div>
 
-                <!-- Table Section -->
                 <div class="lamv2-table-container">
                     <table class="lamv2-data-table">
                         <thead>
@@ -66,16 +64,13 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Rows will be populated by JavaScript -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
                 
-                <!-- Pagination Section -->
                 <div class="lamv2-pagination-container"></div>
             </div>
 
-            <!-- Modal for Uploading Journal -->
             <div id="lamv2-upload-journal-modal" class="lamv2-modal-overlay hidden">
                 <div class="lamv2-modal-content">
                     <div class="lamv2-modal-header">

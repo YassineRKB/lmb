@@ -78,22 +78,22 @@ function lmb_register_all_assets() {
     ];
 
     foreach ($scripts as $handle => $path) {
-        $dependency = ($handle === 'lmb-core') ? ['jquery'] : ['lmb-core'];
+        // --- FIX: Add 'elementor-frontend' as a dependency for all widget scripts ---
+        $dependency = ($handle === 'lmb-core') ? ['jquery'] : ['lmb-core', 'elementor-frontend'];
         wp_register_script($handle, LMB_CORE_URL . $path, $dependency, LMB_CORE_VERSION, true);
     }
     
     // --- STYLES ---
     $styles = [
-        'lmb-core'               => 'assets/css/lmb-core.css',
-        'lmb-admin-widgets'      => 'assets/css/lmb-admin-widgets.css',
-        'lmb-user-widgets'       => 'assets/css/lmb-user-widgets.css',
-        'lmb-notifications'      => 'assets/css/lmb-notifications.css',
-        'lmb-admin-widgets-v2'   => 'assets/css/lmb-admin-widgets-v2.css',
-        'lmb-user-widgets-v2'    => 'assets/css/lmb-user-widgets-v2.css',
-        'lmb-auth-v2'            => 'assets/css/lmb-auth-v2.css',
-        'lmb-profile-v2'         => 'assets/css/lmb-profile-v2.css',
-        // --- NEW: Register the dedicated stylesheet for our widget ---
-        'lmb-legal-ads-management-v2' => 'assets/css/lmb-legal-ads-management-v2.css',
+        'lmb-core'                      => 'assets/css/lmb-core.css',
+        'lmb-admin-widgets'             => 'assets/css/lmb-admin-widgets.css',
+        'lmb-user-widgets'              => 'assets/css/lmb-user-widgets.css',
+        'lmb-notifications'             => 'assets/css/lmb-notifications.css',
+        'lmb-admin-widgets-v2'          => 'assets/css/lmb-admin-widgets-v2.css',
+        'lmb-user-widgets-v2'           => 'assets/css/lmb-user-widgets-v2.css',
+        'lmb-auth-v2'                   => 'assets/css/lmb-auth-v2.css',
+        'lmb-profile-v2'                => 'assets/css/lmb-profile-v2.css',
+        'lmb-legal-ads-management-v2'   => 'assets/css/lmb-legal-ads-management-v2.css',
     ];
 
     foreach ($styles as $handle => $path) {
@@ -105,6 +105,7 @@ function lmb_register_all_assets() {
         'nonce'   => wp_create_nonce('lmb_nonce'),
     ]);
 
+    // Enqueue core assets that are always needed
     wp_enqueue_script('lmb-core');
     wp_enqueue_style('lmb-core');
     wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');

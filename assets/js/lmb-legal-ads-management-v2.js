@@ -1,12 +1,17 @@
-jQuery(document).ready(function($) {
+(function($) {
+    'use strict';
 
     /**
      * This function initializes all the logic for a single instance of the widget.
      * @param {jQuery} $scope The jQuery object representing the widget's wrapper element.
      */
     const initLegalAdsManagementWidget = function($scope) {
+        // --- DEBUGGING ALERT ---
+        alert('Legal Ads Management V2 JS Initializing!');
+
         const widget = $scope;
-        if (!widget.length || widget.data('lmb-widget-initialized')) {
+        // Prevent re-initialization if the widget is re-rendered.
+        if (widget.data('lmb-widget-initialized')) {
             return;
         }
         widget.data('lmb-widget-initialized', true);
@@ -190,11 +195,10 @@ jQuery(document).ready(function($) {
 
     /**
      * Elementor's Frontend Hook
-     * This ensures the script runs for each widget instance, even when loaded via AJAX.
+     * This ensures the script runs for each widget instance, even when loaded via AJAX in the editor.
      */
     $(window).on('elementor/frontend/init', function() {
         elementorFrontend.hooks.addAction('frontend/element_ready/lmb_legal_ads_management_v2.default', initLegalAdsManagementWidget);
     });
 
-});
-
+})(jQuery);
