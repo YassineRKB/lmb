@@ -28,7 +28,7 @@ class LMB_Ajax_Handlers {
             'lmb_admin_upload_temporary_journal',
             'lmb_update_password_v2',
             'lmb_fetch_public_ads',
-            'lmb_fetch_newspapers_v2',
+            'lmb_fetch_newspapers_v2', 'lmb_fetch_payments',
             
         ];
         // --- MODIFICATION: Make auth actions public ---
@@ -1671,4 +1671,89 @@ class LMB_Ajax_Handlers {
         wp_reset_postdata();
         wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
     }
+
+    // --- NEW FUNCTION: fetch payments for admin to handle ---
+    private static function lmb_fetch_payments() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access Denied.'], 403);
+        }
+
+        $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
+        parse_str($_POST['filters'] ?? '', $filters);
+
+        $args = [
+            'post_type' => 'lmb_payment',
+            'post_status' => 'publish',
+            'posts_per_page' => 15,
+            'paged' => $paged,
+            'meta_query' => ['relation' => 'AND'],
+            'orderby' => 'date',
+            'order' => 'DESC'
+        ];
+        
+        // Apply filters
+        if (!empty($filters['filter_status'])) {
+            $args['meta_query'][] = ['key' => 'payment_status', 'value' => sanitize_key($filters['filter_status'])];
+        }
+        if (!empty($filters['filter_ref'])) {
+            $args['meta_query'][] = ['key' => 'payment_reference', 'value' => sanitize_text_field($filters['filter_ref']), 'compare' => 'LIKE'];
+        }
+        if (!empty($filters['filter_client'])) {
+            $user_query = new WP_User_Query([
+                'search' => '*' . esc_attr(sanitize_text_field($filters['filter_client'])) . '*',
+                'search_columns' => ['user_login', 'display_name'],
+                'fields' => 'ID'
+            ]);
+            $user_ids = $user_query->get_results();
+            $args['author__in'] = !empty($user_ids) ? $user_ids : [0];
+        }
+
+        $query = new WP_Query($args);
+        ob_start();
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $payment_id = get_the_ID();
+                $client = get_userdata(get_post_field('post_author', $payment_id));
+                $package_id = get_post_meta($payment_id, 'package_id', true);
+                $status = get_post_meta($payment_id, 'payment_status', true);
+                $proof_id = get_post_meta($payment_id, 'proof_attachment_id', true);
+
+                echo '<tr>';
+                echo '<td>' . esc_html(get_post_meta($payment_id, 'payment_reference', true)) . '</td>';
+                echo '<td>' . ($client ? '<a href="' . home_url('/profile/' . $client->ID . '/') . '">' . esc_html($client->display_name) . '</a>' : 'N/A') . '</td>';
+                echo '<td>' . ($package_id ? esc_html(get_the_title($package_id)) : 'N/A') . '</td>';
+                echo '<td>' . esc_html(get_post_meta($payment_id, 'package_price', true)) . ' MAD</td>';
+                echo '<td>' . esc_html(get_the_date('Y-m-d H:i', $payment_id)) . '</td>';
+                echo '<td><span class="lmb-status-badge lmb-status-' . esc_attr($status) . '">' . esc_html($status) . '</span></td>';
+                echo '<td class="lmb-actions-cell">';
+                if ($status === 'pending') {
+                    if ($proof_id) {
+                        echo '<a href="' . esc_url(wp_get_attachment_url($proof_id)) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-paperclip"></i> View Proof</a>';
+                    }
+                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-payment-action-btn" data-action="approve" data-id="' . $payment_id . '"><i class="fas fa-check"></i> Approve</button>';
+                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-payment-action-btn" data-action="deny" data-id="' . $payment_id . '"><i class="fas fa-times"></i> Deny</button>';
+                } else {
+                    echo '—';
+                }
+                echo '</td>';
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="7" style="text-align:center;">No payments found for this status.</td></tr>';
+        }
+        
+        $html = ob_get_clean();
+        wp_reset_postdata();
+
+        $pagination_html = paginate_links([
+            'base' => add_query_arg('paged', '%#%'), 'format' => '', 'current' => $paged,
+            'total' => $query->max_num_pages, 'prev_text' => '&laquo;', 'next_text' => '&raquo;',
+            'add_args' => false
+        ]);
+
+        wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
+    }
+
 }

@@ -102,6 +102,7 @@ function lmb_register_all_assets() {
         'lmb-profile-v2'              => 'assets/js/lmb-profile-v2.js',
         'lmb-ads-directory-v2'        => 'assets/js/lmb-ads-directory-v2.js',
         'lmb-newspaper-directory-v2'  => 'assets/js/lmb-newspaper-directory-v2.js',
+        'lmb-payments-management'     => 'assets/js/lmb-payments-management.js',
     ];
 
     foreach ($scripts as $handle => $path) {
@@ -125,6 +126,7 @@ function lmb_register_all_assets() {
         'lmb-newspaper-directory-v2'    => 'assets/css/lmb-newspaper-directory-v2.css',
         'lmb-active-clients-v2'         => 'assets/css/lmb-active-clients-v2.css',
         'lmb-inactive-clients-v2'       => 'assets/css/lmb-inactive-clients-v2.css',
+        'lmb-payments-management'     => 'assets/css/lmb-payments-management.css',
     ];
 
     foreach ($styles as $handle => $path) {

@@ -65,6 +65,7 @@ add_action('elementor/widgets/register', function($widgets_manager) {
         'LMB_Inactive_Clients_V2_Widget' => __DIR__ . '/widgets/class-lmb-inactive-clients-v2-widget.php',
         'LMB_Active_Clients_V2_Widget' => __DIR__ . '/widgets/class-lmb-active-clients-v2-widget.php',
         'LMB_Profile_V2_Widget' => __DIR__ . '/widgets/class-lmb-profile-v2-widget.php',
+        'LMB_Payments_Management_Widget' => __DIR__ . '/widgets/class-lmb-payments-management-widget.php',
     ];
 
     foreach ($widgets as $class_name => $file_path) {
