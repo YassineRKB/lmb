@@ -44,10 +44,7 @@ class LMB_Invoice_Handler {
         update_post_meta($payment_id, 'package_price', $price);
         update_post_meta($payment_id, 'payment_status', 'pending'); // Initial status
 
-        // Now, generate the PDF using the data from the payment post
-        $pdf_url = self::generate_invoice_pdf($payment_id);
-        
-        return $pdf_url;
+        return true; // Return true on success
     }
 
     /**

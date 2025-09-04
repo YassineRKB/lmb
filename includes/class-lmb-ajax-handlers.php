@@ -1625,7 +1625,8 @@ class LMB_Ajax_Handlers {
                 $pdf_id = get_post_meta(get_the_ID(), 'newspaper_pdf', true);
                 $pdf_url = wp_get_attachment_url($pdf_id);
                 
-                $html .= '<tr>';
+                // Add class and data-href to the table row
+                $html .= '<tr class="clickable-row" data-href="' . esc_url($pdf_url) . '">';
                 $html .= '<td>' . get_the_ID() . '</td>';
                 $html .= '<td>' . esc_html(get_the_title()) . '</td>';
                 $html .= '<td>' . esc_html(get_the_date()) . '</td>';

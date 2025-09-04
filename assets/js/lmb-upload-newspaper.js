@@ -1,3 +1,4 @@
+// FILE: assets/js/lmb-upload-newspaper.js
 jQuery(document).ready(function($) {
     $('#lmb-upload-newspaper-form').on('submit', function(e) {
         e.preventDefault();
@@ -17,13 +18,13 @@ jQuery(document).ready(function($) {
             contentType: false,
         }).done(function(response) {
             if (response.success) {
-                alert('Success: ' + response.data.message);
+                showLMBModal('success', response.data.message);
                 form[0].reset();
             } else {
-                alert('Error: ' + response.data.message);
+                showLMBModal('error', response.data.message);
             }
         }).fail(function() {
-            alert('An unexpected server error occurred.');
+            showLMBModal('error', 'An unexpected server error occurred.');
         }).always(function() {
             submitBtn.prop('disabled', false).html('<i class="fas fa-upload"></i> Upload Newspaper');
         });

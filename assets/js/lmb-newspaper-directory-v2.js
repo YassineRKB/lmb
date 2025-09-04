@@ -3,12 +3,11 @@ jQuery(document).ready(function($) {
     $('.lmb-newspaper-directory-v2').each(function() {
         const widget = $(this);
         const form = widget.find('.lmb-filters-form');
-        const tableBody = widget.find('.lmb-data-table tbody'); // CORRECTED SELECTOR
+        const tableBody = widget.find('.lmb-data-table tbody');
         const paginationContainer = widget.find('.lmb-pagination-container');
         let debounceTimer;
 
         function fetchNewspapers(page = 1) {
-            // Updated loading message for a table
             tableBody.html('<tr><td colspan="4" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading newspapers...</td></tr>');
 
             const formData = form.serialize();
@@ -22,7 +21,7 @@ jQuery(document).ready(function($) {
             $.post(lmb_ajax_params.ajaxurl, data)
                 .done(function(response) {
                     if (response.success) {
-                        tableBody.html(response.data.html); // This now inserts <tr> elements
+                        tableBody.html(response.data.html);
                         paginationContainer.html(response.data.pagination);
                     } else {
                         tableBody.html('<tr><td colspan="4" style="text-align:center;">' + (response.data.message || 'No newspapers found.') + '</td></tr>');
@@ -69,6 +68,19 @@ jQuery(document).ready(function($) {
                 }
             }
             fetchNewspapers(page);
+        });
+
+        // --- NEW: Handle clickable table rows ---
+        tableBody.on('click', 'tr.clickable-row', function(e) {
+            // Do nothing if a button or link inside the row was clicked
+            if ($(e.target).closest('a, button').length > 0) {
+                return;
+            }
+
+            const url = $(this).data('href');
+            if (url) {
+                window.open(url, '_blank');
+            }
         });
 
         // Initial Load

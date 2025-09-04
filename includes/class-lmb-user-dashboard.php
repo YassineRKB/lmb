@@ -32,22 +32,18 @@ class LMB_User_Dashboard {
 
         $stats = [];
         $stats['points_balance'] = LMB_Points::get_balance($user_id);
+        
+        // --- NEW: Calculate Remaining Ads Quota ---
+        $cost_per_ad = LMB_Points::get_cost_per_ad($user_id);
+        // Use default of 10 if cost is 0 to prevent division by zero error.
+        $cost_per_ad = ($cost_per_ad > 0) ? $cost_per_ad : 10; 
+        $stats['remaining_ads'] = floor($stats['points_balance'] / $cost_per_ad);
+
         $stats['ads_total'] = count_user_posts($user_id, 'lmb_legal_ad', true);
         
         // Count ads by custom status
         $stats['ads_pending'] = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id WHERE p.post_author = %d AND p.post_type = 'lmb_legal_ad' AND pm.meta_key = 'lmb_status' AND pm.meta_value = 'pending_review'", $user_id));
         $stats['ads_published'] = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id WHERE p.post_author = %d AND p.post_type = 'lmb_legal_ad' AND pm.meta_key = 'lmb_status' AND pm.meta_value = 'published'", $user_id));
-
-        // --- NEW STAT: Due Payments ---
-        $stats['due_payments_value'] = (float) $wpdb->get_var($wpdb->prepare(
-            "SELECT SUM(CAST(pm.meta_value AS DECIMAL(10,2))) 
-             FROM {$wpdb->posts} p 
-             JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id 
-             WHERE p.post_type = 'lmb_payment' AND p.post_author = %d 
-             AND pm.meta_key = 'package_price' 
-             AND p.ID IN (SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = 'payment_status' AND meta_value = 'pending')", 
-            $user_id
-        ));
 
         return $stats;
     }

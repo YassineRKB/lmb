@@ -6,9 +6,6 @@
      * @param {jQuery} $scope The jQuery object representing the widget's wrapper element.
      */
     const initLegalAdsManagementWidget = function($scope) {
-        // --- DEBUGGING ALERT ---
-        alert('Legal Ads Management V2 JS Initializing!');
-
         const widget = $scope;
         // Prevent re-initialization if the widget is re-rendered.
         if (widget.data('lmb-widget-initialized')) {
