@@ -1,28 +1,42 @@
 /* FILE: assets/css/lmb-profile-v2.css */
 .lmb-profile-v2-widget {
-    max-width: 900px;
+    max-width: 1200px;
     margin: auto;
-    display: grid;
-    grid-template-columns: 1fr 300px;
+    display: flex;
+    flex-direction: column;
     gap: 30px;
 }
 
-.lmb-profile-main, .lmb-profile-sidebar {
+/* --- Layout Structure --- */
+.lmb-profile-top-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr; /* Main content gets more space */
+    gap: 30px;
+    align-items: start;
+}
+
+.lmb-profile-sidebar-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* --- Card Styling --- */
+.lmb-profile-card {
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    padding: 30px;
+    overflow: hidden; /* Ensures header border radius is visible */
 }
 
 .lmb-widget-header {
-    margin-bottom: 25px;
-    padding-bottom: 15px;
+    padding: 20px 25px;
     border-bottom: 1px solid #e5e7eb;
 }
 
 .lmb-widget-header h3 {
     font-family: 'Oswald', sans-serif;
-    font-size: 22px;
+    font-size: 20px;
     margin: 0;
     font-weight: 400;
     color: #d78808;
@@ -31,16 +45,35 @@
     gap: 10px;
 }
 
+.lmb-card-content {
+    padding: 25px;
+}
+
+
+/* --- Admin Controls --- */
 .lmb-admin-editing-notice {
     background-color: #fffbe6;
     color: #92400e;
     padding: 15px;
     border-radius: 6px;
-    margin-bottom: 20px;
     font-size: 14px;
     border: 1px solid #fde68a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
+.lmb-admin-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    margin: -25px -25px 25px -25px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* --- Form Styles --- */
 .lmb-form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -49,6 +82,10 @@
 
 .lmb-form-group {
     margin-bottom: 20px;
+}
+
+.lmb-form-group:last-child {
+    margin-bottom: 0;
 }
 
 .lmb-form-group.full-width {
@@ -69,7 +106,6 @@
     border: 1px solid #ced4da;
     border-radius: 6px;
     font-size: 15px;
-    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
     box-sizing: border-box;
 }
 
@@ -87,6 +123,8 @@
     border: 1px solid transparent;
     background-color: #d78808;
     color: #fff;
+    width: 100%;
+    margin-top: 10px;
 }
 
 .lmb-btn-secondary {
@@ -103,7 +141,7 @@
 .lmb-form-response.error { background-color: #f8d7da; color: #721c24; display: block; }
 .lmb-form-response.success { background-color: #d4edda; color: #155724; display: block; }
 
-/* Sidebar styles */
+/* --- Sidebar Content Styles --- */
 .lmb-user-stats .stat-item {
     display: flex;
     justify-content: space-between;
@@ -111,17 +149,59 @@
     padding: 15px 0;
     border-bottom: 1px solid #e5e7eb;
 }
- .lmb-user-stats .stat-item:last-child {
+.lmb-user-stats .stat-item:last-child {
     border-bottom: none;
- }
+}
 .lmb-user-stats .stat-label { color: #6c757d; }
 .lmb-user-stats .stat-value { font-weight: 700; font-size: 18px; color: #d78808; }
+.lmb-user-stats .stat-value-small { font-weight: 500; font-size: 14px; color: #343a40; }
 
-@media (max-width: 768px) {
-    .lmb-profile-v2-widget {
+
+.lmb-balance-history .no-history {
+    font-style: italic;
+    color: #6c757d;
+    font-size: 14px;
+}
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f2f4;
+}
+.history-item:last-child {
+    border-bottom: none;
+}
+.history-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.history-icon.credit { background-color: #dcfce7; color: #166534; }
+.history-icon.debit { background-color: #fee2e2; color: #991b1b; }
+.history-details { flex-grow: 1; }
+.history-reason { display: block; font-weight: 500; font-size: 14px; color: #374151; }
+.history-time { display: block; font-size: 12px; color: #6b7280; }
+.history-amount { font-weight: 700; font-size: 14px; }
+.history-amount.credit { color: #16a34a; }
+.history-amount.debit { color: #dc2626; }
+
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 1024px) {
+    .lmb-profile-top-row {
         grid-template-columns: 1fr;
     }
+}
+@media (max-width: 767px) {
     .lmb-form-grid {
+        grid-template-columns: 1fr;
+    }
+    .lmb-admin-controls {
         grid-template-columns: 1fr;
     }
 }

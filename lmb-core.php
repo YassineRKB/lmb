@@ -149,3 +149,26 @@ function lmb_register_all_assets() {
 }
 add_action('wp_enqueue_scripts', 'lmb_register_all_assets');
 add_action('admin_enqueue_scripts', 'lmb_register_all_assets');
+/**
+ * Adds a rewrite rule to handle profile URLs like /profile/{userid}.
+ */
+function lmb_add_profile_rewrite_rule() {
+    add_rewrite_rule(
+        '^profile/(\d+)/?$',
+        'index.php?pagename=profile&userid=$matches[1]',
+        'top'
+    );
+}
+add_action('init', 'lmb_add_profile_rewrite_rule');
+
+/**
+ * Registers 'userid' as a public query variable so WordPress recognizes it.
+ *
+ * @param array $vars The array of existing public query variables.
+ * @return array The modified array of query variables.
+ */
+function lmb_register_query_vars($vars) {
+    $vars[] = 'userid';
+    return $vars;
+}
+add_filter('query_vars', 'lmb_register_query_vars');

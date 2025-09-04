@@ -1317,7 +1317,8 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['message' => 'Client account has been locked.']);
     }
 
-    // --- NEW FUNCTION: v2 update user profile with role-based field restrictions ---
+    // --- UPDATED FUNCTION: v2 update user profile with role-based field restrictions ---
+    
     private static function lmb_update_profile_v2() {
         $user_id_to_update = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
         parse_str($_POST['form_data'], $data);
@@ -1328,6 +1329,7 @@ class LMB_Ajax_Handlers {
         // Security check: Either you are an admin, or you are editing your own profile.
         if (!$is_admin && $current_user_id !== $user_id_to_update) {
             wp_send_json_error(['message' => 'You do not have permission to edit this profile.'], 403);
+            return;
         }
         
         $user_data = [];
@@ -1337,6 +1339,15 @@ class LMB_Ajax_Handlers {
             if (isset($data['last_name'])) $user_data['last_name'] = sanitize_text_field($data['last_name']);
             if (isset($data['company_name'])) update_user_meta($user_id_to_update, 'company_name', sanitize_text_field($data['company_name']));
             if (isset($data['company_rc'])) update_user_meta($user_id_to_update, 'company_rc', sanitize_text_field($data['company_rc']));
+            
+            // --- NEW: Handle role and client type updates ---
+            if (isset($data['lmb_user_role'])) {
+                $user = new WP_User($user_id_to_update);
+                $user->set_role(sanitize_key($data['lmb_user_role']));
+            }
+            if (isset($data['lmb_client_type'])) {
+                update_user_meta($user_id_to_update, 'lmb_client_type', sanitize_key($data['lmb_client_type']));
+            }
         }
         
         // Fields all users can edit
@@ -1345,8 +1356,8 @@ class LMB_Ajax_Handlers {
         if (isset($data['phone_number'])) update_user_meta($user_id_to_update, 'phone_number', sanitize_text_field($data['phone_number']));
 
         // Update the user display name if it has been changed (for regular users)
-        if (!empty($user_data['first_name']) && !empty($user_data['last_name'])) {
-            $user_data['display_name'] = $user_data['first_name'] . ' ' . $user_data['last_name'];
+        if (isset($data['first_name']) && isset($data['last_name'])) {
+            $user_data['display_name'] = sanitize_text_field($data['first_name']) . ' ' . sanitize_text_field($data['last_name']);
         }
 
         if(!empty($user_data)){
@@ -1356,6 +1367,7 @@ class LMB_Ajax_Handlers {
 
         wp_send_json_success();
     }
+    
     // --- NEW FUNCTION: v2 update user password with current password verification for non-admins ---
     private static function lmb_update_password_v2() {
         $user_id_to_update = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
