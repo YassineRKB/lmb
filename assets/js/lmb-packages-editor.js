@@ -1,134 +1,146 @@
+// FILE: assets/js/lmb-packages-editor.js
 jQuery(document).ready(function($) {
-    const widget = $('.lmb-packages-editor-widget');
+    const widget = $('.lmb-packages-editor');
     if (!widget.length) return;
 
     const form = $('#lmb-package-form');
-    const packagesGrid = $('#lmb-packages-grid');
-    const noPackagesMessage = widget.find('.lmb-no-packages');
+    const packageList = $('#lmb-packages-list');
+    const clearBtn = $('#lmb-clear-form-btn');
 
-    // Function to generate the HTML for a package card
-    function createPackageCard(pkg) {
-        const descriptionHtml = pkg.trimmed_description ? `<div class="lmb-package-description">${escapeHtml(pkg.trimmed_description)}</div>` : '';
+    /**
+     * Renders the HTML for a single package card from a data object.
+     * @param {object} pkg The package data object.
+     * @returns {string} The HTML string for the package card.
+     */
+    function renderPackageCard(pkg) {
+        const description = pkg.description ? `<p>${pkg.trimmed_description}</p>` : '';
         return `
-            <div class="lmb-package-card" data-package-id="${pkg.id}" data-price="${pkg.price}" data-points="${pkg.points}" data-cost-per-ad="${pkg.cost_per_ad}" data-description="${escapeHtml(pkg.description)}">
-                <div class="lmb-package-header">
-                    <h5 class="lmb-package-title">${escapeHtml(pkg.name)}</h5>
-                    <div class="lmb-package-price">${pkg.price} MAD</div>
+            <div class="lmb-package-card" data-package-id="${pkg.id}">
+                <div class="lmb-package-card-header">
+                    <div>
+                        <h4 class="lmb-package-card-title">${pkg.name}</h4>
+                    </div>
+                    <div class="lmb-package-card-actions">
+                        <button class="lmb-edit-package-btn lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="lmb-delete-package-btn lmb-btn lmb-btn-sm lmb-btn-danger"><i class="fas fa-trash"></i></button>
+                    </div>
                 </div>
-                <div class="lmb-package-details">
-                    <div class="lmb-package-detail"><span>Points:</span><strong>${pkg.points}</strong></div>
-                    <div class="lmb-package-detail"><span>Cost per Ad:</span><strong>${pkg.cost_per_ad} pts</strong></div>
+                <div class="lmb-package-card-body">
+                    ${description}
+                    <div class="lmb-package-card-details">
+                        <span><strong>Price:</strong> ${pkg.price} MAD</span>
+                        <span><strong>Points:</strong> ${pkg.points}</span>
+                        <span><strong>Cost/Ad:</strong> ${pkg.cost_per_ad}</span>
+                    </div>
                 </div>
-                ${descriptionHtml}
-                <div class="lmb-package-actions">
-                    <button class="lmb-btn lmb-btn-sm lmb-btn-primary lmb-edit-package"><i class="fas fa-edit"></i> Edit</button>
-                    <button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-package"><i class="fas fa-trash"></i> Delete</button>
-                </div>
-            </div>`;
+            </div>
+        `;
     }
 
-    // Save/Update package
+    // Handle Form Submission (Create/Update)
     form.on('submit', function(e) {
         e.preventDefault();
-        const button = $('#lmb-save-package-btn');
-        const originalText = button.html();
         
-        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+        const submitBtn = form.find('button[type="submit"]');
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
 
-        $.post(lmb_ajax_params.ajaxurl, {
+        const data = {
             action: 'lmb_save_package',
             nonce: lmb_ajax_params.nonce,
-            package_id: $('#package-id').val(),
-            name: $('#package-name').val(),
-            price: $('#package-price').val(),
-            points: $('#package-points').val(),
-            cost_per_ad: $('#package-cost-per-ad').val(),
-            description: $('#package-description').val()
-        })
-        .done(function(response) {
-            if (response.success) {
-                showLMBModal('success', response.data.message);
-                const newCardHtml = createPackageCard(response.data.package);
-                const existingCard = packagesGrid.find(`[data-package-id="${response.data.package.id}"]`);
+            package_id: $('#package_id').val(),
+            name: $('#package_name').val(),
+            price: $('#package_price').val(),
+            points: $('#package_points').val(),
+            cost_per_ad: $('#package_cost').val(),
+            description: $('#package_desc').val(),
+        };
 
-                if (existingCard.length) { // It's an update
-                    existingCard.replaceWith(newCardHtml);
-                } else { // It's a new package
-                    packagesGrid.append(newCardHtml);
-                    if(noPackagesMessage.length) noPackagesMessage.remove();
+        $.post(lmb_ajax_params.ajaxurl, data)
+            .done(function(response) {
+                if (response.success) {
+                    showLMBModal('success', response.data.message);
+                    const packageId = response.data.package.id;
+                    const existingCard = packageList.find(`.lmb-package-card[data-package-id="${packageId}"]`);
+                    const newCardHtml = renderPackageCard(response.data.package);
+                    
+                    if (existingCard.length) {
+                        existingCard.replaceWith(newCardHtml);
+                    } else {
+                        packageList.append(newCardHtml);
+                    }
+                    clearForm();
+                } else {
+                    showLMBModal('error', response.data.message);
                 }
-                resetForm();
-            } else {
-                showLMBModal('error', response.data.message);
-            }
-        }).fail(function() {
-            showLMBModal('error', 'A server error occurred.');
-        }).always(function() {
-            button.prop('disabled', false).html(originalText);
-        });
+            })
+            .fail(function() {
+                showLMBModal('error', 'An error occurred while saving.');
+            })
+            .always(function() {
+                submitBtn.prop('disabled', false).html('<i class="fas fa-save"></i> Save Package');
+            });
     });
 
-    // Populate form for editing
-    packagesGrid.on('click', '.lmb-edit-package', function() {
+    // Handle Edit Button Click
+    packageList.on('click', '.lmb-edit-package-btn', function() {
         const card = $(this).closest('.lmb-package-card');
-        
-        $('#package-id').val(card.data('package-id'));
-        $('#package-name').val(card.find('.lmb-package-title').text());
-        $('#package-price').val(card.data('price'));
-        $('#package-points').val(card.data('points'));
-        $('#package-cost-per-ad').val(card.data('cost-per-ad'));
-        $('#package-description').val(card.data('description'));
-        
-        $('#lmb-save-package-btn').html('<i class="fas fa-save"></i> Update Package');
-        $('#lmb-cancel-edit-btn').show();
-        
-        $('html, body').animate({ scrollTop: widget.offset().top - 50 }, 300);
-    });
-
-    function resetForm() {
-        form[0].reset();
-        $('#package-id').val('');
-        $('#lmb-save-package-btn').html('<i class="fas fa-save"></i> Save Package');
-        $('#lmb-cancel-edit-btn').hide();
-    }
-    
-    // Cancel edit
-    widget.on('click', '#lmb-cancel-edit-btn', resetForm);
-
-    // Delete package
-    packagesGrid.on('click', '.lmb-delete-package', function() {
-        if (!confirm('Are you sure you want to permanently delete this package?')) return;
-
-        const button = $(this);
-        const card = button.closest('.lmb-package-card');
         const packageId = card.data('package-id');
-        
-        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
+        // Fetch full package data to populate the form accurately
         $.post(lmb_ajax_params.ajaxurl, {
-            action: 'lmb_delete_package',
+            action: 'lmb_get_package_data',
             nonce: lmb_ajax_params.nonce,
             package_id: packageId
         }).done(function(response) {
             if (response.success) {
+                const pkg = response.data.package;
+                $('#package_id').val(pkg.id);
+                $('#package_name').val(pkg.name);
+                $('#package_price').val(pkg.price);
+                $('#package_points').val(pkg.points);
+                $('#package_cost').val(pkg.cost_per_ad);
+                $('#package_desc').val(pkg.description);
+                
+                $('html, body').animate({ scrollTop: form.offset().top - 50 }, 300);
+            } else {
+                showLMBModal('error', response.data.message || 'Could not fetch package data.');
+            }
+        }).fail(function() {
+            showLMBModal('error', 'An error occurred while fetching package data.');
+        });
+    });
+
+    // Handle Delete Button Click
+    packageList.on('click', '.lmb-delete-package-btn', function() {
+        if (!confirm('Are you sure you want to delete this package?')) return;
+
+        const card = $(this).closest('.lmb-package-card');
+        const packageId = card.data('package-id');
+        card.css('opacity', 0.5);
+
+        $.post(lmb_ajax_params.ajaxurl, {
+            action: 'lmb_delete_package',
+            nonce: lmb_ajax_params.nonce,
+            package_id: packageId,
+        }).done(function(response) {
+            if (response.success) {
                 showLMBModal('success', response.data.message);
-                card.fadeOut(400, function() { 
-                    $(this).remove(); 
-                    if (packagesGrid.children().length === 0) {
-                        packagesGrid.html('<div class="lmb-no-packages"><p>No packages found.</p></div>');
-                    }
-                });
+                card.fadeOut(300, function() { $(this).remove(); });
             } else {
                 showLMBModal('error', response.data.message);
-                button.prop('disabled', false).html('<i class="fas fa-trash"></i> Delete');
+                card.css('opacity', 1);
             }
+        }).fail(function() {
+            showLMBModal('error', 'An error occurred during deletion.');
+            card.css('opacity', 1);
         });
     });
     
-    // Helper to escape HTML to prevent XSS issues when re-rendering data
-    function escapeHtml(text) {
-        if (typeof text !== 'string') return '';
-        var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    // Clear Form Button
+    clearBtn.on('click', clearForm);
+
+    function clearForm() {
+        form[0].reset();
+        $('#package_id').val('');
     }
 });

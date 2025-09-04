@@ -127,6 +127,7 @@ function lmb_register_all_assets() {
         'lmb-active-clients-v2'         => 'assets/css/lmb-active-clients-v2.css',
         'lmb-inactive-clients-v2'       => 'assets/css/lmb-inactive-clients-v2.css',
         'lmb-payments-management'     => 'assets/css/lmb-payments-management.css',
+        'lmb-packages-editor'         => 'assets/css/lmb-packages-editor.css',
     ];
 
     foreach ($styles as $handle => $path) {

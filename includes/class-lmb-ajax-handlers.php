@@ -27,7 +27,7 @@ class LMB_Ajax_Handlers {
             'lmb_admin_generate_accuse',
             'lmb_admin_upload_temporary_journal',
             'lmb_update_password_v2',
-            'lmb_fetch_public_ads',
+            'lmb_fetch_public_ads', 'lmb_get_package_data',
             'lmb_fetch_newspapers_v2', 'lmb_fetch_payments',
             
         ];
@@ -1756,4 +1756,31 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
     }
 
+    // --- NEW FUNCTION: fetch package data for admin ---
+    private static function lmb_get_package_data() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access denied']);
+        }
+        
+        $package_id = isset($_POST['package_id']) ? intval($_POST['package_id']) : 0;
+        if (!$package_id) {
+            wp_send_json_error(['message' => 'Invalid package ID']);
+        }
+        
+        $package_post = get_post($package_id);
+        if (!$package_post || $package_post->post_type !== 'lmb_package') {
+            wp_send_json_error(['message' => 'Package not found']);
+        }
+        
+        $package_data = [
+            'id'          => $package_post->ID,
+            'name'        => $package_post->post_title,
+            'description' => $package_post->post_content,
+            'price'       => get_post_meta($package_id, 'price', true),
+            'points'      => get_post_meta($package_id, 'points', true),
+            'cost_per_ad' => get_post_meta($package_id, 'cost_per_ad', true),
+        ];
+
+        wp_send_json_success(['package' => $package_data]);
+    }
 }
