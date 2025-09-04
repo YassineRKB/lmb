@@ -1523,6 +1523,7 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['message' => 'Newspaper uploaded. Associated with ' . $updated_count . ' ads. Old temporary files have been deleted.']);
     }
 
+    // --- NEW FUNCTION for Public Ads Directory ---
     private static function lmb_fetch_public_ads() {
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
         parse_str($_POST['filters'] ?? '', $filters);
@@ -1534,12 +1535,19 @@ class LMB_Ajax_Handlers {
             'paged' => $paged,
             'meta_query' => ['relation' => 'AND'],
         ];
-
-        if (!empty($filters['search'])) {
-            $args['s'] = sanitize_text_field($filters['search']);
+        
+        if (!empty($filters['filter_ref']) && is_numeric($filters['filter_ref'])) {
+            $args['p'] = intval($filters['filter_ref']);
         }
-        if (!empty($filters['type'])) {
-            $args['meta_query'][] = ['key' => 'ad_type', 'value' => sanitize_text_field($filters['type'])];
+        if (!empty($filters['filter_company'])) {
+            $args['meta_query'][] = ['key' => 'company_name', 'value' => sanitize_text_field($filters['filter_company']), 'compare' => 'LIKE'];
+        }
+
+        if (!empty($filters['filter_type'])) {
+            $args['meta_query'][] = ['key' => 'ad_type', 'value' => sanitize_text_field($filters['filter_type'])];
+        }
+        if (!empty($filters['filter_date'])) {
+            $args['date_query'] = [['year' => date('Y', strtotime($filters['filter_date'])), 'month' => date('m', strtotime($filters['filter_date'])), 'day' => date('d', strtotime($filters['filter_date']))]];
         }
 
         $query = new WP_Query($args);
