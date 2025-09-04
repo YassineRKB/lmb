@@ -101,6 +101,7 @@ function lmb_register_all_assets() {
         'lmb-active-clients-v2'       => 'assets/js/lmb-active-clients-v2.js',
         'lmb-profile-v2'              => 'assets/js/lmb-profile-v2.js',
         'lmb-ads-directory-v2'        => 'assets/js/lmb-ads-directory-v2.js',
+        'lmb-newspaper-directory-v2'  => 'assets/js/lmb-newspaper-directory-v2.js',
     ];
 
     foreach ($scripts as $handle => $path) {
@@ -121,6 +122,7 @@ function lmb_register_all_assets() {
         'lmb-legal-ads-management-v2'   => 'assets/css/lmb-legal-ads-management-v2.css',
         'lmb-my-legal-ads-v2'           => 'assets/css/lmb-my-legal-ads-v2.css',
         'lmb-ads-directory-v2'          => 'assets/css/lmb-ads-directory-v2.css',
+        'lmb-newspaper-directory-v2'    => 'assets/css/lmb-newspaper-directory-v2.css',
     ];
 
     foreach ($styles as $handle => $path) {

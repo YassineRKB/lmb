@@ -28,6 +28,7 @@ class LMB_Ajax_Handlers {
             'lmb_admin_upload_temporary_journal',
             'lmb_update_password_v2',
             'lmb_fetch_public_ads',
+            'lmb_fetch_newspapers_v2',
             
         ];
         // --- MODIFICATION: Make auth actions public ---
@@ -1585,4 +1586,72 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
     }
 
+    // --- NEW FUNCTION for Newspaper Directory ---
+    private static function lmb_fetch_newspapers_v2() {
+        $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
+        parse_str($_POST['filters'] ?? '', $filters);
+
+        $args = [
+            'post_type' => 'lmb_newspaper',
+            'post_status' => 'publish',
+            'posts_per_page' => 15,
+            'paged' => $paged,
+            'orderby' => 'date',
+            'order' => 'DESC'
+        ];
+
+        if (!empty($filters['s'])) {
+            $args['s'] = sanitize_text_field($filters['s']);
+        }
+
+        if (!empty($filters['filter_ref']) && is_numeric($filters['filter_ref'])) {
+            $args['p'] = intval($filters['filter_ref']);
+        }
+        
+        if (!empty($filters['filter_date'])) {
+            $args['date_query'] = [[
+                'year'  => date('Y', strtotime($filters['filter_date'])),
+                'month' => date('m', strtotime($filters['filter_date'])),
+                'day'   => date('d', strtotime($filters['filter_date'])),
+            ]];
+        }
+
+        $query = new WP_Query($args);
+        $html = '';
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $pdf_id = get_post_meta(get_the_ID(), 'newspaper_pdf', true);
+                $pdf_url = wp_get_attachment_url($pdf_id);
+                
+                $html .= '<tr>';
+                $html .= '<td>' . get_the_ID() . '</td>';
+                $html .= '<td>' . esc_html(get_the_title()) . '</td>';
+                $html .= '<td>' . esc_html(get_the_date()) . '</td>';
+                $html .= '<td class="lmb-actions-cell">';
+                if ($pdf_url) {
+                    $html .= '<a target="_blank" href="'.esc_url($pdf_url).'" class="lmb-btn lmb-btn-sm lmb-btn-view"><i class="fas fa-eye"></i> View</a>';
+                    $html .= '<a href="'.esc_url($pdf_url).'" class="lmb-btn lmb-btn-sm lmb-btn-primary" download><i class="fas fa-download"></i> Download</a>';
+                }
+                $html .= '</td>';
+                $html .= '</tr>';
+            }
+        } else {
+            $html = '<tr><td colspan="4" style="text-align:center;">No newspapers found matching your search.</td></tr>';
+        }
+
+        $pagination_html = paginate_links([
+            'base' => add_query_arg('paged', '%#%'),
+            'format' => '',
+            'current' => $paged,
+            'total' => $query->max_num_pages,
+            'prev_text' => '&laquo;',
+            'next_text' => '&raquo;',
+            'add_args' => false
+        ]);
+
+        wp_reset_postdata();
+        wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
+    }
 }
