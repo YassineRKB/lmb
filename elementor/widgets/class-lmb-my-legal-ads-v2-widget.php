@@ -28,7 +28,7 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
     }
 
     public function get_style_depends() {
-        return ['lmb-user-widgets-v2'];
+        return ['lmb-my-legal-ads-v2'];
     }
 
     protected function _register_controls() {
@@ -139,14 +139,12 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- This will be populated by JavaScript -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
                 
                 <div class="lmb-pagination-container">
-                    <!-- Pagination will be loaded here by JS -->
-                </div>
+                    </div>
 
                 <?php if (!empty($view_more_url)): ?>
                 <div class="lmb-view-more-container" style="text-align: center; margin-top: 20px;">

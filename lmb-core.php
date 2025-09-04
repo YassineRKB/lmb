@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LMB Core
  * Description: Elementor-first legal ads platform core.
- * Version: 5.3.90
+ * Version: 5.3.91
  * Author: Yassine Rakibi
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -100,6 +100,7 @@ function lmb_register_all_assets() {
         'lmb-inactive-clients-v2'     => 'assets/js/lmb-inactive-clients-v2.js',
         'lmb-active-clients-v2'       => 'assets/js/lmb-active-clients-v2.js',
         'lmb-profile-v2'              => 'assets/js/lmb-profile-v2.js',
+        'lmb-ads-directory-v2'        => 'assets/js/lmb-ads-directory-v2.js',
     ];
 
     foreach ($scripts as $handle => $path) {
@@ -118,6 +119,8 @@ function lmb_register_all_assets() {
         'lmb-auth-v2'                   => 'assets/css/lmb-auth-v2.css',
         'lmb-profile-v2'                => 'assets/css/lmb-profile-v2.css',
         'lmb-legal-ads-management-v2'   => 'assets/css/lmb-legal-ads-management-v2.css',
+        'lmb-my-legal-ads-v2'           => 'assets/css/lmb-my-legal-ads-v2.css',
+        'lmb-ads-directory-v2'          => 'assets/css/lmb-ads-directory-v2.css',
     ];
 
     foreach ($styles as $handle => $path) {

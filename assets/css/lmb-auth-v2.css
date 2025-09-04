@@ -48,7 +48,7 @@
 }
 
 .lmb-form-group {
-    margin-bottom: 20px;
+    margin-bottom: 5px;
 }
 
 .lmb-form-group label {
@@ -61,7 +61,7 @@
 
 .lmb-input {
     width: 100%;
-    padding: 12px 15px;
+    padding: 5px 5px;
     border: 1px solid #ced4da;
     border-radius: 6px;
     font-size: 15px;

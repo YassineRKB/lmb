@@ -24,9 +24,10 @@ class LMB_Ajax_Handlers {
             'lmb_fetch_active_clients_v2',
             'lmb_lock_active_client_v2','lmb_update_profile_v2',
             'lmb_update_password_v2',
-            'lmb_admin_generate_accuse', // New action
-            'lmb_admin_upload_temporary_journal', // New action
+            'lmb_admin_generate_accuse',
+            'lmb_admin_upload_temporary_journal',
             'lmb_update_password_v2',
+            'lmb_fetch_public_ads',
             
         ];
         // --- MODIFICATION: Make auth actions public ---
@@ -1520,6 +1521,60 @@ class LMB_Ajax_Handlers {
         wp_reset_postdata();
         
         wp_send_json_success(['message' => 'Newspaper uploaded. Associated with ' . $updated_count . ' ads. Old temporary files have been deleted.']);
+    }
+
+    private static function lmb_fetch_public_ads() {
+        $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
+        parse_str($_POST['filters'] ?? '', $filters);
+
+        $args = [
+            'post_type' => 'lmb_legal_ad',
+            'post_status' => 'publish', // Only published ads
+            'posts_per_page' => 15,
+            'paged' => $paged,
+            'meta_query' => ['relation' => 'AND'],
+        ];
+
+        if (!empty($filters['search'])) {
+            $args['s'] = sanitize_text_field($filters['search']);
+        }
+        if (!empty($filters['type'])) {
+            $args['meta_query'][] = ['key' => 'ad_type', 'value' => sanitize_text_field($filters['type'])];
+        }
+
+        $query = new WP_Query($args);
+        $html = '';
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $ad_id = get_the_ID();
+                $html .= '<tr>';
+                $html .= '<td>' . $ad_id . '</td>';
+                $html .= '<td>' . esc_html(get_post_meta($ad_id, 'company_name', true) ?: get_the_title()) . '</td>';
+                $html .= '<td>' . esc_html(get_post_meta($ad_id, 'ad_type', true)) . '</td>';
+                $html .= '<td>' . get_the_date() . '</td>';
+                $html .= '<td class="lmb-actions-cell">';
+                $html .= '<a href="' . esc_url(get_permalink($ad_id)) . '" class="lmb-btn lmb-btn-sm lmb-btn-view"><i class="fas fa-eye"></i> View</a>';
+                $html .= '</td>';
+                $html .= '</tr>';
+            }
+        } else {
+            $html = '<tr><td colspan="5" style="text-align:center;">No ads found matching your criteria.</td></tr>';
+        }
+
+        $pagination_html = paginate_links([
+            'base' => add_query_arg('paged', '%#%'),
+            'format' => '',
+            'current' => $paged,
+            'total' => $query->max_num_pages,
+            'prev_text' => '&laquo;',
+            'next_text' => '&raquo;',
+            'add_args' => false
+        ]);
+
+        wp_reset_postdata();
+        wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
     }
 
 }
