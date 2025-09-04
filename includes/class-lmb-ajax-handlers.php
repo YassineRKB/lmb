@@ -1095,6 +1095,10 @@ class LMB_Ajax_Handlers {
     }
     // --- NEW FUNCTION: v2 fetch inactive clients with search, pagination, and approve/deny actions ---
     private static function lmb_fetch_inactive_clients_v2() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access Denied.'], 403);
+        }
+
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
         $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 5;
         $search_term = isset($_POST['search_term']) ? sanitize_text_field($_POST['search_term']) : '';
@@ -1104,11 +1108,7 @@ class LMB_Ajax_Handlers {
             'number' => $per_page,
             'paged' => $paged,
             'meta_query' => [
-                [
-                    'key' => 'lmb_user_status',
-                    'value' => 'inactive',
-                    'compare' => '=',
-                ]
+                ['key' => 'lmb_user_status', 'value' => 'inactive', 'compare' => '=']
             ],
             'orderby' => 'user_registered',
             'order' => 'DESC'
@@ -1128,12 +1128,13 @@ class LMB_Ajax_Handlers {
             foreach ($users as $user) {
                 $user_id = $user->ID;
                 $client_type = get_user_meta($user_id, 'lmb_client_type', true);
-                $name = $client_type === 'professional' ? get_user_meta($user_id, 'company_name', true) : $user->display_name;
+                $name = ($client_type === 'professional' && get_user_meta($user_id, 'company_name', true)) ? get_user_meta($user_id, 'company_name', true) : $user->display_name;
+                $edit_url = home_url('/profile/' . $user_id . '/');
                 
                 echo '<div class="lmb-client-card" data-user-id="' . $user_id . '">';
                     echo '<div class="lmb-client-info">';
                         echo '<div class="lmb-client-header">';
-                            echo '<span class="lmb-client-name">' . esc_html($name) . '</span>';
+                            echo '<span class="lmb-client-name"><a href="' . esc_url($edit_url) . '">' . esc_html($name) . '</a></span>'; // LINK ADDED HERE
                             echo '<span class="lmb-client-type-badge ' . esc_attr($client_type) . '">' . esc_html($client_type) . '</span>';
                         echo '</div>';
                         echo '<div class="lmb-client-details">';
@@ -1199,6 +1200,10 @@ class LMB_Ajax_Handlers {
 
     // --- NEW FUNCTION: v2 fetch active clients with search, filters, pagination, and lock action ---
     private static function lmb_fetch_active_clients_v2() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Access Denied.'], 403);
+        }
+
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
         $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 10;
         parse_str($_POST['filters'] ?? '', $filters);
@@ -1220,7 +1225,6 @@ class LMB_Ajax_Handlers {
         
         $search_queries = [];
 
-        // Apply filters
         if (!empty($filters['filter_id']) && is_numeric($filters['filter_id'])) {
              $args['include'] = [intval($filters['filter_id'])];
         }
@@ -1254,9 +1258,8 @@ class LMB_Ajax_Handlers {
                 $roles = (array) $user->roles;
                 $is_admin = in_array('administrator', $roles);
                 $client_type = get_user_meta($user_id, 'lmb_client_type', true);
-                $name = ($client_type === 'professional') ? get_user_meta($user_id, 'company_name', true) : $user->display_name;
+                $name = ($client_type === 'professional' && get_user_meta($user_id, 'company_name', true)) ? get_user_meta($user_id, 'company_name', true) : $user->display_name;
                 
-                // Count published ads for this user
                 $ad_count = count_user_posts($user_id, 'lmb_legal_ad', true);
 
                 echo '<tr>';
@@ -1276,9 +1279,10 @@ class LMB_Ajax_Handlers {
                 echo '<td>' . ($is_admin ? '-' : esc_html(LMB_Points::get_balance($user_id))) . '</td>';
 
                 echo '<td class="lmb-actions-cell">';
-                // Example edit URL. You'll need to create this page.
-                $edit_url = admin_url('user-edit.php?user_id=' . $user_id); // Standard WordPress profile page
+                // --- THIS IS THE CORRECTED LINE ---
+                $edit_url = home_url('/profile/' . $user_id . '/');
                 echo '<a href="' . esc_url($edit_url) . '" class="lmb-btn lmb-btn-icon lmb-btn-primary" title="Edit User"><i class="fas fa-user-edit"></i></a>';
+                
                 if (!$is_admin) {
                     echo '<button class="lmb-btn lmb-btn-icon lmb-btn-warning lmb-lock-user-btn" data-user-id="' . $user_id . '" title="Lock User (set to inactive)"><i class="fas fa-user-lock"></i></button>';
                 }

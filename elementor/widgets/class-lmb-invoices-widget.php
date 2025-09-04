@@ -32,7 +32,7 @@ class LMB_Invoices_Widget extends Widget_Base {
         $payments_query = new WP_Query([
             'post_type' => 'lmb_payment',
             'post_status' => 'publish',
-            'posts_per_page' => 10,
+            'posts_per_page' => 5,
             'paged' => $paged,
             'meta_query' => [['key' => 'user_id', 'value' => $user_id]],
             'orderby' => 'date',

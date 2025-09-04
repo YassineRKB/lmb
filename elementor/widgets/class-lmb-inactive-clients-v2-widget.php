@@ -29,7 +29,7 @@ class LMB_Inactive_Clients_V2_Widget extends Widget_Base {
     }
 
     public function get_style_depends() {
-        return ['lmb-admin-widgets-v2'];
+        return ['lmb-inactive-clients-v2'];
     }
 
     protected function _register_controls() {
@@ -77,12 +77,10 @@ class LMB_Inactive_Clients_V2_Widget extends Widget_Base {
                 </div>
 
                 <div class="lmb-inactive-clients-list">
-                    <!-- Client cards will be loaded here by JavaScript -->
-                </div>
+                    </div>
 
                 <div class="lmb-pagination-container" style="margin-top: 20px;">
-                    <!-- Pagination will be loaded here by JavaScript -->
-                </div>
+                    </div>
             </div>
         </div>
         <?php

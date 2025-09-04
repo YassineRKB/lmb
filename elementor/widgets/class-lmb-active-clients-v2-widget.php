@@ -29,7 +29,7 @@ class LMB_Active_Clients_V2_Widget extends Widget_Base {
     }
 
     public function get_style_depends() {
-        return ['lmb-admin-widgets-v2'];
+        return ['lmb-active-clients-v2'];
     }
 
     protected function _register_controls() {
@@ -100,13 +100,11 @@ class LMB_Active_Clients_V2_Widget extends Widget_Base {
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- User rows will be loaded here by JavaScript -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
                  <div class="lmb-pagination-container" style="margin-top: 20px;">
-                    <!-- Pagination will be loaded here by JavaScript -->
-                </div>
+                    </div>
             </div>
         </div>
         <?php

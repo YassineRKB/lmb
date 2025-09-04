@@ -1,0 +1,174 @@
+/* FILE: assets/css/lmb-inactive-clients-v2.css */
+
+/* --- Base Widget Container --- */
+.lmb-inactive-clients-v2 {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* --- Widget Header --- */
+.lmb-inactive-clients-v2 .lmb-widget-header {
+    background: #fff;
+    color: #333;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 8px 8px 0 0;
+}
+
+.lmb-inactive-clients-v2 .lmb-widget-header h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 400;
+    color: #d78808;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Widget Content --- */
+.lmb-inactive-clients-v2 .lmb-widget-content {
+    padding: 25px;
+}
+
+/* --- Filters --- */
+.lmb-inactive-clients-v2 .lmb-filters-box {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.lmb-inactive-clients-v2 .lmb-filter-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 15px;
+}
+
+.lmb-inactive-clients-v2 .lmb-filter-input {
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- Client List & Cards --- */
+.lmb-inactive-clients-v2 .lmb-inactive-clients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.lmb-inactive-clients-v2 .lmb-client-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    transition: box-shadow 0.2s ease-in-out;
+}
+.lmb-inactive-clients-v2 .lmb-client-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.lmb-inactive-clients-v2 .lmb-client-info {
+    flex-grow: 1;
+}
+
+.lmb-inactive-clients-v2 .lmb-client-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.lmb-inactive-clients-v2 .lmb-client-name {
+    font-size: 18px;
+    font-weight: 500;
+    color: #000;
+}
+
+.lmb-inactive-clients-v2 .lmb-client-name a {
+    text-decoration: none;
+    color: inherit;
+}
+.lmb-inactive-clients-v2 .lmb-client-name a:hover {
+    color: #d78808;
+}
+
+.lmb-inactive-clients-v2 .lmb-client-type-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.lmb-inactive-clients-v2 .lmb-client-type-badge.regular { background-color: #e0f2fe; color: #0c4a6e; }
+.lmb-inactive-clients-v2 .lmb-client-type-badge.professional { background-color: #dcfce7; color: #166534; }
+
+.lmb-inactive-clients-v2 .lmb-client-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px 20px;
+    font-size: 14px;
+}
+
+.lmb-inactive-clients-v2 .lmb-client-details div {
+    color: #6c757d;
+}
+
+.lmb-inactive-clients-v2 .lmb-client-details strong {
+    font-weight: 500;
+    color: #343a40;
+    margin-left: 5px;
+}
+
+.lmb-inactive-clients-v2 .lmb-client-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* --- Buttons --- */
+.lmb-inactive-clients-v2 .lmb-btn {
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-decoration: none;
+}
+.lmb-inactive-clients-v2 .lmb-btn-success { background-color: #28a745; border-color: #28a745; color: #fff; }
+.lmb-inactive-clients-v2 .lmb-btn-success:hover { background-color: #218838; border-color: #1e7e34; }
+.lmb-inactive-clients-v2 .lmb-btn-danger { background-color: #dc3545; border-color: #dc3545; color: #fff; }
+.lmb-inactive-clients-v2 .lmb-btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
+.lmb-inactive-clients-v2 .lmb-btn-view { background-color: #f0f0f1; border: 1px solid #ddd; color: #333; }
+.lmb-inactive-clients-v2 .lmb-btn-view:hover { background-color: #e2e6ea; }
+
+/* --- Pagination --- */
+.lmb-inactive-clients-v2 .lmb-pagination-container a.page-numbers, 
+.lmb-inactive-clients-v2 .lmb-pagination-container span.page-numbers {
+    display: inline-block;
+    padding: 8px 14px;
+    margin: 0 4px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #4a5568;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+}

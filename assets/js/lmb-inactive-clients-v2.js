@@ -1,3 +1,4 @@
+// FILE: assets/js/lmb-inactive-clients-v2.js
 jQuery(document).ready(function($) {
     
     $('.lmb-inactive-clients-v2').each(function() {
@@ -8,7 +9,6 @@ jQuery(document).ready(function($) {
         const resetButton = widget.find('#lmb-inactive-client-reset');
         const clientsPerPage = widget.data('per-page');
 
-        // Debounce function to prevent firing AJAX on every keystroke
         const debounce = (func, delay) => {
             let timeout;
             return function(...args) {
@@ -18,12 +18,11 @@ jQuery(document).ready(function($) {
             };
         };
 
-        // Main function to fetch clients
         const fetchClients = (page = 1, searchTerm = '') => {
             clientList.html('<div style="text-align:center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading clients...</div>');
             
             $.post(lmb_ajax_params.ajaxurl, {
-                action: 'lmb_fetch_inactive_clients_v2', // We will create this action next
+                action: 'lmb_fetch_inactive_clients_v2',
                 nonce: lmb_ajax_params.nonce,
                 paged: page,
                 per_page: clientsPerPage,
@@ -42,19 +41,14 @@ jQuery(document).ready(function($) {
             });
         };
 
-        // --- EVENT LISTENERS ---
-
-        // Handle search input (with a 500ms debounce)
         const debouncedFetch = debounce(() => fetchClients(1, searchInput.val()), 500);
         searchInput.on('keyup', debouncedFetch);
         
-        // Handle search reset
         resetButton.on('click', function() {
             searchInput.val('');
             fetchClients(1);
         });
 
-        // Handle pagination clicks
         paginationContainer.on('click', 'a.page-numbers', function(e) {
             e.preventDefault();
             const url = new URL($(this).attr('href'), window.location.origin);
@@ -62,7 +56,7 @@ jQuery(document).ready(function($) {
             fetchClients(page, searchInput.val());
         });
 
-        // Handle Approve/Deny actions
+        // --- MODIFIED: Handle Approve/Deny actions with modals ---
         clientList.on('click', '.lmb-client-action-btn', function(e) {
             e.preventDefault();
             const button = $(this);
@@ -78,23 +72,28 @@ jQuery(document).ready(function($) {
             button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
 
             $.post(lmb_ajax_params.ajaxurl, {
-                action: 'lmb_manage_inactive_client_v2', // We will create this action next
+                action: 'lmb_manage_inactive_client_v2',
                 nonce: lmb_ajax_params.nonce,
                 user_id: userId,
                 approval_action: approvalAction
             }).done(function(response) {
                 if (response.success) {
+                    showLMBModal('success', response.data.message);
                     card.fadeOut(400, function() { $(this).remove(); });
                 } else {
-                    alert(response.data.message || 'An error occurred.');
+                    showLMBModal('error', response.data.message || 'An error occurred.');
                     card.css('opacity', 1);
-                    const originalIcon = approvalAction === 'approve' ? '<i class="fas fa-check"></i> Approve' : '<i class="fas fa-times"></i> Deny';
-                    button.html(originalIcon).prop('disabled', false);
+                    const originalText = approvalAction === 'approve' ? '<i class="fas fa-check"></i> Approve' : '<i class="fas fa-times"></i> Deny';
+                    button.html(originalText).prop('disabled', false);
                 }
+            }).fail(function() {
+                showLMBModal('error', 'A server error occurred. Please try again.');
+                card.css('opacity', 1);
+                const originalText = approvalAction === 'approve' ? '<i class="fas fa-check"></i> Approve' : '<i class="fas fa-times"></i> Deny';
+                button.html(originalText).prop('disabled', false);
             });
         });
 
-        // Initial load of clients
         fetchClients();
     });
 });

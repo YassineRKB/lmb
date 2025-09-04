@@ -123,6 +123,8 @@ function lmb_register_all_assets() {
         'lmb-my-legal-ads-v2'           => 'assets/css/lmb-my-legal-ads-v2.css',
         'lmb-ads-directory-v2'          => 'assets/css/lmb-ads-directory-v2.css',
         'lmb-newspaper-directory-v2'    => 'assets/css/lmb-newspaper-directory-v2.css',
+        'lmb-active-clients-v2'         => 'assets/css/lmb-active-clients-v2.css',
+        'lmb-inactive-clients-v2'       => 'assets/css/lmb-inactive-clients-v2.css',
     ];
 
     foreach ($styles as $handle => $path) {

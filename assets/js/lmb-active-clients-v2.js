@@ -1,3 +1,4 @@
+// FILE: assets/js/lmb-active-clients-v2.js
 jQuery(document).ready(function($) {
     
     $('.lmb-active-clients-v2').each(function() {
@@ -7,7 +8,6 @@ jQuery(document).ready(function($) {
         const filtersForm = widget.find('#lmb-active-clients-filters');
         const clientsPerPage = widget.data('per-page');
 
-        // Debounce function
         const debounce = (func, delay) => {
             let timeout;
             return function(...args) {
@@ -17,14 +17,13 @@ jQuery(document).ready(function($) {
             };
         };
 
-        // Main function to fetch clients
         const fetchClients = (page = 1) => {
             tableBody.html('<tr><td colspan="7" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading clients...</td></tr>');
             
             const formData = filtersForm.serialize();
 
             $.post(lmb_ajax_params.ajaxurl, {
-                action: 'lmb_fetch_active_clients_v2', // We will create this action next
+                action: 'lmb_fetch_active_clients_v2',
                 nonce: lmb_ajax_params.nonce,
                 paged: page,
                 per_page: clientsPerPage,
@@ -43,21 +42,16 @@ jQuery(document).ready(function($) {
             });
         };
 
-        // --- EVENT LISTENERS ---
-
-        // Handle filtering (with a 500ms debounce)
         const debouncedFetch = debounce(() => fetchClients(1), 500);
         filtersForm.on('keyup change', 'input, select', function(e) {
             e.preventDefault();
             debouncedFetch();
         });
         
-        // Handle form reset
         filtersForm.on('reset', function() {
             setTimeout(() => fetchClients(1), 1);
         });
 
-        // Handle pagination clicks
         paginationContainer.on('click', 'a.page-numbers', function(e) {
             e.preventDefault();
             const url = new URL($(this).attr('href'), window.location.origin);
@@ -65,7 +59,7 @@ jQuery(document).ready(function($) {
             fetchClients(page);
         });
 
-        // Handle Lock User action
+        // --- MODIFIED: Handle Lock User action with Modal ---
         tableBody.on('click', '.lmb-lock-user-btn', function(e) {
             e.preventDefault();
             const button = $(this);
@@ -80,21 +74,25 @@ jQuery(document).ready(function($) {
             button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
 
             $.post(lmb_ajax_params.ajaxurl, {
-                action: 'lmb_lock_active_client_v2', // We will create this action next
+                action: 'lmb_lock_active_client_v2',
                 nonce: lmb_ajax_params.nonce,
                 user_id: userId,
             }).done(function(response) {
                 if (response.success) {
+                    showLMBModal('success', response.data.message || 'User has been locked.');
                     row.fadeOut(400, function() { $(this).remove(); });
                 } else {
-                    alert(response.data.message || 'An error occurred.');
+                    showLMBModal('error', response.data.message || 'An error occurred.');
                     row.css('opacity', 1);
                     button.html('<i class="fas fa-user-lock"></i>').prop('disabled', false);
                 }
+            }).fail(function() {
+                showLMBModal('error', 'A server error occurred. Please try again.');
+                row.css('opacity', 1);
+                button.html('<i class="fas fa-user-lock"></i>').prop('disabled', false);
             });
         });
 
-        // Initial load of clients
         fetchClients();
     });
 });
