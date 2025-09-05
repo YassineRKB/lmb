@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Ads_Directory_Widget extends Widget_Base {
     public function get_name() { return 'lmb_ads_directory'; }
-    public function get_title() { return __('LMB Ads Directory V2','lmb-core'); }
+    //public function get_title() { return __('LMB Ads Directory V2','lmb-core'); }
     public function get_title() { return __('Répertoire des Annonces LMB V2','lmb-core'); }
     public function get_icon() { return 'eicon-post-list'; }
     public function get_categories() { return ['lmb-user-widgets-v2']; }

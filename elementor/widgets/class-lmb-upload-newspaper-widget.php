@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Upload_Newspaper_Widget extends Widget_Base {
     public function get_name() { return 'lmb_upload_newspaper'; }
-    public function get_title(){ return __('LMB Upload Final Newspaper','lmb-core'); }
+    //public function get_title(){ return __('LMB Upload Final Newspaper','lmb-core'); }
     public function get_title(){ return __('LMB Télécharger Journal Final','lmb-core'); }
     public function get_icon() { return 'eicon-upload'; }
     public function get_categories(){ return ['lmb-admin-widgets-v2']; }

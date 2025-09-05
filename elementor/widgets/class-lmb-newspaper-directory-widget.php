@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Newspaper_Directory_Widget extends Widget_Base {
     public function get_name() { return 'lmb_newspaper_directory'; }
-    public function get_title() { return __('LMB Newspaper Directory V2','lmb-core'); }
+    //public function get_title() { return __('LMB Newspaper Directory V2','lmb-core'); }
     public function get_title() { return __('Répertoire des Journaux LMB V2','lmb-core'); }
     public function get_icon()  { return 'eicon-library-upload'; }
     

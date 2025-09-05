@@ -5,9 +5,8 @@ use Elementor\Widget_Base;
 if (!defined('ABSPATH')) exit;
 
 class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
-    // ... (get_name, get_title, etc. remain the same) ...
     public function get_name() { return 'lmb_upload_bank_proof'; }
-    public function get_title(){ return __('LMB Upload Bank Proof','lmb-core'); }
+    //public function get_title(){ return __('LMB Upload Bank Proof','lmb-core'); }
     public function get_title(){ return __('LMB Télécharger Preuve Bancaire','lmb-core'); }
     public function get_icon() { return 'eicon-upload'; }
     public function get_categories(){ return ['lmb-user-widgets-v2']; }

@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Notifications_Widget extends Widget_Base {
     public function get_name() { return 'lmb_notifications'; }
-    public function get_title(){ return __('LMB Notifications','lmb-core'); }
+    //public function get_title(){ return __('LMB Notifications','lmb-core'); }
     public function get_title(){ return __('Notifications LMB','lmb-core'); }
     public function get_icon() { return 'eicon-bell'; }
     public function get_categories(){ return ['lmb-user-widgets', 'lmb-admin-widgets']; }

@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Admin_Stats_Widget extends Widget_Base {
     public function get_name() { return 'lmb_admin_stats'; }
-    public function get_title(){ return __('LMB Admin Stats & Overview','lmb-core'); }
+    //public function get_title(){ return __('LMB Admin Stats & Overview','lmb-core'); }
     public function get_title(){ return __('Statistiques et Aperçu Admin LMB','lmb-core'); }
     public function get_icon() { return 'eicon-dashboard'; }
     public function get_categories(){ return ['lmb-admin-widgets-v2']; } // Changed category

@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
     public function get_name() { return 'lmb_legal_ads_management_v2'; }
-    public function get_title() { return __('LMB Legal Ads Management V2', 'lmb-core'); }
+    //public function get_title() { return __('LMB Legal Ads Management V2', 'lmb-core'); }
     public function get_title() { return __('Gestion des Annonces Légales LMB V2', 'lmb-core'); }
     public function get_icon() { return 'eicon-table'; }
     public function get_categories() { return ['lmb-admin-widgets-v2']; }

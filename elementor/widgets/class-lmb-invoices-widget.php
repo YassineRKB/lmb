@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Invoices_Widget extends Widget_Base {
     public function get_name() { return 'lmb_invoices'; }
-    public function get_title() { return __('LMB Payment Invoices', 'lmb-core'); }
+    //public function get_title() { return __('LMB Payment Invoices', 'lmb-core'); }
     public function get_title() { return __('Factures de Paiement LMB', 'lmb-core'); }
     public function get_icon() { return 'eicon-file-download'; }
     public function get_categories() { return ['lmb-user-widgets-v2']; } // Changed category
