@@ -31,11 +31,11 @@ jQuery(document).ready(function($) {
                     tableBody.html(response.data.html);
                     paginationContainer.html(response.data.pagination);
                 } else {
-                    tableBody.html('<tr><td colspan="7" style="text-align:center;">' + (response.data.message || 'Could not load payments.') + '</td></tr>');
+                    tableBody.html('<tr><td colspan="7" style="text-align:center;">' + (response.data.message || 'Impossible de charger les paiements.') + '</td></tr>');
                     paginationContainer.empty();
                 }
             }).fail(function() {
-                tableBody.html('<tr><td colspan="7" style="text-align:center;">An error occurred. Please try again.</td></tr>');
+                tableBody.html('<tr><td colspan="7" style="text-align:center;">Une erreur s\'est produite. Veuillez réessayer.</td></tr>');
                 paginationContainer.empty();
             });
         };
@@ -65,10 +65,10 @@ jQuery(document).ready(function($) {
             let reason = '';
 
             if(paymentAction === 'deny') {
-                reason = prompt('Please provide a reason for denying this payment proof:');
+                reason = prompt('Veuillez fournir une raison pour refuser cette preuve de paiement:');
                 if (reason === null) return; // User cancelled
             } else {
-                if (!confirm('Are you sure you want to approve this payment?')) return;
+                if (!confirm('Êtes-vous sûr de vouloir approuver ce paiement?')) return;
             }
 
             button.closest('.lmb-actions-cell').html('<i class="fas fa-spinner fa-spin"></i>');
@@ -84,11 +84,11 @@ jQuery(document).ready(function($) {
                     showLMBModal('success', response.data.message);
                     fetchPayments(1); // Refresh the table
                 } else {
-                    showLMBModal('error', response.data.message || 'An error occurred.');
+                    showLMBModal('error', response.data.message || 'Une erreur s\'est produite.');
                     fetchPayments(1); // Refresh to restore buttons
                 }
             }).fail(function() {
-                showLMBModal('error', 'A server error occurred.');
+                showLMBModal('error', 'Une erreur serveur s\'est produite.');
                 fetchPayments(1); // Refresh to restore buttons
             });
         });

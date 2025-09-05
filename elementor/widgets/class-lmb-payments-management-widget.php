@@ -13,7 +13,7 @@ class LMB_Payments_Management_Widget extends Widget_Base {
     }
 
     public function get_title() {
-        return __('Payments Management', 'lmb-core');
+        return __('Gestion des Paiements', 'lmb-core');
     }
 
     public function get_icon() {
@@ -36,21 +36,21 @@ class LMB_Payments_Management_Widget extends Widget_Base {
         ?>
         <div class="lmb-payments-management">
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-file-invoice-dollar"></i> Payments Management</h3>
+                <h3><i class="fas fa-file-invoice-dollar"></i> Gestion des Paiements</h3>
             </div>
             <div class="lmb-widget-content">
                 <div class="lmb-filters-box">
                     <form id="lmb-payments-filters-form">
                         <div class="lmb-filter-grid">
-                            <input type="text" name="filter_ref" placeholder="Search by Invoice Ref..." class="lmb-filter-input">
-                            <input type="text" name="filter_client" placeholder="Search by Client Name..." class="lmb-filter-input">
+                            <input type="text" name="filter_ref" placeholder="Rechercher par Réf Facture..." class="lmb-filter-input">
+                            <input type="text" name="filter_client" placeholder="Rechercher par Nom Client..." class="lmb-filter-input">
                             <select name="filter_status" class="lmb-filter-select">
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="denied">Denied</option>
-                                <option value="">All Statuses</option>
+                                <option value="pending">En Attente</option>
+                                <option value="approved">Approuvé</option>
+                                <option value="denied">Refusé</option>
+                                <option value="">Tous les Statuts</option>
                             </select>
-                            <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Reset</button>
+                            <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Réinitialiser</button>
                         </div>
                     </form>
                 </div>
@@ -59,12 +59,12 @@ class LMB_Payments_Management_Widget extends Widget_Base {
                     <table class="lmb-data-table">
                         <thead>
                             <tr>
-                                <th>Invoice Ref</th>
+                                <th>Réf Facture</th>
                                 <th>Client</th>
                                 <th>Package</th>
-                                <th>Price</th>
-                                <th>Submitted</th>
-                                <th>Status</th>
+                                <th>Prix</th>
+                                <th>Soumis</th>
+                                <th>Statut</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>

@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) exit;
 class LMB_Notifications_Widget extends Widget_Base {
     public function get_name() { return 'lmb_notifications'; }
     public function get_title(){ return __('LMB Notifications','lmb-core'); }
+    public function get_title(){ return __('Notifications LMB','lmb-core'); }
     public function get_icon() { return 'eicon-bell'; }
     public function get_categories(){ return ['lmb-user-widgets', 'lmb-admin-widgets']; }
 
@@ -34,13 +35,13 @@ class LMB_Notifications_Widget extends Widget_Base {
             
             <div class="lmb-dropdown" id="lmb-dropdown-<?php echo $widget_id; ?>" role="menu" aria-label="<?php esc_attr_e('Notifications', 'lmb-core'); ?>">
                 <div class="lmb-dropdown-header">
-                    <strong><?php esc_html_e('Notifications', 'lmb-core'); ?></strong>
-                    <button type="button" class="lmb-mark-all" disabled><?php esc_html_e('Mark all as read', 'lmb-core'); ?></button>
+                    <strong>Notifications</strong>
+                    <button type="button" class="lmb-mark-all" disabled>Marquer tout comme lu</button>
                 </div>
                 <div class="lmb-list" aria-live="polite">
                     <div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i></div>
                 </div>
-                <div class="lmb-empty" style="display:none;"><em><?php esc_html_e('No notifications yet.', 'lmb-core'); ?></em></div>
+                <div class="lmb-empty" style="display:none;"><em>Aucune notification pour le moment.</em></div>
             </div>
         </div>
         <?php

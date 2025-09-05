@@ -39,7 +39,7 @@ jQuery(document).ready(function($) {
             e.preventDefault();
             const submitBtn = $(this).find('button[type="submit"]');
             loginResponse.removeClass('error success').hide();
-            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Logging In...').prop('disabled', true);
+            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Connexion en cours...').prop('disabled', true);
 
             $.post(lmb_ajax_params.ajaxurl, {
                 action: 'lmb_login_v2',
@@ -48,15 +48,15 @@ jQuery(document).ready(function($) {
                 password: $('#login-password').val(),
             }).done(function(response) {
                 if (response.success) {
-                    loginResponse.addClass('success').text('Login successful! Redirecting...').show();
+                    loginResponse.addClass('success').text('Connexion réussie ! Redirection...').show();
                     window.location.href = response.data.redirect_url;
                 } else {
-                    loginResponse.addClass('error').text(response.data.message || 'An unknown error occurred.').show();
+                    loginResponse.addClass('error').text(response.data.message || 'Une erreur inconnue s\'est produite.').show();
                 }
             }).fail(function() {
-                loginResponse.addClass('error').text('Request failed. Please check your connection.').show();
+                loginResponse.addClass('error').text('Demande échouée. Veuillez vérifier votre connexion.').show();
             }).always(function() {
-                submitBtn.html('Login').prop('disabled', false);
+                submitBtn.html('Se connecter').prop('disabled', false);
             });
         });
 
@@ -65,7 +65,7 @@ jQuery(document).ready(function($) {
             e.preventDefault();
             const submitBtn = $(this).find('button[type="submit"]');
             signupResponse.removeClass('error success').hide();
-            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Creating Account...').prop('disabled', true);
+            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Création du compte...').prop('disabled', true);
 
             $.post(lmb_ajax_params.ajaxurl, {
                 action: 'lmb_signup_v2',
@@ -73,15 +73,15 @@ jQuery(document).ready(function($) {
                 form_data: $(this).serialize(),
             }).done(function(response) {
                 if (response.success) {
-                    signupResponse.addClass('success').text('Registration successful! Please wait for admin approval.').show();
+                    signupResponse.addClass('success').text('Inscription réussie ! Veuillez attendre l\'approbation de l\'administrateur.').show();
                     signupForm[0].reset();
                 } else {
-                    signupResponse.addClass('error').text(response.data.message || 'An unknown error occurred.').show();
+                    signupResponse.addClass('error').text(response.data.message || 'Une erreur inconnue s\'est produite.').show();
                 }
             }).fail(function() {
-                 signupResponse.addClass('error').text('Request failed. Please check your connection.').show();
+                 signupResponse.addClass('error').text('Demande échouée. Veuillez vérifier votre connexion.').show();
             }).always(function() {
-                submitBtn.html('Create Account').prop('disabled', false);
+                submitBtn.html('Créer un Compte').prop('disabled', false);
             });
         });
     });

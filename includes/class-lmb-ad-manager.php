@@ -37,8 +37,8 @@ class LMB_Ad_Manager {
     public static function set_custom_columns($columns) {
         unset($columns['author'], $columns['date']);
         $columns['lmb_client'] = __('Client', 'lmb-core');
-        $columns['ad_type'] = __('Ad Type', 'lmb-core');
-        $columns['lmb_status'] = __('Status', 'lmb-core');
+        $columns['ad_type'] = __('Type d\'Annonce', 'lmb-core');
+        $columns['lmb_status'] = __('Statut', 'lmb-core');
         $columns['lmb_actions'] = __('Actions', 'lmb-core');
         $columns['date'] = __('Date', 'lmb-core');
         return $columns;
@@ -63,8 +63,8 @@ class LMB_Ad_Manager {
                 
             case 'lmb_actions':
                 if (get_post_meta($post_id, 'lmb_status', true) === 'pending_review') {
-                    echo '<button class="button button-primary button-small lmb-ad-action" data-action="approve" data-id="'.$post_id.'">'.__('Approve', 'lmb-core').'</button>';
-                    echo '<button class="button button-secondary button-small lmb-ad-action" data-action="deny" data-id="'.$post_id.'">'.__('Deny', 'lmb-core').'</button>';
+                    echo '<button class="button button-primary button-small lmb-ad-action" data-action="approve" data-id="'.$post_id.'">Approuver</button>';
+                    echo '<button class="button button-secondary button-small lmb-ad-action" data-action="deny" data-id="'.$post_id.'">Refuser</button>';
                 } else {
                     echo '—';
                 }

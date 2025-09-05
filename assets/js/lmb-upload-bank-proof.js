@@ -6,7 +6,7 @@ jQuery(document).ready(function($) {
 
     // Function to fetch and render the form/content
     function fetchFormContent() {
-        container.html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Loading pending invoices...</div>');
+        container.html('<div class="lmb-loading"><i class="fas fa-spinner fa-spin"></i> Chargement des factures en attente...</div>');
         
         $.post(lmb_ajax_params.ajaxurl, {
             action: 'lmb_get_pending_invoices_form',
@@ -15,7 +15,7 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 container.html(response.data.html);
             } else {
-                container.html('<div class="lmb-notice lmb-notice-error"><p>Could not load content.</p></div>');
+                container.html('<div class="lmb-notice lmb-notice-error"><p>Impossible de charger le contenu.</p></div>');
             }
         });
     }
@@ -29,7 +29,7 @@ jQuery(document).ready(function($) {
         formData.append('action', 'lmb_upload_bank_proof');
         formData.append('nonce', lmb_ajax_params.nonce);
 
-        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Submitting...');
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Soumission...');
 
         $.ajax({
             url: lmb_ajax_params.ajaxurl,
@@ -44,11 +44,11 @@ jQuery(document).ready(function($) {
                 fetchFormContent();
             } else {
                 showLMBModal('error', response.data.message);
-                submitBtn.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Submit for Verification');
+                submitBtn.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Soumettre pour Vérification');
             }
         }).fail(function() {
-            showLMBModal('error', 'An unexpected server error occurred.');
-            submitBtn.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Submit for Verification');
+            showLMBModal('error', 'Une erreur serveur inattendue s\'est produite.');
+            submitBtn.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Soumettre pour Vérification');
         });
     });
 

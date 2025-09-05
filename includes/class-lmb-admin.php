@@ -7,17 +7,17 @@ class LMB_Admin {
 
     public static function init() {
         self::$settings_tabs = [
-            'general'        => __('General', 'lmb-core'),
-            'templates'      => __('Templates', 'lmb-core'),
+            'general'        => __('Général', 'lmb-core'),
+            'templates'      => __('Modèles', 'lmb-core'),
             'notifications'  => __('Notifications', 'lmb-core'),
-            'security'       => __('Security', 'lmb-core'),
-            'roles'          => __('Roles & Users', 'lmb-core'),
+            'security'       => __('Sécurité', 'lmb-core'),
+            'roles'          => __('Rôles et Utilisateurs', 'lmb-core'),
         ];
 
         self::$settings_sub_tabs = [
             'templates' => [
-                'legal_ads'        => __('Legal Ad Templates', 'lmb-core'),
-                'accuse_newspaper' => __('Accuse & Newspaper', 'lmb-core'),
+                'legal_ads'        => __('Modèles d\'Annonces Légales', 'lmb-core'),
+                'accuse_newspaper' => __('Accusé et Journal', 'lmb-core'),
             ]
         ];
 
@@ -38,8 +38,8 @@ class LMB_Admin {
 
         add_submenu_page(
             'lmb-core',
-            __('Dashboard', 'lmb-core'),
-            __('Dashboard', 'lmb-core'),
+            __('Tableau de Bord', 'lmb-core'),
+            __('Tableau de Bord', 'lmb-core'),
             'manage_options',
             'lmb-core',
             [__CLASS__, 'render_dashboard_page']
@@ -47,8 +47,8 @@ class LMB_Admin {
 
         add_submenu_page(
             'lmb-core',
-            __('Settings', 'lmb-core'),
-            __('Settings', 'lmb-core'),
+            __('Paramètres', 'lmb-core'),
+            __('Paramètres', 'lmb-core'),
             'manage_options',
             'lmb-core-settings',
             [__CLASS__, 'render_settings_page']
@@ -56,8 +56,8 @@ class LMB_Admin {
 
         add_submenu_page(
             'lmb-core',
-            __('Error Logs', 'lmb-core'),
-            __('Error Logs', 'lmb-core'),
+            __('Journaux d\'Erreurs', 'lmb-core'),
+            __('Journaux d\'Erreurs', 'lmb-core'),
             'manage_options',
             'lmb-error-logs',
             ['LMB_Error_Handler', 'render_logs_page']
@@ -94,40 +94,40 @@ class LMB_Admin {
 
     public static function render_dashboard_page() {
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.', 'lmb-core'));
+            wp_die(__('Vous n\'avez pas les permissions suffisantes pour accéder à cette page.', 'lmb-core'));
         }
 
         $stats = self::collect_stats();
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('LMB Core Dashboard', 'lmb-core'); ?></h1>
+            <h1>Tableau de Bord LMB Core</h1>
 
             <div class="lmb-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:16px;">
                 <div class="card" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-                    <h2 style="margin-top:0;"><?php esc_html_e('Total Users', 'lmb-core'); ?></h2>
+                    <h2 style="margin-top:0;">Total Utilisateurs</h2>
                     <p style="font-size:20px;margin:0;"><?php echo esc_html($stats['users_total']); ?></p>
                 </div>
                 <div class="card" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-                    <h2 style="margin-top:0;"><?php esc_html_e('Legal Ads (Published)', 'lmb-core'); ?></h2>
+                    <h2 style="margin-top:0;">Annonces Légales (Publiées)</h2>
                     <p style="font-size:20px;margin:0;"><?php echo esc_html($stats['ads_published']); ?></p>
                 </div>
                 <div class="card" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-                    <h2 style="margin-top:0;"><?php esc_html_e('Legal Ads (Draft/Pending)', 'lmb-core'); ?></h2>
+                    <h2 style="margin-top:0;">Annonces Légales (Brouillon/En Attente)</h2>
                     <p style="font-size:20px;margin:0;"><?php echo esc_html($stats['ads_draft'] + $stats['ads_pending']); ?></p>
                 </div>
                 <div class="card" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-                    <h2 style="margin-top:0;"><?php esc_html_e('Newspapers', 'lmb-core'); ?></h2>
+                    <h2 style="margin-top:0;">Journaux</h2>
                     <p style="font-size:20px;margin:0;"><?php echo esc_html($stats['news_total']); ?></p>
                 </div>
             </div>
 
             <div style="margin-top:24px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
-                <h2 style="margin-top:0;"><?php esc_html_e('Quick Links', 'lmb-core'); ?></h2>
+                <h2 style="margin-top:0;">Liens Rapides</h2>
                 <ul>
-                    <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=lmb_legal_ad')); ?>"><?php esc_html_e('Manage Legal Ads', 'lmb-core'); ?></a></li>
-                    <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=lmb_newspaper')); ?>"><?php esc_html_e('Manage Newspapers', 'lmb-core'); ?></a></li>
-                    <li><a href="<?php echo esc_url(admin_url('admin.php?page=lmb-error-logs')); ?>"><?php esc_html_e('View Error Logs', 'lmb-core'); ?></a></li>
-                    <li><a href="<?php echo esc_url(admin_url('admin.php?page=lmb-core-settings')); ?>"><?php esc_html_e('Settings', 'lmb-core'); ?></a></li>
+                    <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=lmb_legal_ad')); ?>">Gérer les Annonces Légales</a></li>
+                    <li><a href="<?php echo esc_url(admin_url('edit.php?post_type=lmb_newspaper')); ?>">Gérer les Journaux</a></li>
+                    <li><a href="<?php echo esc_url(admin_url('admin.php?page=lmb-error-logs')); ?>">Voir les Journaux d'Erreurs</a></li>
+                    <li><a href="<?php echo esc_url(admin_url('admin.php?page=lmb-core-settings')); ?>">Paramètres</a></li>
                 </ul>
             </div>
         </div>
@@ -138,7 +138,7 @@ class LMB_Admin {
         $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
         ?>
         <div class="wrap">
-            <h2><?php esc_html_e('LMB Core Settings', 'lmb-core'); ?></h2>
+            <h2>Paramètres LMB Core</h2>
             <h2 class="nav-tab-wrapper">
                 <?php
                 foreach (self::$settings_tabs as $tab_key => $tab_name) {
@@ -202,19 +202,19 @@ class LMB_Admin {
     private static function render_general_tab() {
         settings_fields('lmb_general_settings');
         ?>
-        <h3><?php esc_html_e('Bank Details', 'lmb-core'); ?></h3>
-        <p><?php esc_html_e('This information will be displayed to users when they need to make a payment.', 'lmb-core'); ?></p>
+        <h3>Détails Bancaires</h3>
+        <p>Ces informations seront affichées aux utilisateurs lorsqu'ils devront effectuer un paiement.</p>
         <table class="form-table">
             <tr valign="top">
-                <th scope="row"><label for="lmb_bank_name"><?php esc_html_e('Bank Name', 'lmb-core'); ?></label></th>
+                <th scope="row"><label for="lmb_bank_name">Nom de la Banque</label></th>
                 <td><input type="text" id="lmb_bank_name" name="lmb_bank_name" value="<?php echo esc_attr(get_option('lmb_bank_name')); ?>" class="regular-text" /></td>
             </tr>
             <tr valign="top">
-                <th scope="row"><label for="lmb_bank_iban"><?php esc_html_e('IBAN', 'lmb-core'); ?></label></th>
+                <th scope="row"><label for="lmb_bank_iban">IBAN</label></th>
                 <td><input type="text" id="lmb_bank_iban" name="lmb_bank_iban" value="<?php echo esc_attr(get_option('lmb_bank_iban')); ?>" class="regular-text" /></td>
             </tr>
              <tr valign="top">
-                <th scope="row"><label for="lmb_bank_account_holder"><?php esc_html_e('Account Holder Name', 'lmb-core'); ?></label></th>
+                <th scope="row"><label for="lmb_bank_account_holder">Nom du Titulaire du Compte</label></th>
                 <td><input type="text" id="lmb_bank_account_holder" name="lmb_bank_account_holder" value="<?php echo esc_attr(get_option('lmb_bank_account_holder')); ?>" class="regular-text" /></td>
             </tr>
         </table>
@@ -224,32 +224,32 @@ class LMB_Admin {
     private static function render_accuse_newspaper_tab() {
         settings_fields('lmb_accuse_newspaper_settings');
         ?>
-        <h3><?php esc_html_e('Accuse (Receipt) Template Settings', 'lmb-core'); ?></h3>
+        <h3>Paramètres du Modèle d'Accusé (Reçu)</h3>
         <p class="description">
-            <?php esc_html_e('Configure the template and assets for the automatically generated accuse/receipt PDF.', 'lmb-core'); ?>
+            Configurez le modèle et les ressources pour le PDF d'accusé/reçu généré automatiquement.
         </p>
 
         <table class="form-table">
             <tr valign="top">
-                <th scope="row"><label for="lmb_logo_url"><?php esc_html_e('Logo Image URL', 'lmb-core'); ?></label></th>
+                <th scope="row"><label for="lmb_logo_url">URL de l'Image du Logo</label></th>
                 <td>
                     <input type="text" id="lmb_logo_url" name="lmb_logo_url" value="<?php echo esc_attr(get_option('lmb_logo_url')); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e('Enter the full URL for the logo to display at the top of the accuse.', 'lmb-core'); ?></p>
+                    <p class="description">Entrez l'URL complète du logo à afficher en haut de l'accusé.</p>
                 </td>
             </tr>
             <tr valign="top">
-                <th scope="row"><label for="lmb_signature_url"><?php esc_html_e('Signature Image URL', 'lmb-core'); ?></label></th>
+                <th scope="row"><label for="lmb_signature_url">URL de l'Image de Signature</label></th>
                 <td>
                     <input type="text" id="lmb_signature_url" name="lmb_signature_url" value="<?php echo esc_attr(get_option('lmb_signature_url')); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e('Enter the full URL for the signature image.', 'lmb-core'); ?></p>
+                    <p class="description">Entrez l'URL complète de l'image de signature.</p>
                 </td>
             </tr>
         </table>
 
-        <h3><?php esc_html_e('Accuse HTML Template', 'lmb-core'); ?></h3>
+        <h3>Modèle HTML d'Accusé</h3>
         <textarea name="lmb_accuse_template_html" rows="20" style="width:100%; font-family: monospace;"><?php echo esc_textarea(get_option('lmb_accuse_template_html', self::get_default_accuse_template())); ?></textarea>
         
-        <h4><?php esc_html_e('Available Placeholders:', 'lmb-core'); ?></h4>
+        <h4>Espaces Réservés Disponibles:</h4>
         <ul style="list-style: inside; margin-left: 20px;">
             <li><code>{{lmb_logo_url}}</code></li>
             <li><code>{{journal_no}}</code></li>
@@ -268,7 +268,7 @@ class LMB_Admin {
         
         ?>
         <p class="description">
-            <?php esc_html_e('Select an ad type to edit its template. Use placeholders like {{field_id}}.', 'lmb-core'); ?>
+            Sélectionnez un type d'annonce pour modifier son modèle. Utilisez des espaces réservés comme {{field_id}}.
         </p>
         
         <select onchange="if (this.value) window.location.href = this.value;">
@@ -287,7 +287,7 @@ class LMB_Admin {
             $field_name = 'lmb_legal_ad_templates[' . $current_ad_type_key . ']';
             $template_content = isset($all_templates[$current_ad_type_key]) ? $all_templates[$current_ad_type_key] : '';
             ?>
-            <h3>Template for: <strong><?php echo esc_html($current_ad_type); ?></strong></h3>
+            <h3>Modèle pour: <strong><?php echo esc_html($current_ad_type); ?></strong></h3>
             <textarea name="<?php echo esc_attr($field_name); ?>" rows="20" style="width:100%;"><?php echo esc_textarea($template_content); ?></textarea>
             
             <?php
@@ -297,7 +297,7 @@ class LMB_Admin {
                 echo '<input type="hidden" name="lmb_legal_ad_templates[' . esc_attr($key) . ']" value="' . esc_attr($value) . '" />';
             }
         } else {
-            echo '<p>' . esc_html__('No ad types found. Please create an ad first.', 'lmb-core') . '</p>';
+            echo '<p>Aucun type d\'annonce trouvé. Veuillez d\'abord créer une annonce.</p>';
         }
         ?>
         <?php
@@ -308,7 +308,7 @@ class LMB_Admin {
         ?>
         <label>
             <input type="checkbox" name="lmb_enable_email_notifications" value="1" <?php checked(get_option('lmb_enable_email_notifications', 0), 1); ?>>
-            <?php esc_html_e('Enable email notifications', 'lmb-core'); ?>
+            Activer les notifications par email
         </label>
         <?php
     }
@@ -318,14 +318,14 @@ class LMB_Admin {
         $protected_pages = get_option('lmb_protected_pages', []);
         $pages = get_pages();
         ?>
-        <h3><?php esc_html_e('Page Access Control', 'lmb-core'); ?></h3>
-        <p class="description"><?php esc_html_e('Configure access control for specific pages based on user roles.', 'lmb-core'); ?></p>
+        <h3>Contrôle d'Accès aux Pages</h3>
+        <p class="description">Configurez le contrôle d'accès pour des pages spécifiques basé sur les rôles utilisateur.</p>
         
         <table class="form-table" role="presentation">
             <thead>
                 <tr>
-                    <th><?php esc_html_e('Page', 'lmb-core'); ?></th>
-                    <th><?php esc_html_e('Access Level', 'lmb-core'); ?></th>
+                    <th>Page</th>
+                    <th>Niveau d'Accès</th>
                 </tr>
             </thead>
             <tbody>
@@ -338,9 +338,9 @@ class LMB_Admin {
                         </td>
                         <td>
                             <select name="lmb_protected_pages[<?php echo $page->ID; ?>]">
-                                <option value="public" <?php selected($page_protection, 'public'); ?>><?php esc_html_e('Public Access', 'lmb-core'); ?></option>
-                                <option value="logged_in" <?php selected($page_protection, 'logged_in'); ?>><?php esc_html_e('Logged-in Users Only', 'lmb-core'); ?></option>
-                                <option value="admin_only" <?php selected($page_protection, 'admin_only'); ?>><?php esc_html_e('Administrators Only', 'lmb-core'); ?></option>
+                                <option value="public" <?php selected($page_protection, 'public'); ?>>Accès Public</option>
+                                <option value="logged_in" <?php selected($page_protection, 'logged_in'); ?>>Utilisateurs Connectés Uniquement</option>
+                                <option value="admin_only" <?php selected($page_protection, 'admin_only'); ?>>Administrateurs Uniquement</option>
                             </select>
                         </td>
                     </tr>
@@ -351,7 +351,7 @@ class LMB_Admin {
 
     private static function render_roles_tab() { 
         ?>
-        <p><?php esc_html_e('Roles management is handled elsewhere in the plugin.', 'lmb-core'); ?></p>
+        <p>La gestion des rôles est gérée ailleurs dans le plugin.</p>
         <?php
     }
 

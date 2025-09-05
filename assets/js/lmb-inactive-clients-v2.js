@@ -32,11 +32,11 @@ jQuery(document).ready(function($) {
                     clientList.html(response.data.html);
                     paginationContainer.html(response.data.pagination);
                 } else {
-                    clientList.html('<div style="text-align:center; padding: 20px;">' + (response.data.message || 'Could not load clients.') + '</div>');
+                    clientList.html('<div style="text-align:center; padding: 20px;">' + (response.data.message || 'Impossible de charger les clients.') + '</div>');
                     paginationContainer.empty();
                 }
             }).fail(function() {
-                clientList.html('<div style="text-align:center; padding: 20px;">An error occurred. Please try again.</div>');
+                clientList.html('<div style="text-align:center; padding: 20px;">Une erreur s\'est produite. Veuillez réessayer.</div>');
                 paginationContainer.empty();
             });
         };
@@ -65,6 +65,7 @@ jQuery(document).ready(function($) {
             const approvalAction = button.data('action');
 
             if (approvalAction === 'deny' && !confirm('Are you sure you want to deny and permanently delete this user? This action cannot be undone.')) {
+            if (approvalAction === 'deny' && !confirm('Êtes-vous sûr de vouloir refuser et supprimer définitivement cet utilisateur ? Cette action ne peut pas être annulée.')) {
                 return;
             }
 
@@ -81,15 +82,15 @@ jQuery(document).ready(function($) {
                     showLMBModal('success', response.data.message);
                     card.fadeOut(400, function() { $(this).remove(); });
                 } else {
-                    showLMBModal('error', response.data.message || 'An error occurred.');
+                    showLMBModal('error', response.data.message || 'Une erreur s\'est produite.');
                     card.css('opacity', 1);
-                    const originalText = approvalAction === 'approve' ? '<i class="fas fa-check"></i> Approve' : '<i class="fas fa-times"></i> Deny';
+                    const originalText = approvalAction === 'approve' ? '<i class="fas fa-check"></i> Approuver' : '<i class="fas fa-times"></i> Refuser';
                     button.html(originalText).prop('disabled', false);
                 }
             }).fail(function() {
-                showLMBModal('error', 'A server error occurred. Please try again.');
+                showLMBModal('error', 'Une erreur serveur s\'est produite. Veuillez réessayer.');
                 card.css('opacity', 1);
-                const originalText = approvalAction === 'approve' ? '<i class="fas fa-check"></i> Approve' : '<i class="fas fa-times"></i> Deny';
+                const originalText = approvalAction === 'approve' ? '<i class="fas fa-check"></i> Approuver' : '<i class="fas fa-times"></i> Refuser';
                 button.html(originalText).prop('disabled', false);
             });
         });

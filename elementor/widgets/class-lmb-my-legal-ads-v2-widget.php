@@ -12,7 +12,7 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
     }
 
     public function get_title() {
-        return __('My Legal Ads V2', 'lmb-core');
+        return __('Mes Annonces Légales V2', 'lmb-core');
     }
 
     public function get_icon() {
@@ -47,10 +47,10 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
                 'type' => Controls_Manager::SELECT,
                 'default' => 'published',
                 'options' => [
-                    'published' => __('Published', 'lmb-core'),
-                    'pending'   => __('Pending', 'lmb-core'),
-                    'drafts'    => __('Drafts', 'lmb-core'),
-                    'denied'    => __('Denied', 'lmb-core'),
+                    'published' => __('Publié', 'lmb-core'),
+                    'pending'   => __('En Attente', 'lmb-core'),
+                    'drafts'    => __('Brouillons', 'lmb-core'),
+                    'denied'    => __('Refusé', 'lmb-core'),
                 ],
             ]
         );
@@ -99,18 +99,18 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
         ?>
         <div <?php echo $this->get_render_attribute_string('wrapper'); ?>>
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-list-alt"></i> My Legal Ads: <?php echo esc_html(ucfirst($status_to_display)); ?></h3>
+                <h3><i class="fas fa-list-alt"></i> Mes Annonces Légales: <?php echo esc_html(ucfirst($status_to_display)); ?></h3>
             </div>
             <div class="lmb-widget-content">
                 
                 <div class="lmb-filters-box">
                     <form>
                         <div class="lmb-filter-grid lmb-filter-grid-user">
-                            <input type="text" placeholder="Ref (ID)" class="lmb-filter-input" name="filter_ref">
-                            <input type="text" placeholder="Company" class="lmb-filter-input" name="filter_company">
+                            <input type="text" placeholder="Réf (ID)" class="lmb-filter-input" name="filter_ref">
+                            <input type="text" placeholder="Société" class="lmb-filter-input" name="filter_company">
                             <input type="text" placeholder="Type" class="lmb-filter-input" name="filter_type">
                             <input type="date" class="lmb-filter-input" name="filter_date">
-                            <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Reset</button>
+                            <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Réinitialiser</button>
                         </div>
                     </form>
                 </div>
@@ -123,16 +123,16 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
                                 // Render table headers based on the selected status
                                 switch ($status_to_display) {
                                     case 'published':
-                                        echo '<th>ID (Ref)</th><th>Company</th><th>Type</th><th>Date</th><th>Approved By</th><th>Accuse</th><th>Journal</th>';
+                                        echo '<th>ID (Réf)</th><th>Société</th><th>Type</th><th>Date</th><th>Approuvé Par</th><th>Accusé</th><th>Journal</th>';
                                         break;
                                     case 'pending':
-                                        echo '<th>ID (Ref)</th><th>Company</th><th>Type</th><th>Date Submitted</th>';
+                                        echo '<th>ID (Réf)</th><th>Société</th><th>Type</th><th>Date de Soumission</th>';
                                         break;
                                     case 'drafts':
-                                        echo '<th>ID (Ref)</th><th>Company</th><th>Type</th><th>Date Created</th><th>Actions</th>';
+                                        echo '<th>ID (Réf)</th><th>Société</th><th>Type</th><th>Date de Création</th><th>Actions</th>';
                                         break;
                                     case 'denied':
-                                        echo '<th>ID (Ref)</th><th>Company</th><th>Type</th><th>Date Denied</th><th>Reason</th><th>Actions</th>';
+                                        echo '<th>ID (Réf)</th><th>Société</th><th>Type</th><th>Date de Refus</th><th>Raison</th><th>Actions</th>';
                                         break;
                                 }
                                 ?>
@@ -149,7 +149,7 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
                 <?php if (!empty($view_more_url)): ?>
                 <div class="lmb-view-more-container" style="text-align: center; margin-top: 20px;">
                     <a href="<?php echo esc_url($view_more_url); ?>" class="lmb-btn lmb-btn-view" <?php if($settings['view_more_link']['is_external']) { echo 'target="_blank"'; } ?>>
-                        View All
+                        Voir Tout
                     </a>
                 </div>
                 <?php endif; ?>

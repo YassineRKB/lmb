@@ -78,8 +78,8 @@ class LMB_Error_Handler {
     public static function add_logs_page() {
         add_submenu_page(
             'lmb-core',
-            __('Error Logs', 'lmb-core'),
-            __('Error Logs', 'lmb-core'),
+            __('Journaux d\'Erreurs', 'lmb-core'),
+            __('Journaux d\'Erreurs', 'lmb-core'),
             'manage_options',
             'lmb-error-logs',
             [__CLASS__, 'render_logs_page']
@@ -99,18 +99,18 @@ class LMB_Error_Handler {
             if (file_exists(self::$log_file)) {
                 unlink(self::$log_file);
             }
-            echo '<div class="notice notice-success"><p>' . __('Logs cleared successfully.', 'lmb-core') . '</p></div>';
+            echo '<div class="notice notice-success"><p>Journaux effacés avec succès.</p></div>';
         }
         
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('LMB Error Logs', 'lmb-core'); ?></h1>
+            <h1>Journaux d'Erreurs LMB</h1>
             
             <form method="post" style="margin-bottom: 20px;">
                 <?php wp_nonce_field('clear_logs'); ?>
                 <button type="submit" name="clear_logs" class="button button-secondary" 
-                        onclick="return confirm('<?php esc_attr_e('Are you sure you want to clear all logs?', 'lmb-core'); ?>')">
-                    <?php esc_html_e('Clear Logs', 'lmb-core'); ?>
+                        onclick="return confirm('Êtes-vous sûr de vouloir effacer tous les journaux ?')">
+                    Effacer les Journaux
                 </button>
             </form>
             
@@ -124,7 +124,7 @@ class LMB_Error_Handler {
                         $lines = array_slice($lines, -100);
                         echo esc_html(implode("\n", $lines));
                     } else {
-                        esc_html_e('No logs found.', 'lmb-core');
+                        echo 'Aucun journal trouvé.';
                     }
                     ?>
                 </pre>

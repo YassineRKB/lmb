@@ -13,7 +13,7 @@ class LMB_Active_Clients_V2_Widget extends Widget_Base {
     }
 
     public function get_title() {
-        return __('Clients Management: Active V2', 'lmb-core');
+        return __('Gestion des Clients: Actifs V2', 'lmb-core');
     }
 
     public function get_icon() {
@@ -66,22 +66,22 @@ class LMB_Active_Clients_V2_Widget extends Widget_Base {
         ?>
         <div <?php echo $this->get_render_attribute_string('wrapper'); ?>>
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-users"></i> Active Clients Management</h3>
+                <h3><i class="fas fa-users"></i> Gestion des Clients Actifs</h3>
             </div>
             <div class="lmb-widget-content">
                 <div class="lmb-filters-box">
                     <form id="lmb-active-clients-filters">
                         <div class="lmb-filter-grid">
-                            <input type="text" name="filter_id" placeholder="Filter by ID..." class="lmb-filter-input">
-                            <input type="text" name="filter_name" placeholder="Filter by Name/Company..." class="lmb-filter-input">
-                            <input type="text" name="filter_city" placeholder="Filter by City..." class="lmb-filter-input">
+                            <input type="text" name="filter_id" placeholder="Filtrer par ID..." class="lmb-filter-input">
+                            <input type="text" name="filter_name" placeholder="Filtrer par Nom/Société..." class="lmb-filter-input">
+                            <input type="text" name="filter_city" placeholder="Filtrer par Ville..." class="lmb-filter-input">
                             <select name="filter_type" class="lmb-filter-select">
-                                <option value="">All Types</option>
-                                <option value="regular">Regular</option>
+                                <option value="">Tous les Types</option>
+                                <option value="regular">Régulier</option>
                                 <option value="professional">Professional</option>
-                                <option value="administrator">Admin</option>
+                                <option value="administrator">Administrateur</option>
                             </select>
-                            <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Reset</button>
+                            <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Réinitialiser</button>
                         </div>
                     </form>
                 </div>
@@ -91,11 +91,11 @@ class LMB_Active_Clients_V2_Widget extends Widget_Base {
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Name</th>
-                                <th>City</th>
+                                <th>Nom</th>
+                                <th>Ville</th>
                                 <th>Type</th>
-                                <th>Published Ads</th>
-                                <th>Balance (PTS)</th>
+                                <th>Annonces Publiées</th>
+                                <th>Solde (PTS)</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>

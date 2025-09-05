@@ -45,13 +45,13 @@
             }).done(function(response) {
                 // Updated success logic
                 if (response.success) {
-                    showLMBModal('success', 'Subscription successful! You can now upload your proof of payment.');
+                    showLMBModal('success', 'Abonnement réussi ! Vous pouvez maintenant télécharger votre preuve de paiement.');
                     
                 } else {
-                    showLMBModal('error', response.data ? response.data.message : 'Could not subscribe to package.');
+                    showLMBModal('error', response.data ? response.data.message : 'Impossible de s\'abonner au package.');
                 }
             }).fail(function() {
-                showLMBModal('error', 'An unknown server error occurred.');
+                showLMBModal('error', 'Une erreur serveur inconnue s\'est produite.');
             }).always(function() {
                 button.text(originalText).prop('disabled', false);
             });

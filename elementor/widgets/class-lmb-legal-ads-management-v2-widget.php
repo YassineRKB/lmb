@@ -8,6 +8,7 @@ if (!defined('ABSPATH')) exit;
 class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
     public function get_name() { return 'lmb_legal_ads_management_v2'; }
     public function get_title() { return __('LMB Legal Ads Management V2', 'lmb-core'); }
+    public function get_title() { return __('Gestion des Annonces Légales LMB V2', 'lmb-core'); }
     public function get_icon() { return 'eicon-table'; }
     public function get_categories() { return ['lmb-admin-widgets-v2']; }
     
@@ -17,32 +18,32 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
 
     protected function render() {
         if (!current_user_can('manage_options')) {
-            echo '<div class="lamv2-widget"><p style="padding: 20px;">'.esc_html__('You do not have permission to view this content.', 'lmb-core').'</p></div>';
+            echo '<div class="lamv2-widget"><p style="padding: 20px;">Vous n\'avez pas la permission de voir ce contenu.</p></div>';
             return;
         }
         ?>
         <div class="lamv2-widget">
             <div class="lamv2-widget-header">
-                <h3><i class="fas fa-gavel"></i> <?php esc_html_e('Legal Ads Management V2', 'lmb-core'); ?></h3>
+                <h3><i class="fas fa-gavel"></i> Gestion des Annonces Légales V2</h3>
             </div>
             <div class="lamv2-widget-content">
                 <div class="lamv2-filters-box">
                     <form id="lamv2-ads-filters-form">
                         <div class="lamv2-filter-grid">
-                            <input type="text" name="filter_ref" placeholder="<?php esc_attr_e('Ref (ID)', 'lmb-core'); ?>" class="lamv2-filter-input">
-                            <input type="text" name="filter_company" placeholder="<?php esc_attr_e('Company', 'lmb-core'); ?>" class="lamv2-filter-input">
-                            <input type="text" name="filter_type" placeholder="<?php esc_attr_e('Type', 'lmb-core'); ?>" class="lamv2-filter-input">
+                            <input type="text" name="filter_ref" placeholder="Réf (ID)" class="lamv2-filter-input">
+                            <input type="text" name="filter_company" placeholder="Société" class="lamv2-filter-input">
+                            <input type="text" name="filter_type" placeholder="Type" class="lamv2-filter-input">
                             <input type="date" name="filter_date" class="lamv2-filter-input">
-                            <input type="text" name="filter_client" placeholder="<?php esc_attr_e('Client', 'lmb-core'); ?>" class="lamv2-filter-input">
+                            <input type="text" name="filter_client" placeholder="Client" class="lamv2-filter-input">
                             <select name="filter_status" class="lamv2-filter-select">
-                                <option value=""><?php esc_html_e('All Statuses', 'lmb-core'); ?></option>
-                                <option value="published"><?php esc_html_e('Published', 'lmb-core'); ?></option>
-                                <option value="pending_review"><?php esc_html_e('Pending Review', 'lmb-core'); ?></option>
-                                <option value="draft"><?php esc_html_e('Draft', 'lmb-core'); ?></option>
-                                <option value="denied"><?php esc_html_e('Denied', 'lmb-core'); ?></option>
+                                <option value="">Tous les Statuts</option>
+                                <option value="published">Publié</option>
+                                <option value="pending_review">En Attente de Révision</option>
+                                <option value="draft">Brouillon</option>
+                                <option value="denied">Refusé</option>
                             </select>
-                            <input type="text" name="filter_approved_by" placeholder="<?php esc_attr_e('Approved By', 'lmb-core'); ?>" class="lamv2-filter-input">
-                            <button type="reset" class="lamv2-btn lamv2-btn-view"><i class="fas fa-undo"></i> <?php esc_html_e('Reset', 'lmb-core'); ?></button>
+                            <input type="text" name="filter_approved_by" placeholder="Approuvé Par" class="lamv2-filter-input">
+                            <button type="reset" class="lamv2-btn lamv2-btn-view"><i class="fas fa-undo"></i> Réinitialiser</button>
                         </div>
                     </form>
                 </div>
@@ -51,16 +52,16 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                     <table class="lamv2-data-table">
                         <thead>
                             <tr>
-                                <th><?php esc_html_e('Ref', 'lmb-core'); ?></th>
-                                <th><?php esc_html_e('Company', 'lmb-core'); ?></th>
-                                <th><?php esc_html_e('Type', 'lmb-core'); ?></th>
-                                <th><?php esc_html_e('Date', 'lmb-core'); ?></th>
-                                <th><?php esc_html_e('Client', 'lmb-core'); ?></th>
-                                <th><?php esc_html_e('Status', 'lmb-core'); ?></th>
-                                <th><?php esc_html_e('Approved By', 'lmb-core'); ?></th>
-                                <th><?php esc_html_e('Accuse', 'lmb-core'); ?></th>
-                                <th><?php esc_html_e('Journal', 'lmb-core'); ?></th>
-                                <th><?php esc_html_e('Actions', 'lmb-core'); ?></th>
+                                <th>Réf</th>
+                                <th>Société</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Client</th>
+                                <th>Statut</th>
+                                <th>Approuvé Par</th>
+                                <th>Accusé</th>
+                                <th>Journal</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -74,24 +75,24 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
             <div id="lamv2-upload-journal-modal" class="lamv2-modal-overlay hidden">
                 <div class="lamv2-modal-content">
                     <div class="lamv2-modal-header">
-                         <h4><?php esc_html_e('Upload Temporary Journal', 'lmb-core'); ?></h4>
+                         <h4>Télécharger Journal Temporaire</h4>
                          <button class="lamv2-modal-close">&times;</button>
                     </div>
                      <form id="lamv2-upload-journal-form" class="lamv2-upload-journal-form">
                         <input type="hidden" name="ad_id" id="lamv2-journal-ad-id">
                          <div class="lamv2-form-grid">
                             <div class="lamv2-form-group">
-                                <label for="lamv2-journal-no"><?php esc_html_e('Journal N°', 'lmb-core'); ?></label>
-                                <input type="text" id="lamv2-journal-no" name="journal_no" class="lamv2-filter-input" placeholder="<?php esc_attr_e('Enter Journal Number', 'lmb-core'); ?>" required>
+                                <label for="lamv2-journal-no">Journal N°</label>
+                                <input type="text" id="lamv2-journal-no" name="journal_no" class="lamv2-filter-input" placeholder="Entrer le Numéro de Journal" required>
                             </div>
                             <div class="lamv2-form-group">
-                                <label for="lamv2-journal-file"><?php esc_html_e('Journal PDF File', 'lmb-core'); ?></label>
+                                <label for="lamv2-journal-file">Fichier PDF du Journal</label>
                                 <input type="file" id="lamv2-journal-file" name="journal_file" class="lamv2-filter-input" required accept="application/pdf">
                             </div>
                          </div>
                          <div class="lamv2-form-actions">
-                             <button type="button" class="lamv2-btn lamv2-btn-view lamv2-modal-close"><?php esc_html_e('Cancel', 'lmb-core'); ?></button>
-                             <button type="submit" class="lamv2-btn lamv2-btn-primary"><?php esc_html_e('Upload', 'lmb-core'); ?></button>
+                             <button type="button" class="lamv2-btn lamv2-btn-view lamv2-modal-close">Annuler</button>
+                             <button type="submit" class="lamv2-btn lamv2-btn-primary">Télécharger</button>
                          </div>
                      </form>
                 </div>

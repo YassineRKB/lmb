@@ -33,11 +33,11 @@ jQuery(document).ready(function($) {
                     tableBody.html(response.data.html);
                     paginationContainer.html(response.data.pagination);
                 } else {
-                    tableBody.html('<tr><td colspan="7" style="text-align:center;">' + (response.data.message || 'Could not load clients.') + '</td></tr>');
+                    tableBody.html('<tr><td colspan="7" style="text-align:center;">' + (response.data.message || 'Impossible de charger les clients.') + '</td></tr>');
                     paginationContainer.empty();
                 }
             }).fail(function() {
-                tableBody.html('<tr><td colspan="7" style="text-align:center;">An error occurred. Please try again.</td></tr>');
+                tableBody.html('<tr><td colspan="7" style="text-align:center;">Une erreur s\'est produite. Veuillez réessayer.</td></tr>');
                 paginationContainer.empty();
             });
         };
@@ -67,6 +67,7 @@ jQuery(document).ready(function($) {
             const userId = button.data('user-id');
 
             if (!confirm('Are you sure you want to lock this user? Their account will be deactivated.')) {
+            if (!confirm('Êtes-vous sûr de vouloir verrouiller cet utilisateur ? Son compte sera désactivé.')) {
                 return;
             }
             
@@ -79,15 +80,15 @@ jQuery(document).ready(function($) {
                 user_id: userId,
             }).done(function(response) {
                 if (response.success) {
-                    showLMBModal('success', response.data.message || 'User has been locked.');
+                    showLMBModal('success', response.data.message || 'L\'utilisateur a été verrouillé.');
                     row.fadeOut(400, function() { $(this).remove(); });
                 } else {
-                    showLMBModal('error', response.data.message || 'An error occurred.');
+                    showLMBModal('error', response.data.message || 'Une erreur s\'est produite.');
                     row.css('opacity', 1);
                     button.html('<i class="fas fa-user-lock"></i>').prop('disabled', false);
                 }
             }).fail(function() {
-                showLMBModal('error', 'A server error occurred. Please try again.');
+                showLMBModal('error', 'Une erreur serveur s\'est produite. Veuillez réessayer.');
                 row.css('opacity', 1);
                 button.html('<i class="fas fa-user-lock"></i>').prop('disabled', false);
             });

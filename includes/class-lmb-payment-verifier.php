@@ -11,11 +11,11 @@ class LMB_Payment_Verifier {
         unset($columns['title'], $columns['date']);
         $columns['client'] = __('Client', 'lmb-core');
         $columns['package'] = __('Package', 'lmb-core');
-        $columns['reference'] = __('Reference', 'lmb-core');
-        $columns['proof'] = __('Proof', 'lmb-core');
-        $columns['status'] = __('Status', 'lmb-core');
+        $columns['reference'] = __('Référence', 'lmb-core');
+        $columns['proof'] = __('Preuve', 'lmb-core');
+        $columns['status'] = __('Statut', 'lmb-core');
         $columns['actions'] = __('Actions', 'lmb-core');
-        $columns['date'] = __('Submitted', 'lmb-core');
+        $columns['date'] = __('Soumis', 'lmb-core');
         return $columns;
     }
 
@@ -33,7 +33,7 @@ class LMB_Payment_Verifier {
                 break;
             case 'proof':
                 $url = wp_get_attachment_url(get_post_meta($post_id, 'proof_attachment_id', true));
-                if ($url) echo '<a href="'.esc_url($url).'" target="_blank" class="button button-small">View Proof</a>';
+                if ($url) echo '<a href="'.esc_url($url).'" target="_blank" class="button button-small">Voir Preuve</a>';
                 break;
             case 'status':
                 $status = get_post_meta($post_id, 'payment_status', true);
@@ -41,8 +41,8 @@ class LMB_Payment_Verifier {
                 break;
             case 'actions':
                 if (get_post_meta($post_id, 'payment_status', true) === 'pending') {
-                    echo '<button class="button button-primary button-small lmb-payment-action" data-action="approve" data-id="'.$post_id.'">'.__('Approve', 'lmb-core').'</button>';
-                    echo '<button class="button button-secondary button-small lmb-payment-action" data-action="reject" data-id="'.$post_id.'">'.__('Reject', 'lmb-core').'</button>';
+                    echo '<button class="button button-primary button-small lmb-payment-action" data-action="approve" data-id="'.$post_id.'">Approuver</button>';
+                    echo '<button class="button button-secondary button-small lmb-payment-action" data-action="reject" data-id="'.$post_id.'">Rejeter</button>';
                 }
                 break;
         }
@@ -67,7 +67,7 @@ class LMB_Payment_Verifier {
             $points = (int) get_post_meta($package_id, 'points', true);
             $cost_per_ad = (int) get_post_meta($package_id, 'cost_per_ad', true);
             
-            LMB_Points::add($user_id, $points, 'Purchase of package: ' . get_the_title($package_id));
+            LMB_Points::add($user_id, $points, 'Achat du package: ' . get_the_title($package_id));
             LMB_Points::set_cost_per_ad($user_id, $cost_per_ad);
             
             update_post_meta($payment_id, 'payment_status', 'approved');
@@ -76,14 +76,14 @@ class LMB_Payment_Verifier {
                 LMB_Notification_Manager::notify_payment_verified($user_id, $package_id, $points);
             }
             
-            wp_send_json_success(['message' => 'Payment approved! Points have been added to the client\'s account.']);
+            wp_send_json_success(['message' => 'Paiement approuvé ! Les points ont été ajoutés au compte du client.']);
 
         } elseif ($action === 'reject') {
             update_post_meta($payment_id, 'payment_status', 'rejected');
             update_post_meta($payment_id, 'rejection_reason', $reason);
             LMB_Ad_Manager::log_activity(sprintf('Payment #%d rejected by %s.', $payment_id, wp_get_current_user()->display_name));
             
-            wp_send_json_success(['message' => 'Payment has been rejected.']);
+            wp_send_json_success(['message' => 'Le paiement a été rejeté.']);
         }
     }
 }

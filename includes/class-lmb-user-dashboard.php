@@ -49,7 +49,7 @@ class LMB_User_Dashboard {
     }
     
     public static function render_user_stats() {
-        if (!is_user_logged_in()) return '<p>'.esc_html__('Login required.', 'lmb-core').'</p>';
+        if (!is_user_logged_in()) return '<p>Connexion requise.</p>';
         ob_start();
         the_widget('LMB_User_Stats_Widget');
         return ob_get_clean();
@@ -78,6 +78,7 @@ class LMB_User_Dashboard {
             $user_id
         ));
         return self::generate_chart_html('lmbPointsChart', 'Points Usage This Year', 'Points Spent', $results);
+        return self::generate_chart_html('lmbPointsChart', 'Utilisation des Points Cette Année', 'Points Dépensés', $results);
     }
 
     // Chart Shortcode 2: Published Ads
@@ -93,6 +94,7 @@ class LMB_User_Dashboard {
             $user_id
         ));
         return self::generate_chart_html('lmbPublishedAdsChart', 'Published Ads This Year', 'Ads Published', $results, 'rgba(75, 192, 192, 1)', 'rgba(75, 192, 192, 0.1)');
+        return self::generate_chart_html('lmbPublishedAdsChart', 'Annonces Publiées Cette Année', 'Annonces Publiées', $results, 'rgba(75, 192, 192, 1)', 'rgba(75, 192, 192, 0.1)');
     }
 
     // Chart Shortcode 3: Draft Ads
@@ -108,6 +110,7 @@ class LMB_User_Dashboard {
             $user_id
         ));
         return self::generate_chart_html('lmbDraftAdsChart', 'Draft Ads This Year', 'Ads Created', $results, 'rgba(255, 159, 64, 1)', 'rgba(255, 159, 64, 0.1)');
+        return self::generate_chart_html('lmbDraftAdsChart', 'Brouillons d\'Annonces Cette Année', 'Annonces Créées', $results, 'rgba(255, 159, 64, 1)', 'rgba(255, 159, 64, 0.1)');
     }
 
     // Helper function to generate chart markup
@@ -161,7 +164,7 @@ class LMB_User_Dashboard {
         ob_start();
         ?>
         <div class="lmb-user-ads-list-wrapper">
-            <h3><?php esc_html_e('Your Recent Legal Ads', 'lmb-core'); ?></h3>
+            <h3>Vos Annonces Légales Récentes</h3>
             <?php if (!$q->have_posts()): ?>
                 <div class="lmb-notice"><p><?php esc_html_e('You have not submitted any ads yet.', 'lmb-core'); ?></p></div>
             <?php else: ?>
@@ -175,20 +178,20 @@ class LMB_User_Dashboard {
                                 <h4 class="lmb-ad-title"><?php the_title(); ?></h4>
                                 <div class="lmb-ad-meta"><?php echo get_the_date(); ?></div>
                                 <?php if($status === 'denied' && ($reason = get_post_meta(get_the_ID(), 'denial_reason', true))): ?>
-                                    <div class="lmb-ad-reason"><strong><?php _e('Reason:', 'lmb-core'); ?></strong> <?php echo esc_html($reason); ?></div>
+                                    <div class="lmb-ad-reason"><strong>Raison:</strong> <?php echo esc_html($reason); ?></div>
                                 <?php endif; ?>
                             </div>
                             <div class="lmb-ad-actions">
                                 <?php if (in_array($status, ['draft', 'denied'])): ?>
                                     <button class="lmb-btn lmb-btn-sm lmb-submit-for-review-btn" data-ad-id="<?php echo get_the_ID(); ?>">
-                                        <i class="fas fa-paper-plane"></i> <?php _e('Submit for Review', 'lmb-core'); ?>
+                                        <i class="fas fa-paper-plane"></i> Soumettre pour Révision
                                     </button>
                                 <?php elseif ($status === 'pending_review'): ?>
-                                    <span><?php _e('Awaiting Review', 'lmb-core'); ?></span>
+                                    <span>En Attente de Révision</span>
                                 <?php elseif ($status === 'published'): 
                                     $pdf_url = get_post_meta(get_the_ID(), 'ad_pdf_url', true);
                                     if ($pdf_url): ?>
-                                        <a href="<?php echo esc_url($pdf_url); ?>" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-download"></i> <?php _e('Download PDF', 'lmb-core'); ?></a>
+                                        <a href="<?php echo esc_url($pdf_url); ?>" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-download"></i> Télécharger PDF</a>
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </div>
@@ -197,11 +200,11 @@ class LMB_User_Dashboard {
                 </div>
                  <?php if ($q->max_num_pages > 1) {
                     echo '<div class="lmb-pagination">';
-                    echo paginate_links(['base' => str_replace(999999999, '%#%', esc_url(get_pagenum_link(999999999))), 'format' => '?paged=%#%', 'current' => $paged, 'total' => $q->max_num_pages, 'prev_text' => '&laquo; ' . __('Previous'), 'next_text' => __('Next') . ' &raquo;']);
+                    echo paginate_links(['base' => str_replace(999999999, '%#%', esc_url(get_pagenum_link(999999999))), 'format' => '?paged=%#%', 'current' => $paged, 'total' => $q->max_num_pages, 'prev_text' => '&laquo; Précédent', 'next_text' => 'Suivant &raquo;']);
                     echo '</div>';
                 } ?>
             <?php endif; ?>
-        </div>
+                <div class="lmb-notice"><p>Vous n'avez encore soumis aucune annonce.</p></div>
         <?php
         wp_reset_postdata();
         return ob_get_clean();

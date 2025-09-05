@@ -8,7 +8,7 @@ jQuery(document).ready(function($) {
         formData.append('action', 'lmb_upload_newspaper');
         formData.append('nonce', lmb_ajax_params.nonce);
 
-        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Téléchargement...');
 
         $.ajax({
             url: lmb_ajax_params.ajaxurl,
@@ -24,9 +24,9 @@ jQuery(document).ready(function($) {
                 showLMBModal('error', response.data.message);
             }
         }).fail(function() {
-            showLMBModal('error', 'An unexpected server error occurred.');
+            showLMBModal('error', 'Une erreur serveur inattendue s\'est produite.');
         }).always(function() {
-            submitBtn.prop('disabled', false).html('<i class="fas fa-upload"></i> Upload Newspaper');
+            submitBtn.prop('disabled', false).html('<i class="fas fa-upload"></i> Télécharger Journal');
         });
     });
 });

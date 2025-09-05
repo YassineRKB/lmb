@@ -28,7 +28,7 @@ jQuery(document).ready(function($) {
             e.preventDefault();
             const submitBtn = $(this).find('button[type="submit"]');
             profileResponse.removeClass('error success').hide();
-            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Enregistrement...').prop('disabled', true);
 
             $.post(lmb_ajax_params.ajaxurl, {
                 action: 'lmb_update_profile_v2',
@@ -37,16 +37,16 @@ jQuery(document).ready(function($) {
                 form_data: $(this).serialize(),
             }).done(function(response) {
                 if (response.success) {
-                    profileResponse.addClass('success').text('Profile updated successfully! Refreshing...').show();
+                    profileResponse.addClass('success').text('Profil mis à jour avec succès ! Actualisation...').show();
                     // Refresh after a short delay to see the message
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    profileResponse.addClass('error').text(response.data.message || 'An unknown error occurred.').show();
+                    profileResponse.addClass('error').text(response.data.message || 'Une erreur inconnue s\'est produite.').show();
                 }
             }).fail(function() {
-                profileResponse.addClass('error').text('Request failed. Please check your connection.').show();
+                profileResponse.addClass('error').text('Demande échouée. Veuillez vérifier votre connexion.').show();
             }).always(function() {
-                submitBtn.html('Save Changes').prop('disabled', false);
+                submitBtn.html('Enregistrer les Modifications').prop('disabled', false);
             });
         });
 
@@ -55,7 +55,7 @@ jQuery(document).ready(function($) {
             e.preventDefault();
             const submitBtn = $(this).find('button[type="submit"]');
             passwordResponse.removeClass('error success').hide();
-            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Updating...').prop('disabled', true);
+            submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Mise à jour...').prop('disabled', true);
 
             $.post(lmb_ajax_params.ajaxurl, {
                 action: 'lmb_update_password_v2',
@@ -64,15 +64,15 @@ jQuery(document).ready(function($) {
                 form_data: $(this).serialize(),
             }).done(function(response) {
                 if (response.success) {
-                    passwordResponse.addClass('success').text('Password updated successfully!').show();
+                    passwordResponse.addClass('success').text('Mot de passe mis à jour avec succès !').show();
                     passwordForm[0].reset();
                 } else {
-                    passwordResponse.addClass('error').text(response.data.message || 'An unknown error occurred.').show();
+                    passwordResponse.addClass('error').text(response.data.message || 'Une erreur inconnue s\'est produite.').show();
                 }
             }).fail(function() {
-                passwordResponse.addClass('error').text('Request failed. Please check your connection.').show();
+                passwordResponse.addClass('error').text('Demande échouée. Veuillez vérifier votre connexion.').show();
             }).always(function() {
-                submitBtn.html('Update Password').prop('disabled', false);
+                submitBtn.html('Mettre à Jour le Mot de Passe').prop('disabled', false);
             });
         });
     });

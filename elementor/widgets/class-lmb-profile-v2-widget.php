@@ -13,7 +13,7 @@ class LMB_Profile_V2_Widget extends Widget_Base {
     }
 
     public function get_title() {
-        return __('Profile V2', 'lmb-core');
+        return __('Profil V2', 'lmb-core');
     }
 
     public function get_icon() {
@@ -34,7 +34,7 @@ class LMB_Profile_V2_Widget extends Widget_Base {
 
     protected function render() {
         if (!is_user_logged_in()) {
-            echo '<p>You must be logged in to view this page.</p>';
+            echo '<p>Vous devez être connecté pour voir cette page.</p>';
             return;
         }
 
@@ -52,7 +52,7 @@ class LMB_Profile_V2_Widget extends Widget_Base {
         }
 
         if (!$user_to_display) {
-            echo '<p>User not found.</p>';
+            echo '<p>Utilisateur introuvable.</p>';
             return;
         }
         
@@ -78,7 +78,7 @@ class LMB_Profile_V2_Widget extends Widget_Base {
             
             <?php if ($is_editing_other) : ?>
             <div class="lmb-admin-editing-notice">
-                <i class="fas fa-exclamation-triangle"></i> You are editing the profile for <strong><?php echo esc_html($user_to_display->display_name); ?></strong>.
+                <i class="fas fa-exclamation-triangle"></i> Vous modifiez le profil de <strong><?php echo esc_html($user_to_display->display_name); ?></strong>.
             </div>
             <?php endif; ?>
 
@@ -86,7 +86,7 @@ class LMB_Profile_V2_Widget extends Widget_Base {
                 <div class="lmb-profile-top-row">
                     <div class="lmb-profile-card">
                         <div class="lmb-widget-header">
-                            <h3><i class="fas fa-user-edit"></i> Profile Details</h3>
+                            <h3><i class="fas fa-user-edit"></i> Détails du Profil</h3>
                         </div>
                         <div class="lmb-card-content">
                             <div class="lmb-form-response" id="profile-response"></div>
@@ -94,17 +94,17 @@ class LMB_Profile_V2_Widget extends Widget_Base {
                             <?php if ($is_editing_other): ?>
                                 <div class="lmb-admin-controls">
                                     <div class="lmb-form-group">
-                                        <label for="lmb_client_type">Client Type</label>
+                                        <label for="lmb_client_type">Type de Client</label>
                                         <select name="lmb_client_type" id="lmb_client_type" class="lmb-input">
-                                            <option value="regular" <?php selected($client_type, 'regular'); ?>>Regular</option>
+                                            <option value="regular" <?php selected($client_type, 'regular'); ?>>Régulier</option>
                                             <option value="professional" <?php selected($client_type, 'professional'); ?>>Professional</option>
                                         </select>
                                     </div>
                                     <div class="lmb-form-group">
-                                        <label for="lmb_user_role">User Role</label>
+                                        <label for="lmb_user_role">Rôle Utilisateur</label>
                                         <select name="lmb_user_role" id="lmb_user_role" class="lmb-input">
                                             <option value="client" <?php selected($user_role, 'client'); ?>>Client</option>
-                                            <option value="administrator" <?php selected($user_role, 'administrator'); ?>>Administrator</option>
+                                            <option value="administrator" <?php selected($user_role, 'administrator'); ?>>Administrateur</option>
                                         </select>
                                     </div>
                                 </div>
@@ -112,47 +112,47 @@ class LMB_Profile_V2_Widget extends Widget_Base {
                             
                             <div id="lmb-profile-regular-fields" style="<?php echo ($client_type !== 'regular') ? 'display: none;' : ''; ?>">
                                 <div class="lmb-form-grid">
-                                    <div class="lmb-form-group"><label for="first_name">First Name</label><input type="text" name="first_name" id="first_name" class="lmb-input" value="<?php echo esc_attr($user_to_display->first_name); ?>" <?php echo $is_admin ? '' : 'readonly'; ?>></div>
-                                    <div class="lmb-form-group"><label for="last_name">Last Name</label><input type="text" name="last_name" id="last_name" class="lmb-input" value="<?php echo esc_attr($user_to_display->last_name); ?>" <?php echo $is_admin ? '' : 'readonly'; ?>></div>
+                                    <div class="lmb-form-group"><label for="first_name">Prénom</label><input type="text" name="first_name" id="first_name" class="lmb-input" value="<?php echo esc_attr($user_to_display->first_name); ?>" <?php echo $is_admin ? '' : 'readonly'; ?>></div>
+                                    <div class="lmb-form-group"><label for="last_name">Nom</label><input type="text" name="last_name" id="last_name" class="lmb-input" value="<?php echo esc_attr($user_to_display->last_name); ?>" <?php echo $is_admin ? '' : 'readonly'; ?>></div>
                                 </div>
                             </div>
                             
                             <div id="lmb-profile-professional-fields" style="<?php echo ($client_type !== 'professional') ? 'display: none;' : ''; ?>">
                                 <div class="lmb-form-grid">
-                                    <div class="lmb-form-group full-width"><label for="company_name">Company Name</label><input type="text" name="company_name" id="company_name" class="lmb-input" value="<?php echo esc_attr(get_user_meta($user_id, 'company_name', true)); ?>" <?php echo $is_admin ? '' : 'readonly'; ?>></div>
+                                    <div class="lmb-form-group full-width"><label for="company_name">Nom de la Société</label><input type="text" name="company_name" id="company_name" class="lmb-input" value="<?php echo esc_attr(get_user_meta($user_id, 'company_name', true)); ?>" <?php echo $is_admin ? '' : 'readonly'; ?>></div>
                                     <div class="lmb-form-group"><label for="company_rc">RC</label><input type="text" name="company_rc" id="company_rc" class="lmb-input" value="<?php echo esc_attr(get_user_meta($user_id, 'company_rc', true)); ?>" <?php echo $is_admin ? '' : 'readonly'; ?>></div>
-                                    <div class="lmb-form-group"><label for="company_hq">Company HQ Address</label><input type="text" name="company_hq" id="company_hq" class="lmb-input" value="<?php echo esc_attr(get_user_meta($user_id, 'company_hq', true)); ?>"></div>
+                                    <div class="lmb-form-group"><label for="company_hq">Adresse du Siège Social</label><input type="text" name="company_hq" id="company_hq" class="lmb-input" value="<?php echo esc_attr(get_user_meta($user_id, 'company_hq', true)); ?>"></div>
                                 </div>
                             </div>
 
                             <div class="lmb-form-grid">
-                                <div class="lmb-form-group"><label for="city">City</label><input type="text" name="city" id="city" class="lmb-input" value="<?php echo esc_attr(get_user_meta($user_id, 'city', true)); ?>"></div>
-                                <div class="lmb-form-group"><label for="phone">Phone</label><input type="tel" name="phone_number" id="phone" class="lmb-input" value="<?php echo esc_attr(get_user_meta($user_id, 'phone_number', true)); ?>"></div>
+                                <div class="lmb-form-group"><label for="city">Ville</label><input type="text" name="city" id="city" class="lmb-input" value="<?php echo esc_attr(get_user_meta($user_id, 'city', true)); ?>"></div>
+                                <div class="lmb-form-group"><label for="phone">Téléphone</label><input type="tel" name="phone_number" id="phone" class="lmb-input" value="<?php echo esc_attr(get_user_meta($user_id, 'phone_number', true)); ?>"></div>
                             </div>
                             <div class="lmb-form-group full-width">
-                                <label for="email">Email Address</label>
+                                <label for="email">Adresse Email</label>
                                 <input type="email" id="email" class="lmb-input" value="<?php echo esc_attr($user_to_display->user_email); ?>" disabled>
                             </div>
-                            <button type="submit" class="lmb-btn">Save Changes</button>
+                            <button type="submit" class="lmb-btn">Enregistrer les Modifications</button>
                         </div>
                     </div>
 
                     <div class="lmb-profile-sidebar-grid">
                         <div class="lmb-profile-card">
                             <div class="lmb-widget-header">
-                                <h3><i class="fas fa-chart-bar"></i> Account Status</h3>
+                                <h3><i class="fas fa-chart-bar"></i> Statut du Compte</h3>
                             </div>
                             <div class="lmb-card-content">
                                 <div class="lmb-user-stats">
-                                    <div class="stat-item"><span class="stat-label">Current Balance</span><span class="stat-value"><?php echo esc_html($balance); ?> PTS</span></div>
-                                    <div class="stat-item"><span class="stat-label">Cost Per Ad</span><span class="stat-value-small"><?php echo esc_html($cost_per_ad); ?> PTS</span></div>
-                                    <div class="stat-item"><span class="stat-label">Remaining Ads Quota</span><span class="stat-value"><?php echo esc_html($remaining_ads); ?></span></div>
+                                    <div class="stat-item"><span class="stat-label">Solde Actuel</span><span class="stat-value"><?php echo esc_html($balance); ?> PTS</span></div>
+                                    <div class="stat-item"><span class="stat-label">Coût Par Annonce</span><span class="stat-value-small"><?php echo esc_html($cost_per_ad); ?> PTS</span></div>
+                                    <div class="stat-item"><span class="stat-label">Quota d'Annonces Restant</span><span class="stat-value"><?php echo esc_html($remaining_ads); ?></span></div>
                                 </div>
                             </div>
                         </div>
                         <div class="lmb-profile-card">
                             <div class="lmb-widget-header">
-                                <h3><i class="fas fa-history"></i> Balance History</h3>
+                                <h3><i class="fas fa-history"></i> Historique du Solde</h3>
                             </div>
                             <div class="lmb-card-content">
                                 <div class="lmb-balance-history">
@@ -166,7 +166,7 @@ class LMB_Profile_V2_Widget extends Widget_Base {
                                         <div class="history-amount <?php echo $is_credit ? 'credit' : 'debit'; ?>"><?php echo ($is_credit ? '+' : '') . esc_html($item->amount); ?></div>
                                     </div>
                                     <?php endforeach; else: ?>
-                                    <p class="no-history">No recent transactions.</p>
+                                    <p class="no-history">Aucune transaction récente.</p>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -178,17 +178,17 @@ class LMB_Profile_V2_Widget extends Widget_Base {
             <div class="lmb-profile-bottom-row">
                  <div class="lmb-profile-card">
                     <form id="lmb-password-change-form">
-                        <div class="lmb-widget-header"><h3><i class="fas fa-key"></i> Change Password</h3></div>
+                        <div class="lmb-widget-header"><h3><i class="fas fa-key"></i> Changer le Mot de Passe</h3></div>
                         <div class="lmb-card-content">
                             <div class="lmb-form-response" id="password-response"></div>
                             <?php if (!$is_editing_other): ?>
-                            <div class="lmb-form-group"><label for="current-password">Current Password</label><input type="password" name="current_password" id="current-password" class="lmb-input" required></div>
+                            <div class="lmb-form-group"><label for="current-password">Mot de Passe Actuel</label><input type="password" name="current_password" id="current-password" class="lmb-input" required></div>
                             <?php endif; ?>
                             <div class="lmb-form-grid">
-                                <div class="lmb-form-group"><label for="new-password">New Password</label><input type="password" name="new_password" id="new-password" class="lmb-input" required></div>
-                                <div class="lmb-form-group"><label for="confirm-password">Confirm New Password</label><input type="password" name="confirm_password" id="confirm-password" class="lmb-input" required></div>
+                                <div class="lmb-form-group"><label for="new-password">Nouveau Mot de Passe</label><input type="password" name="new_password" id="new-password" class="lmb-input" required></div>
+                                <div class="lmb-form-group"><label for="confirm-password">Confirmer le Nouveau Mot de Passe</label><input type="password" name="confirm_password" id="confirm-password" class="lmb-input" required></div>
                             </div>
-                            <button type="submit" class="lmb-btn lmb-btn-secondary">Update Password</button>
+                            <button type="submit" class="lmb-btn lmb-btn-secondary">Mettre à Jour le Mot de Passe</button>
                         </div>
                     </form>
                 </div>

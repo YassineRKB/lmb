@@ -40,11 +40,11 @@ jQuery(document).ready(function($) {
                     tableBody.html(response.data.html);
                     paginationContainer.html(response.data.pagination);
                 } else {
-                    tableBody.html('<tr><td colspan="7" style="text-align:center;">' + (response.data.message || 'Could not load ads.') + '</td></tr>');
+                    tableBody.html('<tr><td colspan="7" style="text-align:center;">' + (response.data.message || 'Impossible de charger les annonces.') + '</td></tr>');
                     paginationContainer.empty();
                 }
             }).fail(function() {
-                tableBody.html('<tr><td colspan="7" style="text-align:center;">An error occurred. Please try again.</td></tr>');
+                tableBody.html('<tr><td colspan="7" style="text-align:center;">Une erreur s\'est produite. Veuillez réessayer.</td></tr>');
                 paginationContainer.empty();
             });
         };
@@ -89,6 +89,7 @@ jQuery(document).ready(function($) {
             const actionType = button.hasClass('lmb-submit-ad-btn') ? 'lmb_submit_draft_ad_v2' : 'lmb_delete_draft_ad_v2';
             
             if (actionType === 'lmb_delete_draft_ad_v2' && !confirm('Are you sure you want to delete this draft? This cannot be undone.')) {
+            if (actionType === 'lmb_delete_draft_ad_v2' && !confirm('Êtes-vous sûr de vouloir supprimer ce brouillon ? Cela ne peut pas être annulé.')) {
                 return;
             }
 
@@ -104,9 +105,9 @@ jQuery(document).ready(function($) {
                     const currentPage = paginationContainer.find('.current').text() || 1;
                     fetchAds(currentPage);
                 } else {
-                    alert(response.data.message || 'An error occurred.');
+                    alert(response.data.message || 'Une erreur s\'est produite.');
                     // Restore button on failure
-                    button.html(button.hasClass('lmb-submit-ad-btn') ? '<i class="fas fa-paper-plane"></i> Submit' : '<i class="fas fa-trash"></i> Delete').prop('disabled', false);
+                    button.html(button.hasClass('lmb-submit-ad-btn') ? '<i class="fas fa-paper-plane"></i> Soumettre' : '<i class="fas fa-trash"></i> Supprimer').prop('disabled', false);
                 }
             });
         });

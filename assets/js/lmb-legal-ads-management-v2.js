@@ -42,12 +42,12 @@
                         tableBody.html(response.data.html);
                         paginationContainer.html(response.data.pagination);
                     } else {
-                        tableBody.html('<tr><td colspan="10" style="text-align:center;">' + (response.data.message || 'No ads found.') + '</td></tr>');
+                        tableBody.html('<tr><td colspan="10" style="text-align:center;">' + (response.data.message || 'Aucune annonce trouvée.') + '</td></tr>');
                         paginationContainer.html('');
                     }
                 })
                 .fail(function() {
-                    tableBody.html('<tr><td colspan="10" style="text-align:center;">An error occurred while fetching data.</td></tr>');
+                    tableBody.html('<tr><td colspan="10" style="text-align:center;">Une erreur s\'est produite lors de la récupération des données.</td></tr>');
                     paginationContainer.html('');
                 });
         }
@@ -97,7 +97,7 @@
             const button = $(this);
             const adId = button.data('id');
             const action = button.data('action');
-            const reason = (action === 'deny') ? prompt('Reason for denial:') : '';
+            const reason = (action === 'deny') ? prompt('Raison du refus:') : '';
 
             if (action === 'deny' && reason === null) return;
 
@@ -136,7 +136,7 @@
                     showLMBModal('success', response.data.message);
                     fetchAds($('.lamv2-pagination-container .current').text() || 1);
                 } else {
-                    showLMBModal('error', response.data.message);
+                    showLMBModal('error', 'Une erreur serveur inconnue s\'est produite.');
                     button.html('<i class="fas fa-receipt"></i>').prop('disabled', false);
                 }
             }).fail(function() {
@@ -177,12 +177,12 @@
                     uploadForm[0].reset();
                     fetchAds($('.lamv2-pagination-container .current').text() || 1);
                 } else {
-                    alert('Upload Failed: ' + response.data.message);
+                    alert('Téléchargement Échoué: ' + response.data.message);
                 }
             }).fail(function() {
-                alert('An unexpected server error occurred during the upload.');
+                alert('Une erreur serveur inattendue s\'est produite pendant le téléchargement.');
             }).always(function() {
-                submitButton.html('Upload').prop('disabled', false);
+                submitButton.html('Télécharger').prop('disabled', false);
             });
         });
 

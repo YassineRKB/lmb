@@ -13,7 +13,7 @@ class LMB_Inactive_Clients_V2_Widget extends Widget_Base {
     }
 
     public function get_title() {
-        return __('Clients Management: Inactive V2', 'lmb-core');
+        return __('Gestion des Clients: Inactifs V2', 'lmb-core');
     }
 
     public function get_icon() {
@@ -66,13 +66,13 @@ class LMB_Inactive_Clients_V2_Widget extends Widget_Base {
         ?>
         <div <?php echo $this->get_render_attribute_string('wrapper'); ?>>
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-user-clock"></i> Inactive Clients Management</h3>
+                <h3><i class="fas fa-user-clock"></i> Gestion des Clients Inactifs</h3>
             </div>
             <div class="lmb-widget-content">
                 <div class="lmb-filters-box">
                     <div class="lmb-filter-grid">
-                        <input type="text" id="lmb-inactive-client-search" placeholder="Search by name, company, or email..." class="lmb-filter-input">
-                        <button type="reset" id="lmb-inactive-client-reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Reset</button>
+                        <input type="text" id="lmb-inactive-client-search" placeholder="Rechercher par nom, société, ou email..." class="lmb-filter-input">
+                        <button type="reset" id="lmb-inactive-client-reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Réinitialiser</button>
                     </div>
                 </div>
 

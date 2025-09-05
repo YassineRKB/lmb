@@ -24,12 +24,12 @@ jQuery(document).ready(function($) {
                         tableBody.html(response.data.html);
                         paginationContainer.html(response.data.pagination);
                     } else {
-                        tableBody.html('<tr><td colspan="5" style="text-align:center;">' + (response.data.message || 'No ads found.') + '</td></tr>');
+                        tableBody.html('<tr><td colspan="5" style="text-align:center;">' + (response.data.message || 'Aucune annonce trouvée.') + '</td></tr>');
                         paginationContainer.html('');
                     }
                 })
                 .fail(function() {
-                    tableBody.html('<tr><td colspan="5" style="text-align:center;">An error occurred while fetching data.</td></tr>');
+                    tableBody.html('<tr><td colspan="5" style="text-align:center;">Une erreur s\'est produite lors de la récupération des données.</td></tr>');
                     paginationContainer.html('');
                 });
         }

@@ -12,7 +12,7 @@ class LMB_Feed_V2_Widget extends Widget_Base {
     }
 
     public function get_title() {
-        return __('Feed V2', 'lmb-core');
+        return __('Flux d\'Activité V2', 'lmb-core');
     }
 
     public function get_icon() {
@@ -69,16 +69,16 @@ class LMB_Feed_V2_Widget extends Widget_Base {
         <div <?php echo $this->get_render_attribute_string('wrapper'); ?>>
             <div class="lmb-widget-header">
                 <?php if ($is_admin): ?>
-                    <h3><i class="fas fa-stream"></i> Global Activity Feed</h3>
+                    <h3><i class="fas fa-stream"></i> Flux d'Activité Global</h3>
                 <?php else: ?>
-                    <h3><i class="fas fa-history"></i> Your Recent Activity</h3>
+                    <h3><i class="fas fa-history"></i> Votre Activité Récente</h3>
                 <?php endif; ?>
             </div>
             <div class="lmb-widget-content">
                 <div class="feed-list">
-                    <!-- Feed items will be loaded here by JavaScript -->
+                    <!-- Les éléments du flux seront chargés ici par JavaScript -->
                     <div class="feed-item-placeholder" style="text-align: center; padding: 20px;">
-                        <i class="fas fa-spinner fa-spin"></i> Loading Feed...
+                        <i class="fas fa-spinner fa-spin"></i> Chargement du Flux...
                     </div>
                 </div>
             </div>

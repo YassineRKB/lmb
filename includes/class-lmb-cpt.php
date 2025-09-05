@@ -14,7 +14,7 @@ class LMB_CPT {
 
     public static function register_post_types() {
         register_post_type('lmb_legal_ad', [
-            'labels' => ['name' => __('Legal Ads', 'lmb-core'), 'singular_name' => __('Legal Ad', 'lmb-core'), 'add_new_item' => __('Add New Legal Ad', 'lmb-core')],
+            'labels' => ['name' => __('Annonces Légales', 'lmb-core'), 'singular_name' => __('Annonce Légale', 'lmb-core'), 'add_new_item' => __('Ajouter Nouvelle Annonce Légale', 'lmb-core')],
             'public' => true,
             'show_ui' => true,
             'show_in_menu' => 'lmb-core',
@@ -28,7 +28,7 @@ class LMB_CPT {
         ]);
 
         register_post_type('lmb_newspaper', [
-            'labels' => ['name' => __('Newspapers', 'lmb-core'), 'singular_name' => __('Newspaper', 'lmb-core'), 'add_new_item' => __('Upload New Newspaper', 'lmb-core')],
+            'labels' => ['name' => __('Journaux', 'lmb-core'), 'singular_name' => __('Journal', 'lmb-core'), 'add_new_item' => __('Télécharger Nouveau Journal', 'lmb-core')],
             'public' => true,
             'show_ui' => true,
             'show_in_menu' => 'lmb-core',
@@ -39,7 +39,7 @@ class LMB_CPT {
         ]);
 
         register_post_type('lmb_payment', [
-            'labels' => ['name' => __('Payments', 'lmb-core'), 'singular_name' => __('Payment', 'lmb-core')],
+            'labels' => ['name' => __('Paiements', 'lmb-core'), 'singular_name' => __('Paiement', 'lmb-core')],
             'public' => false,
             'show_ui' => true,
             'show_in_menu' => 'lmb-core',
@@ -50,7 +50,7 @@ class LMB_CPT {
         ]);
 
         register_post_type('lmb_package', [
-            'labels' => ['name' => __('Packages', 'lmb-core'), 'singular_name' => __('Package', 'lmb-core'), 'add_new_item' => __('Add New Package', 'lmb-core')],
+            'labels' => ['name' => __('Packages', 'lmb-core'), 'singular_name' => __('Package', 'lmb-core'), 'add_new_item' => __('Ajouter Nouveau Package', 'lmb-core')],
             'public' => false,
             'show_ui' => true,
             'show_in_menu' => 'lmb-core',
@@ -60,8 +60,8 @@ class LMB_CPT {
     }
     
     public static function add_meta_boxes() {
-        add_meta_box('lmb_package_details', __('Package Details', 'lmb-core'), [__CLASS__, 'render_package_metabox'], 'lmb_package', 'normal', 'high');
-        add_meta_box('lmb_newspaper_pdf', __('Newspaper PDF', 'lmb-core'), [__CLASS__, 'render_newspaper_metabox'], 'lmb_newspaper', 'normal', 'high');
+        add_meta_box('lmb_package_details', __('Détails du Package', 'lmb-core'), [__CLASS__, 'render_package_metabox'], 'lmb_package', 'normal', 'high');
+        add_meta_box('lmb_newspaper_pdf', __('PDF du Journal', 'lmb-core'), [__CLASS__, 'render_newspaper_metabox'], 'lmb_newspaper', 'normal', 'high');
         self::add_generation_meta_box();
     }
 
@@ -70,15 +70,15 @@ class LMB_CPT {
         ?>
         <table class="form-table">
             <tr>
-                <th><label for="lmb_price"><?php _e('Price (MAD)', 'lmb-core'); ?></label></th>
+                <th><label for="lmb_price">Prix (MAD)</label></th>
                 <td><input type="number" step="0.01" id="lmb_price" name="price" value="<?php echo esc_attr(get_post_meta($post->ID, 'price', true)); ?>" class="regular-text" /></td>
             </tr>
             <tr>
-                <th><label for="lmb_points"><?php _e('Points Awarded', 'lmb-core'); ?></label></th>
+                <th><label for="lmb_points">Points Attribués</label></th>
                 <td><input type="number" id="lmb_points" name="points" value="<?php echo esc_attr(get_post_meta($post->ID, 'points', true)); ?>" class="regular-text" /></td>
             </tr>
             <tr>
-                <th><label for="lmb_cost_per_ad"><?php _e('New Cost Per Ad', 'lmb-core'); ?></label></th>
+                <th><label for="lmb_cost_per_ad">Nouveau Coût Par Annonce</label></th>
                 <td><input type="number" id="lmb_cost_per_ad" name="cost_per_ad" value="<?php echo esc_attr(get_post_meta($post->ID, 'cost_per_ad', true)); ?>" class="regular-text" /></td>
             </tr>
         </table>
@@ -102,8 +102,8 @@ class LMB_CPT {
         ?>
         <p>
             <input type="hidden" name="newspaper_pdf" id="lmb_newspaper_pdf_id" value="<?php echo esc_attr($pdf_id); ?>" />
-            <button type="button" class="button" id="lmb_upload_pdf_button"><?php _e('Upload PDF', 'lmb-core'); ?></button>
-            <span id="lmb_pdf_filename" style="margin-left: 10px;"><?php echo $pdf_id ? basename(get_attached_file($pdf_id)) : 'No file selected.'; ?></span>
+            <button type="button" class="button" id="lmb_upload_pdf_button">Télécharger PDF</button>
+            <span id="lmb_pdf_filename" style="margin-left: 10px;"><?php echo $pdf_id ? basename(get_attached_file($pdf_id)) : 'Aucun fichier sélectionné.'; ?></span>
         </p>
         <script>
         jQuery(document).ready(function($){
@@ -111,7 +111,7 @@ class LMB_CPT {
             $('#lmb_upload_pdf_button').on('click', function(e){
                 e.preventDefault();
                 if(frame){ frame.open(); return; }
-                frame = wp.media({ title: 'Select Newspaper PDF', button: { text: 'Use this PDF' }, multiple: false, library: { type: 'application/pdf' } });
+                frame = wp.media({ title: 'Sélectionner PDF du Journal', button: { text: 'Utiliser ce PDF' }, multiple: false, library: { type: 'application/pdf' } });
                 frame.on('select', function(){
                     var attachment = frame.state().get('selection').first().toJSON();
                     $('#lmb_newspaper_pdf_id').val(attachment.id);
@@ -148,17 +148,17 @@ class LMB_CPT {
         ?>
         <p>
             <button type="button" id="lmb-regenerate-text-btn" class="button">
-                <i class="fas fa-sync-alt"></i> <?php _e('Regenerate Text from Template', 'lmb-core'); ?>
+                <i class="fas fa-sync-alt"></i> Régénérer le Texte à partir du Modèle
             </button>
         </p>
         <p>
             <button type="button" id="lmb-generate-pdf-btn" class="button button-primary">
-                <i class="fas fa-file-pdf"></i> <?php _e('Generate PDF', 'lmb-core'); ?>
+                <i class="fas fa-file-pdf"></i> Générer PDF
             </button>
         </p>
         <div id="lmb-generator-feedback" style="margin-top:10px;"></div>
         <p class="description">
-            Use 'Regenerate Text' to update the ad content from the latest template. 'Generate PDF' will save the current content as a PDF.
+            Utilisez 'Régénérer le Texte' pour mettre à jour le contenu de l'annonce à partir du dernier modèle. 'Générer PDF' sauvegardera le contenu actuel en PDF.
         </p>
         <?php
     }

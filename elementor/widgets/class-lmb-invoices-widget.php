@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) exit;
 class LMB_Invoices_Widget extends Widget_Base {
     public function get_name() { return 'lmb_invoices'; }
     public function get_title() { return __('LMB Payment Invoices', 'lmb-core'); }
+    public function get_title() { return __('Factures de Paiement LMB', 'lmb-core'); }
     public function get_icon() { return 'eicon-file-download'; }
     public function get_categories() { return ['lmb-user-widgets-v2']; } // Changed category
 
@@ -22,7 +23,7 @@ class LMB_Invoices_Widget extends Widget_Base {
 
     protected function render() {
         if (!is_user_logged_in()) {
-            echo '<div class="lmb-notice lmb-notice-error"><p>' . esc_html__('You must be logged in to view your invoices.', 'lmb-core') . '</p></div>';
+            echo '<div class="lmb-notice lmb-notice-error"><p>' . esc_html__('Vous devez être connecté pour voir vos factures.', 'lmb-core') . '</p></div>';
             return;
         }
 
@@ -41,7 +42,7 @@ class LMB_Invoices_Widget extends Widget_Base {
         ?>
         <div class="lmb-invoices-widget lmb-user-widget-v2">
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-file-invoice"></i> <?php esc_html_e('Payment Invoices', 'lmb-core'); ?></h3>
+                <h3><i class="fas fa-file-invoice"></i> Factures de Paiement</h3>
             </div>
             <div class="lmb-widget-content">
                 <?php if ($payments_query->have_posts()): ?>
@@ -49,11 +50,11 @@ class LMB_Invoices_Widget extends Widget_Base {
                         <table class="lmb-data-table">
                             <thead>
                                 <tr>
-                                    <th><?php esc_html_e('Invoice ID', 'lmb-core'); ?></th>
-                                    <th><?php esc_html_e('Date', 'lmb-core'); ?></th>
-                                    <th><?php esc_html_e('Package', 'lmb-core'); ?></th>
-                                    <th><?php esc_html_e('Amount', 'lmb-core'); ?></th>
-                                    <th><?php esc_html_e('Status', 'lmb-core'); ?></th>
+                                    <th>ID Facture</th>
+                                    <th>Date</th>
+                                    <th>Package</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -69,7 +70,7 @@ class LMB_Invoices_Widget extends Widget_Base {
                                     <tr>
                                         <td><strong><?php echo esc_html($payment_reference ?: '#' . $payment->ID); ?></strong></td>
                                         <td><?php echo esc_html(get_the_date('Y-m-d H:i', $payment->ID)); ?></td>
-                                        <td><?php echo $package ? esc_html($package->post_title) : '<em>' . esc_html__('N/A', 'lmb-core') . '</em>'; ?></td>
+                                        <td><?php echo $package ? esc_html($package->post_title) : '<em>N/A</em>'; ?></td>
                                         <td><strong><?php echo esc_html($package_price); ?> MAD</strong></td>
                                         <td>
                                             <span class="lmb-status-badge lmb-status-<?php echo esc_attr($payment_status); ?>">
@@ -83,7 +84,7 @@ class LMB_Invoices_Widget extends Widget_Base {
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
-                            </tbody>
+                                                <strong>Raison:</strong> <?php echo esc_html($rejection_reason); ?>
                         </table>
                     </div>
                     <?php if ($payments_query->max_num_pages > 1): ?>
@@ -95,8 +96,8 @@ class LMB_Invoices_Widget extends Widget_Base {
                     <div class="lmb-no-results-container">
                         <div class="lmb-empty-state">
                             <i class="fas fa-file-invoice fa-3x"></i>
-                            <h4><?php esc_html_e('No Invoices Found', 'lmb-core'); ?></h4>
-                            <p><?php esc_html_e('You haven\'t made any purchases yet. When you buy a package, your invoices will appear here.', 'lmb-core'); ?></p>
+                            <h4>Aucune Facture Trouvée</h4>
+                            <p>Vous n'avez encore effectué aucun achat. Lorsque vous achèterez un package, vos factures apparaîtront ici.</p>
                         </div>
                     </div>
                 <?php endif; ?>
