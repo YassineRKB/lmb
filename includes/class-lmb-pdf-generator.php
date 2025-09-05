@@ -99,7 +99,6 @@ class LMB_Accuse_PDF extends PDF_UTF8 {
         $footerText = "Directeur de publication : MOHAMED ELBACHIR LANSAR | License : 2022/23/01ص\n" .
                       "Adresse : RUE AHL LKHALIL OULD MHAMED N°08 ES-SEMARA\n" .
                       "ICE : 002924841000097 | TP : 77402556 | IF : 50611382 | CNSS : 4319969\n" .
-                      "RIB : 007260000899200000033587\n" .
                       "lmbannonceslegales.com | ste.lmbgroup@gmail.com\n" .
                       "06 61 83 82 11 | 06 74 40 61 97 | 06 05 28 98 04 | 08 08 61 04 87";
         
@@ -128,7 +127,7 @@ class LMB_Accuse_PDF extends PDF_UTF8 {
         // Company Name
         $this->SetX(20);
         $this->SetFont('Arial', '', 11);
-        $this->Cell($labelWidth, $lineHeight, "Societe / Nom:");
+        $this->Cell($labelWidth, $lineHeight, "Societe:");
         $this->SetFont('Arial', 'B', 11);
         $this->MultiCell(0, $lineHeight, $this->data['companyName']);
 
