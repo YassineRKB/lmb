@@ -54,7 +54,7 @@ jQuery(document).ready(function($) {
                     loginResponse.addClass('error').text(response.data.message || 'Une erreur inconnue s\'est produite.').show();
                 }
             }).fail(function() {
-                loginResponse.addClass('error').text('Demande échouée. Veuillez vérifier votre connexion.').show();
+                loginResponse.addClass('error').text('Demande échouée. Veuillez attendre l\'approbation de l\'administrateur.').show();
             }).always(function() {
                 submitBtn.html('Se connecter').prop('disabled', false);
             });
