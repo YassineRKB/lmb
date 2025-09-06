@@ -57,6 +57,7 @@ add_action('elementor/widgets/register', function($widgets_manager) {
         'LMB_Newspaper_Directory_Widget' => __DIR__ . '/widgets/class-lmb-newspaper-directory-widget.php',
         'LMB_Packages_Editor_Widget' => __DIR__ . '/widgets/class-lmb-packages-editor-widget.php',
         'LMB_Invoices_Widget' => __DIR__ . '/widgets/class-lmb-invoices-widget.php',
+        'LMB_Final_Newspapers_List_Widget' => __DIR__ . '/widgets/class-lmb-final-newspapers-list-widget.php',
         //v2 widgets
         'LMB_Legal_Ads_Management_V2_Widget' => __DIR__ . '/widgets/class-lmb-legal-ads-management-v2-widget.php',
         'LMB_My_Legal_Ads_V2_Widget' => __DIR__ . '/widgets/class-lmb-my-legal-ads-v2-widget.php',

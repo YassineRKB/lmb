@@ -21,34 +21,32 @@ class LMB_Upload_Newspaper_Widget extends Widget_Base {
         }
         ?>
         <div class="lmb-upload-newspaper-container lmb-admin-widget">
-            <div class="lmb-widget-header"><h3><i class="fas fa-newspaper"></i> Télécharger Journal Final</h3></div>
+            <div class="lmb-widget-header"><h3><i class="fas fa-newspaper"></i> Publier un Journal Final</h3></div>
             <div class="lmb-widget-content">
                 <form id="lmb-upload-newspaper-form" class="lmb-form" enctype="multipart/form-data">
                     <div class="lmb-form-row">
                         <div class="lmb-form-group">
-                            <label for="newspaper_title">Titre du Journal / Édition</label>
-                            <input type="text" name="newspaper_title" id="newspaper_title" required class="lmb-input">
-                        </div>
-                        <div class="lmb-form-group">
                             <label for="journal_no">Journal N°</label>
                             <input type="text" name="journal_no" id="journal_no" required class="lmb-input">
+                        </div>
+                        <div class="lmb-form-group">
+                            <label for="newspaper_pdf">PDF du Journal</label>
+                            <input type="file" name="newspaper_pdf" id="newspaper_pdf" accept="application/pdf" required class="lmb-input">
                         </div>
                     </div>
                     <div class="lmb-form-row">
                         <div class="lmb-form-group">
-                            <label for="start_date">Date de Début (Optionnel)</label>
-                            <input type="date" name="start_date" id="start_date" class="lmb-input">
+                            <label for="start_date">Date de Début</label>
+                            <input type="date" name="start_date" id="start_date" class="lmb-input" required>
                         </div>
                         <div class="lmb-form-group">
-                            <label for="end_date">Date de Fin (Optionnel)</label>
-                            <input type="date" name="end_date" id="end_date" class="lmb-input">
+                            <label for="end_date">Date de Fin</label>
+                            <input type="date" name="end_date" id="end_date" class="lmb-input" required>
                         </div>
                     </div>
-                    <p class="description">Si aucune plage de dates n'est sélectionnée, toutes les annonces avec des journaux temporaires correspondant au Journal N° ci-dessus seront mises à jour.</p>
-                    <div class="lmb-form-group">
-                        <label for="newspaper_pdf">PDF du Journal</label>
-                        <input type="file" name="newspaper_pdf" id="newspaper_pdf" accept="application/pdf" required class="lmb-input">
-                    </div>
+                    <p class="description" style="color: red; font-weight: bold; text-align: center; border: 1px solid red; padding: 10px; border-radius: 5px; margin: 15px 0;">
+                        attention assurez-vous de tout vérifier avant de soumettre le journal
+                    </p>
                     <div class="lmb-form-actions">
                         <button type="submit" class="lmb-btn lmb-btn-primary lmb-btn-large"><i class="fas fa-upload"></i> Télécharger et Associer le Journal</button>
                     </div>

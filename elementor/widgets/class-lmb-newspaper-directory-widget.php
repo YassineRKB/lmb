@@ -23,15 +23,14 @@ class LMB_Newspaper_Directory_Widget extends Widget_Base {
         ?>
         <div class="lmb-newspaper-directory-v2">
             <div class="lmb-widget-header">
-                <h3>LMB Journal</h3>
+                <h3>Journaux Publiés</h3>
                 <p>Consulter votre Journal</p>
             </div>
             <div class="lmb-widget-content">
                 <div class="lmb-filters-box">
                     <form class="lmb-filters-form">
                         <div class="lmb-filter-grid">
-                            <input type="search" name="filter_ref" placeholder="Rechercher par Réf (ID)..." class="lmb-filter-input" />
-                            <input type="search" name="s" placeholder="Rechercher par Nom..." class="lmb-filter-input" />
+                            <input type="search" name="filter_ref" placeholder="Rechercher par Journal N..." class="lmb-filter-input" />
                             <input type="date" name="filter_date" class="lmb-filter-input" />
                             <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Réinitialiser</button>
                         </div>

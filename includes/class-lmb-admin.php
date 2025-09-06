@@ -77,18 +77,31 @@ class LMB_Admin {
         register_setting('lmb_security_settings', 'lmb_protected_pages');
     }
 
+    // REVISED FUNCTION for collecting stats
     public static function collect_stats() {
         global $wpdb;
         $stats = [];
 
+        // Ad Counts
         $ad_counts = (array) wp_count_posts('lmb_legal_ad');
         $stats['ads_draft'] = $ad_counts['draft'] ?? 0;
-        $stats['ads_pending'] = $ad_counts['pending'] ?? 0;
+        $stats['ads_pending'] = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id WHERE p.post_type = 'lmb_legal_ad' AND pm.meta_key = 'lmb_status' AND pm.meta_value = 'pending_review'");
         $stats['ads_published'] = $ad_counts['publish'] ?? 0;
 
+        // User and Newspaper Counts
         $stats['users_total'] = count_users()['total_users'];
         $stats['news_total'] = wp_count_posts('lmb_newspaper')->publish ?? 0;
         
+        // Revenue Metrics
+        $stats['earnings_month'] = (float) $wpdb->get_var("SELECT SUM(pm.meta_value) FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id WHERE p.post_type = 'lmb_payment' AND p.post_status = 'publish' AND pm.meta_key = 'package_price' AND p.post_date >= '" . date('Y-m-01') . "'");
+        $stats['earnings_quarter'] = (float) $wpdb->get_var("SELECT SUM(pm.meta_value) FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id WHERE p.post_type = 'lmb_payment' AND p.post_status = 'publish' AND pm.meta_key = 'package_price' AND p.post_date >= '" . date('Y-m-d', strtotime('-3 months')) . "'");
+        $stats['earnings_year'] = (float) $wpdb->get_var("SELECT SUM(pm.meta_value) FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id WHERE p.post_type = 'lmb_payment' AND p.post_status = 'publish' AND pm.meta_key = 'package_price' AND p.post_date >= '" . date('Y-01-01') . "'");
+
+        // Points Metrics
+        $stats['total_points_system'] = (int) $wpdb->get_var("SELECT SUM(amount) FROM {$wpdb->prefix}lmb_points_transactions WHERE amount > 0");
+        $stats['total_unspent_points'] = (int) $wpdb->get_var("SELECT SUM(meta_value) FROM {$wpdb->usermeta} WHERE meta_key = 'lmb_points_balance'");
+        $stats['total_spent_points'] = $stats['total_points_system'] - $stats['total_unspent_points'];
+
         return $stats;
     }
 
