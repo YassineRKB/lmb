@@ -135,8 +135,11 @@ function lmb_register_all_assets() {
     }
 
     wp_localize_script('lmb-core', 'lmb_ajax_params', [
-        'ajaxurl' => admin_url('admin-ajax.php'),
-        'nonce'   => wp_create_nonce('lmb_nonce'),
+        'ajaxurl'    => admin_url('admin-ajax.php'),
+        'nonce'      => wp_create_nonce('lmb_nonce'),
+        // ADDED THIS LINE: It creates a secure logout URL that redirects to the homepage.
+        // please dont remove it, it's important for secure logout functionality
+        'logout_url' => wp_logout_url(home_url('/')), 
     ]);
 
     // Enqueue core assets that are always needed

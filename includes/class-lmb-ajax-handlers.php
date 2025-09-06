@@ -1036,15 +1036,15 @@ class LMB_Ajax_Handlers {
         wp_set_auth_cookie($user->ID, true, is_ssl());
         do_action('wp_login', $user->user_login, $user);
 
-        // Redirect logic
-        $redirect_url = home_url('/'); // Default redirect
+        // --- MODIFIED: Role-based redirect logic ---
+        $redirect_url = home_url('/'); // Default redirect for any other role
+
         if (in_array('administrator', $user->roles) || in_array('employee', $user->roles)) {
-            $redirect_url = admin_url();
+            // Administrators and Employees are redirected to the /administration page
+            $redirect_url = home_url('/administration/');
         } elseif (in_array('client', $user->roles)) {
-            $dashboard_page_id = get_option('lmb_client_dashboard_page_id'); // You may need a settings page for this
-            if ($dashboard_page_id) {
-                $redirect_url = get_permalink($dashboard_page_id);
-            }
+            // Clients are redirected to the /dashboard page
+            $redirect_url = home_url('/dashboard/');
         }
         
         wp_send_json_success(['redirect_url' => $redirect_url]);
