@@ -155,7 +155,7 @@ class LMB_User_Dashboard {
 
 
     public static function render_user_ads_list() {
-        if (!is_user_logged_in()) return '<p>'.esc_html__('Login required.', 'lmb-core').'</p>';
+        if (!is_user_logged_in()) return '<p>Connexion requise.</p>';
         
         $user_id = get_current_user_id();
         $paged = max(1, (int)(get_query_var('paged') ? get_query_var('paged') : 1));

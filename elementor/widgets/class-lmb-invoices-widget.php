@@ -78,18 +78,17 @@ class LMB_Invoices_Widget extends Widget_Base {
                                             </span>
                                             <?php if ($payment_status === 'rejected' && !empty($rejection_reason)): ?>
                                                 <div class="lmb-rejection-reason">
-                                                    <strong><?php esc_html_e('Reason:', 'lmb-core'); ?></strong> <?php echo esc_html($rejection_reason); ?>
+                                                    <strong>Raison:</strong> <?php echo esc_html($rejection_reason); ?>
                                                 </div>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
-                                                <strong>Raison:</strong> <?php echo esc_html($rejection_reason); ?>
                         </table>
                     </div>
                     <?php if ($payments_query->max_num_pages > 1): ?>
                         <div class="lmb-pagination">
-                            <?php echo paginate_links(['base' => add_query_arg('paged', '%#%'), 'format' => '', 'current' => $paged, 'total' => $payments_query->max_num_pages, 'prev_text' => '&laquo; ' . esc_html__('Previous'), 'next_text' => esc_html__('Next') . ' &raquo;']); ?>
+                            <?php echo paginate_links(['base' => add_query_arg('paged', '%#%'), 'format' => '', 'current' => $paged, 'total' => $payments_query->max_num_pages, 'prev_text' => '&laquo; Précédent', 'next_text' => 'Suivant &raquo;']); ?>
                         </div>
                     <?php endif; ?>
                 <?php else: ?>

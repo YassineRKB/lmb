@@ -65,7 +65,6 @@ jQuery(document).ready(function($) {
             const approvalAction = button.data('action');
 
             if (approvalAction === 'deny' && !confirm('Are you sure you want to deny and permanently delete this user? This action cannot be undone.')) {
-            }
             if (approvalAction === 'deny' && !confirm('Êtes-vous sûr de vouloir refuser et supprimer définitivement cet utilisateur ? Cette action ne peut pas être annulée.')) {
                 return;
             }

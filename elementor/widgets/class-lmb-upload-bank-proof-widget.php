@@ -34,7 +34,7 @@ class LMB_Upload_Bank_Proof_Widget extends Widget_Base {
             <div class="lmb-bank-details" style="padding: 25px; border-top: 1px solid #e9ecef; background-color: #f8f9fa;">
                 <h4 style="margin-top: 0;">Détails Bancaires pour le Paiement</h4>
                 <p><strong>Nom de la Banque:</strong> <?php echo esc_html(get_option('lmb_bank_name', 'Non Spécifié')); ?></p>
-                <p><strong><?php esc_html_e('IBAN:', 'lmb-core'); ?></strong> <?php echo esc_html(get_option('lmb_bank_iban', 'Not Specified')); ?></p>
+                <p><strong>IBAN:</strong> <?php echo esc_html(get_option('lmb_bank_iban', 'Non Spécifié')); ?></p>
                 <p><strong>Titulaire du Compte:</strong> <?php echo esc_html(get_option('lmb_bank_account_holder', 'Non Spécifié')); ?></p>
             </div>
         </div>

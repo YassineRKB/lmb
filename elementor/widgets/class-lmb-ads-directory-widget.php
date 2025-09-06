@@ -40,7 +40,7 @@ class LMB_Ads_Directory_Widget extends Widget_Base {
                     </div>
                     <div class="lmb-single-ad-actions">
                         <a href="<?php echo esc_url(remove_query_arg('legal-ad')); ?>" class="lmb-btn lmb-btn-view">
-                            <i class="fas fa-arrow-left"></i> <?php esc_html_e('Back to Directory', 'lmb-core'); ?>
+                            <i class="fas fa-arrow-left"></i> Retour au Répertoire
                         </a>
                     </div>
                 </div>

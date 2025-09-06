@@ -98,7 +98,7 @@ class LMB_Notification_Manager {
             (int)$user_id, (int)$limit, (int)$offset
         ), ARRAY_A);
         foreach ($rows as &$r) {
-            $r['time_ago'] = human_time_diff( strtotime(get_date_from_gmt($r['created_at'])) , current_time('timestamp')) . ' ' . __('ago');
+            $r['time_ago'] = human_time_diff( strtotime(get_date_from_gmt($r['created_at'])) , current_time('timestamp')) . ' il y a';
         }
         return $rows;
     }
