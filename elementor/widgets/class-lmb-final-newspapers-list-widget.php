@@ -24,7 +24,7 @@ class LMB_Final_Newspapers_List_Widget extends Widget_Base {
     }
 
     public function get_style_depends() {
-        return ['lmb-admin-widgets-v2'];
+        return ['lmb-final-newspapers-list'];
     }
 
     protected function render() {
@@ -43,7 +43,7 @@ class LMB_Final_Newspapers_List_Widget extends Widget_Base {
         ?>
         <div class="lmb-final-newspapers-list lmb-admin-widget">
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-check-circle"></i> Journaux Finaux Publiés</h3>
+                <h3><i class="fas fa-check-circle"></i> Journaux Final Publiés</h3>
             </div>
             <div class="lmb-widget-content">
                 <div class="lmb-table-container">

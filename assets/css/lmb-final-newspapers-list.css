@@ -1,0 +1,96 @@
+/* FILE: assets/css/lmb-final-newspapers-list.css */
+
+/* --- Base Widget Container --- */
+.lmb-final-newspapers-list {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* --- Widget Header --- */
+.lmb-final-newspapers-list .lmb-widget-header {
+    background: #fff;
+    color: #333;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 8px 8px 0 0;
+}
+
+.lmb-final-newspapers-list .lmb-widget-header h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 400;
+    color: #d78808;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Widget Content Area --- */
+.lmb-final-newspapers-list .lmb-widget-content {
+    padding: 25px;
+}
+
+/* --- Data Table --- */
+.lmb-final-newspapers-list .lmb-table-container {
+    overflow-x: auto;
+}
+
+.lmb-final-newspapers-list .lmb-data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lmb-final-newspapers-list .lmb-data-table thead tr {
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-final-newspapers-list .lmb-data-table th,
+.lmb-final-newspapers-list .lmb-data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.lmb-final-newspapers-list .lmb-data-table tbody tr:hover {
+    background-color: #fff8eb;
+}
+
+/* --- Buttons & Actions --- */
+.lmb-final-newspapers-list .lmb-btn {
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-decoration: none;
+}
+
+.lmb-final-newspapers-list .lmb-btn-primary { 
+    background-color: #d78808; 
+    border-color: #d78808; 
+    color: #fff; 
+}
+.lmb-final-newspapers-list .lmb-btn-primary:hover { 
+    background-color: #b87407; 
+}
+
+.lmb-final-newspapers-list .lmb-actions-cell { 
+    display: flex; 
+    gap: 5px; 
+    align-items: center; 
+}
