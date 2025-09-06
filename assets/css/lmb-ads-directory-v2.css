@@ -29,6 +29,11 @@
     gap: 10px;
 }
 
+.lmb-ads-directory-v2 .lmb-widget-header p {
+    margin: 5px 0 0;
+    color: #6c757d;
+}
+
 /* --- Widget Content Area --- */
 .lmb-ads-directory-v2 .lmb-widget-content {
     padding: 25px;
@@ -111,9 +116,20 @@
     justify-content: center;
     gap: 5px;
     text-decoration: none;
-    background-color: #d78808;
-    color: #fff !important;
 }
+
+/* Specific style for journal number buttons */
+.lmb-ads-directory-v2 .lmb-data-table .lmb-actions-cell .lmb-btn {
+    background-color: #d78808; /* Orange background */
+    color: #fff !important; /* White text */
+    border-color: #d78808; /* Orange border */
+}
+
+.lmb-ads-directory-v2 .lmb-data-table .lmb-actions-cell .lmb-btn:hover {
+    background-color: #b87407; /* Darker orange on hover */
+    border-color: #b87407;
+}
+
 .lmb-ads-directory-v2 .lmb-btn-view { background-color: #f0f0f1; border: 1px solid #ddd; color: #333; }
 .lmb-ads-directory-v2 .lmb-btn-view:hover { background-color: #e2e6ea; }
 .lmb-ads-directory-v2 .lmb-btn-primary { background-color: #d78808; border-color: #d78808; color: #fff; }

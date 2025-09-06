@@ -67,6 +67,11 @@ jQuery(document).ready(function($) {
             fetchDirectoryAds(page);
         });
 
+        tableBody.on('click', '.lmb-temp-journal-link', function(e) {
+            e.preventDefault();
+            alert('Il sera disponible plus tard.');
+        });
+
         // Initial Load
         fetchDirectoryAds(1);
     });

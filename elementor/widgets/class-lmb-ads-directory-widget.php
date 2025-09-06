@@ -58,7 +58,8 @@ class LMB_Ads_Directory_Widget extends Widget_Base {
         ?>
         <div class="lmb-ads-directory-v2">
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-search"></i> Répertoire des Annonces Légales</h3>
+                <h3>Annonces Legales</h3>
+                <p>Consultez vos annonces légales</p>
             </div>
             <div class="lmb-widget-content">
                 <div class="lmb-filters-box">
@@ -90,7 +91,7 @@ class LMB_Ads_Directory_Widget extends Widget_Base {
                                 <th>Société / Titre</th>
                                 <th>Type</th>
                                 <th>Date</th>
-                                <th>Actions</th>
+                                <th>Journal</th>
                             </tr>
                         </thead>
                         <tbody>

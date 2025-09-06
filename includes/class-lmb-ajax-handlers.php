@@ -32,7 +32,7 @@ class LMB_Ajax_Handlers {
             
         ];
         // --- MODIFICATION: Make auth actions public ---
-        $public_actions = ['lmb_login_v2', 'lmb_signup_v2'];
+        $public_actions = ['lmb_login_v2', 'lmb_signup_v2', 'lmb_fetch_public_ads'];
 
         foreach ($actions as $action) {
             add_action('wp_ajax_' . $action, [__CLASS__, 'handle_request']);
@@ -45,7 +45,7 @@ class LMB_Ajax_Handlers {
     public static function handle_request() {
         check_ajax_referer('lmb_nonce', 'nonce');
         
-        $public_actions = ['lmb_login_v2', 'lmb_signup_v2'];
+        $public_actions = ['lmb_login_v2', 'lmb_signup_v2', 'lmb_fetch_public_ads'];
         $action = isset($_POST['action']) ? sanitize_key($_POST['action']) : '';
 
         if (!in_array($action, $public_actions) && !is_user_logged_in()) {
@@ -1540,7 +1540,7 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['message' => 'Newspaper uploaded. Associated with ' . $updated_count . ' ads. Old temporary files have been deleted.']);
     }
 
-    // --- NEW FUNCTION for Public Ads Directory ---
+    // --- REVISED FUNCTION for Public Ads Directory ---
     private static function lmb_fetch_public_ads() {
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
         parse_str($_POST['filters'] ?? '', $filters);
@@ -1580,7 +1580,21 @@ class LMB_Ajax_Handlers {
                 $html .= '<td>' . esc_html(get_post_meta($ad_id, 'ad_type', true)) . '</td>';
                 $html .= '<td>' . get_the_date() . '</td>';
                 $html .= '<td class="lmb-actions-cell">';
-                $html .= '<a href="' . esc_url(get_permalink($ad_id)) . '" class="lmb-btn lmb-btn-sm lmb-btn-view"><i class="fas fa-eye"></i> View</a>';
+
+                $final_journal_id = get_post_meta($ad_id, 'lmb_final_journal_id', true);
+                $temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
+
+                if ($final_journal_id) {
+                    $journal_url = wp_get_attachment_url(get_post_meta($final_journal_id, 'newspaper_pdf', true));
+                    $journal_no = get_post_meta($final_journal_id, 'journal_no', true);
+                    if ($journal_url) {
+                       $html .= '<a href="' . esc_url($journal_url) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-view">' . esc_html($journal_no) . '</a>';
+                    }
+                } elseif ($temp_journal_id) {
+                    $journal_no = get_post_meta($temp_journal_id, 'journal_no', true);
+                    $html .= '<a href="#" class="lmb-btn lmb-btn-sm lmb-btn-view lmb-temp-journal-link">' . esc_html($journal_no) . '</a>';
+                }
+
                 $html .= '</td>';
                 $html .= '</tr>';
             }
