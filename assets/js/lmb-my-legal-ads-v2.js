@@ -89,6 +89,7 @@ jQuery(document).ready(function($) {
             const actionType = button.hasClass('lmb-submit-ad-btn') ? 'lmb_submit_draft_ad_v2' : 'lmb_delete_draft_ad_v2';
             
             if (actionType === 'lmb_delete_draft_ad_v2' && !confirm('Are you sure you want to delete this draft? This cannot be undone.')) {
+            }
             if (actionType === 'lmb_delete_draft_ad_v2' && !confirm('Êtes-vous sûr de vouloir supprimer ce brouillon ? Cela ne peut pas être annulé.')) {
                 return;
             }

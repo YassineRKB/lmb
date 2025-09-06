@@ -67,6 +67,7 @@ jQuery(document).ready(function($) {
             const userId = button.data('user-id');
 
             if (!confirm('Are you sure you want to lock this user? Their account will be deactivated.')) {
+            }
             if (!confirm('Êtes-vous sûr de vouloir verrouiller cet utilisateur ? Son compte sera désactivé.')) {
                 return;
             }
