@@ -32,7 +32,7 @@ class LMB_Ajax_Handlers {
             
         ];
         // --- MODIFICATION: Make auth actions public ---
-        $public_actions = ['lmb_login_v2', 'lmb_signup_v2', 'lmb_fetch_public_ads'];
+        $public_actions = ['lmb_login_v2', 'lmb_signup_v2', 'lmb_fetch_public_ads', 'lmb_fetch_newspapers_v2'];
 
         foreach ($actions as $action) {
             add_action('wp_ajax_' . $action, [__CLASS__, 'handle_request']);
@@ -45,7 +45,7 @@ class LMB_Ajax_Handlers {
     public static function handle_request() {
         check_ajax_referer('lmb_nonce', 'nonce');
         
-        $public_actions = ['lmb_login_v2', 'lmb_signup_v2', 'lmb_fetch_public_ads'];
+        $public_actions = ['lmb_login_v2', 'lmb_signup_v2', 'lmb_fetch_public_ads', 'lmb_fetch_newspapers_v2'];
         $action = isset($_POST['action']) ? sanitize_key($_POST['action']) : '';
 
         if (!in_array($action, $public_actions) && !is_user_logged_in()) {
@@ -1617,7 +1617,7 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
     }
 
-    // --- NEW FUNCTION for Newspaper Directory ---
+    // --- REVISED FUNCTION for Newspaper Directory ---
     private static function lmb_fetch_newspapers_v2() {
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
         parse_str($_POST['filters'] ?? '', $filters);
@@ -1655,22 +1655,21 @@ class LMB_Ajax_Handlers {
                 $query->the_post();
                 $pdf_id = get_post_meta(get_the_ID(), 'newspaper_pdf', true);
                 $pdf_url = wp_get_attachment_url($pdf_id);
+                $journal_no = get_post_meta(get_the_ID(), 'journal_no', true);
                 
                 // Add class and data-href to the table row
                 $html .= '<tr class="clickable-row" data-href="' . esc_url($pdf_url) . '">';
-                $html .= '<td>' . get_the_ID() . '</td>';
-                $html .= '<td>' . esc_html(get_the_title()) . '</td>';
+                $html .= '<td>' . esc_html($journal_no) . '</td>';
                 $html .= '<td>' . esc_html(get_the_date()) . '</td>';
                 $html .= '<td class="lmb-actions-cell">';
                 if ($pdf_url) {
-                    $html .= '<a target="_blank" href="'.esc_url($pdf_url).'" class="lmb-btn lmb-btn-sm lmb-btn-view"><i class="fas fa-eye"></i> View</a>';
-                    $html .= '<a href="'.esc_url($pdf_url).'" class="lmb-btn lmb-btn-sm lmb-btn-primary" download><i class="fas fa-download"></i> Download</a>';
+                    $html .= '<a target="_blank" href="'.esc_url($pdf_url).'" class="lmb-btn lmb-btn-sm lmb-btn-primary"><i class="fas fa-download"></i> Télécharger</a>';
                 }
                 $html .= '</td>';
                 $html .= '</tr>';
             }
         } else {
-            $html = '<tr><td colspan="4" style="text-align:center;">No newspapers found matching your search.</td></tr>';
+            $html = '<tr><td colspan="3" style="text-align:center;">No newspapers found matching your search.</td></tr>';
         }
 
         $pagination_html = paginate_links([

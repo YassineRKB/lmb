@@ -8,7 +8,7 @@ jQuery(document).ready(function($) {
         let debounceTimer;
 
         function fetchNewspapers(page = 1) {
-            tableBody.html('<tr><td colspan="4" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading newspapers...</td></tr>');
+            tableBody.html('<tr><td colspan="3" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading newspapers...</td></tr>');
 
             const formData = form.serialize();
             const data = {
@@ -24,12 +24,12 @@ jQuery(document).ready(function($) {
                         tableBody.html(response.data.html);
                         paginationContainer.html(response.data.pagination);
                     } else {
-                        tableBody.html('<tr><td colspan="4" style="text-align:center;">' + (response.data.message || 'Aucun journal trouvé.') + '</td></tr>');
+                        tableBody.html('<tr><td colspan="3" style="text-align:center;">' + (response.data.message || 'Aucun journal trouvé.') + '</td></tr>');
                         paginationContainer.html('');
                     }
                 })
                 .fail(function() {
-                    tableBody.html('<tr><td colspan="4" style="text-align:center;">Une erreur s\'est produite lors de la récupération des données.</td></tr>');
+                    tableBody.html('<tr><td colspan="3" style="text-align:center;">Une erreur s\'est produite lors de la récupération des données.</td></tr>');
                     paginationContainer.html('');
                 });
         }
@@ -70,13 +70,8 @@ jQuery(document).ready(function($) {
             fetchNewspapers(page);
         });
 
-        // --- NEW: Handle clickable table rows ---
+        // --- NEW: Handle clickable table rows and buttons ---
         tableBody.on('click', 'tr.clickable-row', function(e) {
-            // Do nothing if a button or link inside the row was clicked
-            if ($(e.target).closest('a, button').length > 0) {
-                return;
-            }
-
             const url = $(this).data('href');
             if (url) {
                 window.open(url, '_blank');

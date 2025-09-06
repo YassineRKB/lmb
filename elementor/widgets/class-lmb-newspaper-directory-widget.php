@@ -23,7 +23,8 @@ class LMB_Newspaper_Directory_Widget extends Widget_Base {
         ?>
         <div class="lmb-newspaper-directory-v2">
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-newspaper"></i> Archives des Journaux</h3>
+                <h3>LMB Journal</h3>
+                <p>Consulter votre Journal</p>
             </div>
             <div class="lmb-widget-content">
                 <div class="lmb-filters-box">
@@ -41,8 +42,7 @@ class LMB_Newspaper_Directory_Widget extends Widget_Base {
                     <table class="lmb-data-table">
                         <thead>
                             <tr>
-                                <th>Réf</th>
-                                <th>Nom</th>
+                                <th>Journal №</th>
                                 <th>Date</th>
                                 <th>Actions</th>
                             </tr>
