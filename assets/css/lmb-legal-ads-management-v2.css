@@ -43,6 +43,13 @@
     border: 1px solid #e9ecef;
     border-radius: 8px;
     margin-bottom: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+.lamv2-widget #lamv2-ads-filters-form {
+    width: 100%;
 }
 
 .lamv2-widget .lamv2-filter-grid {
@@ -53,7 +60,8 @@
 }
 
 .lamv2-widget .lamv2-filter-input, 
-.lamv2-widget .lamv2-filter-select {
+.lamv2-widget .lamv2-filter-select, 
+.lamv2-widget .lamv2-btn {
     border: 1px solid #ced4da;
     border-radius: 6px;
     padding: 8px 12px;
@@ -78,6 +86,7 @@
 .lamv2-widget .lamv2-data-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed; /* Prevents columns from stretching with long content */
 }
 
 .lamv2-widget .lamv2-data-table thead tr {
@@ -92,7 +101,8 @@
     border-bottom: 1px solid #e9ecef;
     vertical-align: middle;
     font-size: 14px;
-    white-space: nowrap;
+    white-space: normal; /* Allow text to wrap */
+    word-wrap: break-word; /* Force long words to break */
 }
 
 .lamv2-widget .lamv2-data-table tbody .lamv2-clickable-row:hover {
@@ -259,3 +269,16 @@
     padding-top: 20px;
     border-top: 1px solid #e9ecef;
 }
+
+/* Responsive Grid for Filters */
+@media (max-width: 991px) {
+    .lamv2-widget .lamv2-filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 575px) {
+    .lamv2-widget .lamv2-filter-grid {
+        grid-template-columns: 1fr;
+    }
+}
+

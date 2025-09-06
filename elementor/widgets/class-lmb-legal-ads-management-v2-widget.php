@@ -32,7 +32,16 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                         <div class="lamv2-filter-grid">
                             <input type="text" name="filter_ref" placeholder="Réf (ID)" class="lamv2-filter-input">
                             <input type="text" name="filter_company" placeholder="Société" class="lamv2-filter-input">
-                            <input type="text" name="filter_type" placeholder="Type" class="lamv2-filter-input">
+                            <select name="filter_type" class="lamv2-filter-select">
+                                <option value="">Tous les Types</option>
+                                <?php
+                                global $wpdb;
+                                $ad_types = $wpdb->get_col("SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key = 'ad_type' AND meta_value != '' ORDER BY meta_value ASC");
+                                foreach ($ad_types as $type) {
+                                    echo '<option value="'.esc_attr($type).'">'.esc_html($type).'</option>';
+                                }
+                                ?>
+                            </select>
                             <input type="date" name="filter_date" class="lamv2-filter-input">
                             <input type="text" name="filter_client" placeholder="Client" class="lamv2-filter-input">
                             <select name="filter_status" class="lamv2-filter-select">
