@@ -1,0 +1,181 @@
+/* FILE: assets/css/lmb-ads-directory-v2.css */
+
+/* --- Base Widget Container --- */
+.lmb-ads-directory-v2 {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* --- Widget Header --- */
+.lmb-ads-directory-v2 .lmb-widget-header {
+    background: #fff;
+    color: #333;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 8px 8px 0 0;
+}
+
+.lmb-ads-directory-v2 .lmb-widget-header h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 400;
+    color: #d78808;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Widget Content Area --- */
+.lmb-ads-directory-v2 .lmb-widget-content {
+    padding: 25px;
+}
+
+/* --- Filters Section --- */
+.lmb-ads-directory-v2 .lmb-filters-box {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.lmb-ads-directory-v2 .lmb-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    align-items: center;
+}
+
+.lmb-ads-directory-v2 .lmb-filter-input, 
+.lmb-ads-directory-v2 .lmb-filter-select {
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 100%;
+    height: 38px;
+    box-sizing: border-box;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.lmb-ads-directory-v2 .lmb-filter-input:focus, 
+.lmb-ads-directory-v2 .lmb-filter-select:focus {
+    border-color: #f5c469;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(215, 136, 8, .25);
+}
+
+/* --- Data Table --- */
+.lmb-ads-directory-v2 .lmb-table-container {
+    overflow-x: auto;
+}
+
+.lmb-ads-directory-v2 .lmb-data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lmb-ads-directory-v2 .lmb-data-table thead tr {
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-ads-directory-v2 .lmb-data-table th,
+.lmb-ads-directory-v2 .lmb-data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.lmb-ads-directory-v2 .lmb-data-table tbody tr:hover {
+    background-color: #fff8eb;
+}
+
+/* --- Buttons --- */
+.lmb-ads-directory-v2 .lmb-btn {
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-decoration: none;
+    background-color: #d78808;
+    color: #fff !important;
+}
+.lmb-ads-directory-v2 .lmb-btn-view { background-color: #f0f0f1; border: 1px solid #ddd; color: #333; }
+.lmb-ads-directory-v2 .lmb-btn-view:hover { background-color: #e2e6ea; }
+.lmb-ads-directory-v2 .lmb-btn-primary { background-color: #d78808; border-color: #d78808; color: #fff; }
+.lmb-ads-directory-v2 .lmb-btn-primary:hover { background-color: #b87407; }
+
+/* --- Pagination --- */
+.lmb-ads-directory-v2 .lmb-pagination-container { text-align: center; margin-top: 20px; }
+.lmb-ads-directory-v2 .lmb-pagination-container a.page-numbers, .lmb-ads-directory-v2 .lmb-pagination-container span.page-numbers {
+    display: inline-block;
+    padding: 8px 14px;
+    margin: 0 4px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #4a5568;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+.lmb-ads-directory-v2 .lmb-pagination-container a.page-numbers:hover { background: #edf2f7; }
+.lmb-ads-directory-v2 .lmb-pagination-container .page-numbers.current { background: #d78808; color: #fff; border-color: #d78808; }
+
+/* --- Single Ad View --- */
+.lmb-single-ad-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.lmb-single-ad-header {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.lmb-single-ad-header h1 {
+    font-family: 'Oswald', sans-serif;
+    margin: 0 0 15px;
+    font-size: 28px;
+    color: #d78808;
+}
+
+.lmb-single-ad-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.lmb-single-ad-content {
+    line-height: 1.7;
+    color: #4a5568;
+}
+
+/* Responsive Grid for Filters */
+@media (max-width: 991px) {
+    .lmb-ads-directory-v2 .lmb-filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 575px) {
+    .lmb-ads-directory-v2 .lmb-filter-grid {
+        grid-template-columns: 1fr;
+    }
+}

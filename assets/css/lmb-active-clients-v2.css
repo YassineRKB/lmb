@@ -1,0 +1,145 @@
+/* FILE: assets/css/lmb-active-clients-v2.css */
+
+/* --- Base Widget Container --- */
+.lmb-active-clients-v2 {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* --- Widget Header --- */
+.lmb-active-clients-v2 .lmb-widget-header {
+    background: #fff;
+    color: #333;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 8px 8px 0 0;
+}
+
+.lmb-active-clients-v2 .lmb-widget-header h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 400;
+    color: #d78808;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Widget Content Area --- */
+.lmb-active-clients-v2 .lmb-widget-content {
+    padding: 25px;
+}
+
+/* --- Filters Section --- */
+.lmb-active-clients-v2 .lmb-filters-box {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.lmb-active-clients-v2 .lmb-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    align-items: center;
+}
+
+.lmb-active-clients-v2 .lmb-filter-input, 
+.lmb-active-clients-v2 .lmb-filter-select {
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 100%;
+    height: 38px;
+    box-sizing: border-box;
+}
+
+/* --- Data Table --- */
+.lmb-active-clients-v2 .lmb-table-container {
+    overflow-x: auto;
+}
+.lmb-active-clients-v2 .lmb-data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.lmb-active-clients-v2 .lmb-data-table thead tr {
+    background-color: #d78808;
+    color: #fff;
+}
+.lmb-active-clients-v2 .lmb-data-table th, 
+.lmb-active-clients-v2 .lmb-data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+}
+.lmb-active-clients-v2 .lmb-data-table tbody tr:hover {
+    background-color: #fef8f0;
+}
+.lmb-active-clients-v2 .lmb-client-type-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+.lmb-active-clients-v2 .lmb-client-type-badge.regular { background-color: #e0f2fe; color: #0c4a6e; }
+.lmb-active-clients-v2 .lmb-client-type-badge.professional { background-color: #dcfce7; color: #166534; }
+.lmb-active-clients-v2 .lmb-client-type-badge.administrator { background-color: #e5e7eb; color: #1f2937; }
+
+.lmb-active-clients-v2 .lmb-actions-cell {
+    display: flex;
+    gap: 10px;
+}
+
+.lmb-active-clients-v2 .lmb-btn {
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-decoration: none;
+}
+
+.lmb-active-clients-v2 .lmb-btn-icon {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font-size: 14px;
+    border-radius: 50%;
+}
+
+.lmb-active-clients-v2 .lmb-btn-view { background-color: #f0f0f1; border: 1px solid #ddd; color: #333; }
+.lmb-active-clients-v2 .lmb-btn-primary { background-color: #007bff; color: #fff; }
+.lmb-active-clients-v2 .lmb-btn-warning { background-color: #ffc107; color: #212529; }
+
+/* Responsive Grid for Filters */
+@media (max-width: 1200px) {
+    .lmb-active-clients-v2 .lmb-filter-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .lmb-active-clients-v2 .lmb-filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 575px) {
+    .lmb-active-clients-v2 .lmb-filter-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,142 @@
+.lmb-legal-ads-receipts-widget {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.lmb-widget-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+}
+
+.lmb-widget-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lmb-widget-content {
+    padding: 20px;
+}
+
+.lmb-receipts-table-container {
+    overflow-x: auto;
+}
+
+.lmb-receipts-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.lmb-receipts-table th,
+.lmb-receipts-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.lmb-receipts-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.lmb-receipts-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.lmb-btn {
+    background: #0073aa;
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lmb-btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+.lmb-btn-primary:hover {
+    background: #005177;
+}
+
+.lmb-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.lmb-notice {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.lmb-notice-error {
+    background: #f2dede;
+    color: #a94442;
+}
+
+.lmb-no-receipts {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.lmb-empty-state {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.lmb-empty-state i {
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+.lmb-empty-state h4 {
+    color: #495057;
+    margin-bottom: 10px;
+}
+
+.lmb-empty-state p {
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+.lmb-pagination {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.lmb-pagination a,
+.lmb-pagination span {
+    padding: 8px 12px;
+    margin: 0 4px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #0073aa;
+}
+
+.lmb-pagination a:hover {
+    background: #f8f9fa;
+}
+
+.lmb-pagination .current {
+    background: #0073aa;
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .lmb-receipts-table {
+        font-size: 14px;
+    }
+}

@@ -1,0 +1,26 @@
+/* LMB Core Admin Styles */
+.lmb-settings-wrap .nav-tab-wrapper {
+    margin-bottom: 20px;
+}
+.lmb-status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.lmb-status-draft { background: #f0f0f1; color: #646970; }
+.lmb-status-pending_review, .lmb-status-pending { background: #fcf9e8; color: #996800; }
+.lmb-status-published, .lmb-status-approved { background: #edfaef; color: #00a32a; }
+.lmb-status-denied, .lmb-status-rejected { background: #fcf0f1; color: #d63638; }
+
+#adminmenu .menu-icon-lmb-core div.wp-menu-image:before {
+    content: '\f11d';
+}
+
+/* Actions buttons in list tables */
+.lmb_actions .button {
+    margin-right: 5px;
+}

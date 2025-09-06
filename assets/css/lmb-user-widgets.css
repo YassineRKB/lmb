@@ -1,0 +1,160 @@
+/* --- Styles for LMB User Widgets --- */
+
+/* Common Widget Structure */
+.lmb-user-widget {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+.lmb-widget-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+}
+.lmb-widget-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.lmb-widget-content {
+    padding: 20px;
+}
+
+/* Invoices & Receipts Widgets Table */
+.lmb-table-container {
+    overflow-x: auto;
+}
+.lmb-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+.lmb-data-table th,
+.lmb-data-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+.lmb-data-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+.lmb-data-table tbody tr:hover {
+    background: #f8f9fa;
+}
+.lmb-no-results-container {
+    text-align: center;
+    padding: 40px 20px;
+}
+.lmb-empty-state {
+    max-width: 400px;
+    margin: 0 auto;
+}
+.lmb-empty-state i {
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+.lmb-empty-state h4 {
+    color: #495057;
+    margin-bottom: 10px;
+}
+.lmb-empty-state p {
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+/* User Ads List Widget Tabs */
+.lmb-user-ads-list-widget .lmb-tabs-nav {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+.lmb-user-ads-list-widget .lmb-tab-btn {
+    padding: 12px 20px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    border-bottom: 3px solid transparent;
+    font-size: 16px;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.3s ease;
+    margin-bottom: -2px;
+}
+.lmb-user-ads-list-widget .lmb-tab-btn.active {
+    border-bottom-color: #667eea;
+    color: #667eea;
+}
+.lmb-user-ads-list-widget .lmb-tab-btn:hover {
+    background-color: #f5f5f5;
+    color: #333;
+}
+/* User Ads List Item Layout */
+.lmb-ad-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.lmb-ad-info {
+    flex-grow: 1;
+}
+
+.lmb-ad-actions {
+    flex-shrink: 0;
+}
+
+h4.lmb-ad-title {
+    margin: 0 0 5px;
+}
+
+.lmb-ad-meta {
+    font-size: 0.9em;
+    color: #555;
+}
+
+/* Style for the "Submit for Review" button */
+.lmb-submit-review.lmb-btn {
+    padding: 5px 10px;
+    font-size: 13px;
+    background-color: #667eea;
+    color: white;
+    border-radius: 4px;
+}
+.lmb-submit-review.lmb-btn:hover {
+    background-color: #5a67d8;
+}
+
+/* Pagination Buttons */
+#lmb-user-ads-pagination {
+    margin-top: 20px;
+}
+#lmb-user-ads-pagination .page-btn {
+    padding: 8px 12px;
+    margin: 0 5px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 4px;
+}
+#lmb-user-ads-pagination .page-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+/* ... add to the end of lmb-user-widgets.css ... */
+
+/* Rejection Reason Styling in Tables */
+.lmb-rejection-reason {
+    font-size: 12px;
+    color: #a94442; /* A reddish color to indicate an issue */
+    background-color: #f2dede;
+    border-left: 3px solid #ebccd1;
+    padding: 8px 12px;
+    margin-top: 8px;
+    border-radius: 4px;
+}

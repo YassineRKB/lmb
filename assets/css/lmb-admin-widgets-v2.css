@@ -1,0 +1,464 @@
+/* FILE: assets/css/lmb-admin-widgets-v2.css */
+
+/* --- Global V2 Widget Styles --- */
+.lmb-admin-widget {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* --- Widget Header --- */
+.lmb-admin-widget .lmb-widget-header {
+    background: #fff;
+    color: #333;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 8px 8px 0 0;
+}
+
+.lmb-admin-widget .lmb-widget-header h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 400;
+    color: #d78808;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Widget Content Area --- */
+.lmb-widget-content {
+    padding: 25px;
+}
+
+/* --- Filters Section --- */
+.lmb-filters-box {
+    padding: 20px 25px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 25px;
+}
+
+.lmb-filters-box-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.lmb-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    align-items: center;
+}
+
+.lmb-filter-input, .lmb-filter-select, .lmb-filter-grid .lmb-btn {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.lmb-filter-input:focus, .lmb-filter-select:focus {
+    border-color: #f5c469;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(215, 136, 8, .25);
+}
+
+/* --- Data Table --- */
+.lmb-table-container {
+    overflow-x: auto;
+}
+
+.lmb-data-table.lmb-ads-table-v2 {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lmb-data-table.lmb-ads-table-v2 thead tr {
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-data-table.lmb-ads-table-v2 th,
+.lmb-data-table.lmb-ads-table-v2 td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+    font-size: 14px;
+}
+
+.lmb-data-table.lmb-ads-table-v2 tbody tr.clickable-row:hover {
+    background-color: #fff8eb;
+    cursor: pointer;
+}
+
+/* --- Status Badges --- */
+.lmb-status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.lmb-status-published { background-color: #28a745; }
+.lmb-status-pending_review { background-color: #ffc107; color: #333; }
+.lmb-status-draft { background-color: #6c757d; }
+.lmb-status-denied { background-color: #dc3545; }
+
+
+/* --- Buttons & Actions --- */
+.lmb-btn {
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-decoration: none;
+}
+
+.lmb-btn-sm { padding: 4px 8px; font-size: 12px; }
+
+.lmb-btn-icon {
+    padding: 6px;
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+}
+
+.lmb-btn-success { background-color: #28a745; border-color: #28a745; color: #fff; }
+.lmb-btn-success:hover { background-color: #218838; border-color: #1e7e34; }
+
+.lmb-btn-danger { background-color: #dc3545; border-color: #dc3545; color: #fff; }
+.lmb-btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
+
+.lmb-btn-secondary { background-color: #6c757d; border-color: #6c757d; color: #fff; }
+.lmb-btn-secondary:hover { background-color: #5a6268; border-color: #545b62; }
+
+.lmb-btn-info { background-color: #17a2b8; border-color: #17a2b8; color: #fff; }
+.lmb-btn-info:hover { background-color: #138496; border-color: #117a8b; }
+
+.lmb-btn-view { background-color: #f0f0f1; border: 1px solid #ddd; color: #333; }
+.lmb-btn-view:hover { background-color: #e2e6ea; }
+
+.lmb-btn-text-link {
+    background-color: transparent;
+    border: 1px solid #d78808;
+    color: #d78808;
+}
+.lmb-btn-text-link:hover {
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-actions-cell {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.cell-placeholder { color: #888; }
+
+
+/* --- STYLES FOR INACTIVE CLIENTS WIDGET --- */
+.lmb-inactive-clients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.lmb-client-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    transition: box-shadow 0.2s ease-in-out;
+}
+.lmb-client-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.lmb-client-info {
+    flex-grow: 1;
+}
+
+.lmb-client-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.lmb-client-name {
+    font-size: 18px;
+    font-weight: 500;
+    color: #000;
+}
+
+.lmb-client-type-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.lmb-client-type-badge.regular { background-color: #e0f2fe; color: #0c4a6e; }
+.lmb-client-type-badge.professional { background-color: #dcfce7; color: #166534; }
+
+.lmb-client-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px 20px;
+    font-size: 14px;
+}
+
+.lmb-client-details div {
+    color: #6c757d;
+}
+
+.lmb-client-details strong {
+    font-weight: 500;
+    color: #343a40;
+    margin-left: 5px;
+}
+
+.lmb-client-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* --- STYLES FOR ACTIVE CLIENTS WIDGET TABLE --- */
+.lmb-active-clients-v2 .lmb-table-container {
+    overflow-x: auto;
+}
+.lmb-active-clients-v2 .lmb-data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.lmb-active-clients-v2 .lmb-data-table thead tr {
+    background-color: #d78808;
+    color: #fff;
+}
+.lmb-active-clients-v2 .lmb-data-table th, 
+.lmb-active-clients-v2 .lmb-data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+}
+.lmb-active-clients-v2 .lmb-data-table tbody tr:hover {
+    background-color: #fef8f0;
+}
+.lmb-active-clients-v2 .lmb-client-type-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+.lmb-active-clients-v2 .lmb-client-type-badge.regular { background-color: #e0f2fe; color: #0c4a6e; }
+.lmb-active-clients-v2 .lmb-client-type-badge.professional { background-color: #dcfce7; color: #166534; }
+.lmb-active-clients-v2 .lmb-client-type-badge.administrator { background-color: #e5e7eb; color: #1f2937; } /* Changed from .admin to match role name */
+
+.lmb-active-clients-v2 .lmb-actions-cell {
+    display: flex;
+    gap: 10px;
+}
+
+.lmb-active-clients-v2 .lmb-btn-icon {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font-size: 14px;
+    border-radius: 50%;
+}
+
+.lmb-active-clients-v2 .lmb-btn-primary { background-color: #007bff; color: #fff; }
+.lmb-active-clients-v2 .lmb-btn-warning { background-color: #ffc107; color: #212529; }
+/* --- STYLES FOR PACKAGES EDITOR WIDGET --- */
+
+.lmb-packages-editor-widget .lmb-add-package-section,
+.lmb-packages-editor-widget .lmb-packages-list-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.lmb-packages-editor-widget .lmb-packages-list-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.lmb-packages-editor-widget h4 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0 0 20px 0;
+    color: #333;
+}
+
+/* Form Styling */
+.lmb-packages-editor-widget .lmb-form .lmb-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.lmb-packages-editor-widget .lmb-form .lmb-form-group {
+    margin-bottom: 20px;
+}
+
+.lmb-packages-editor-widget .lmb-form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Package Card Styling */
+.lmb-packages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.lmb-package-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.lmb-package-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+    border-color: #d78808;
+}
+
+.lmb-package-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #f8f9fa;
+    padding-bottom: 10px;
+}
+
+.lmb-package-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #000;
+    margin: 0;
+}
+
+.lmb-package-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #d78808;
+    white-space: nowrap;
+}
+
+.lmb-package-details {
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.lmb-package-detail {
+    display: flex;
+    justify-content: space-between;
+    color: #6c757d;
+    padding: 5px 0;
+}
+
+.lmb-package-description {
+    color: #6c757d;
+    font-size: 13px;
+    margin-bottom: 15px;
+    line-height: 1.5;
+    flex-grow: 1;
+}
+
+.lmb-package-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+/* --- Modal Styles (Add to end of file) --- */
+.lmb-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.lmb-modal-content {
+    background: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+}
+
+.lmb-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.lmb-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.lmb-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    color: #6c757d;
+}
+
+.lmb-modal-body .lmb-form-actions {
+    text-align: right;
+    margin-top: 25px;
+}

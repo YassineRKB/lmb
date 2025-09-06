@@ -1,0 +1,160 @@
+/* FILE: assets/css/lmb-payments-management.css */
+
+/* --- Base Widget Container --- */
+.lmb-payments-management {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* --- Widget Header --- */
+.lmb-payments-management .lmb-widget-header {
+    background: #fff;
+    color: #333;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 8px 8px 0 0;
+}
+
+.lmb-payments-management .lmb-widget-header h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 400;
+    color: #d78808;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Widget Content Area --- */
+.lmb-payments-management .lmb-widget-content {
+    padding: 25px;
+}
+
+/* --- Filters Section --- */
+.lmb-payments-management .lmb-filters-box {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.lmb-payments-management .lmb-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    align-items: center;
+}
+
+.lmb-payments-management .lmb-filter-input, 
+.lmb-payments-management .lmb-filter-select {
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 100%;
+    height: 38px;
+    box-sizing: border-box;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.lmb-payments-management .lmb-filter-input:focus, 
+.lmb-payments-management .lmb-filter-select:focus {
+    border-color: #f5c469;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(215, 136, 8, .25);
+}
+
+/* --- Data Table --- */
+.lmb-payments-management .lmb-table-container {
+    overflow-x: auto;
+}
+
+.lmb-payments-management .lmb-data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lmb-payments-management .lmb-data-table thead tr {
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-payments-management .lmb-data-table th,
+.lmb-payments-management .lmb-data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.lmb-payments-management .lmb-data-table tbody tr:hover {
+    background-color: #fff8eb;
+}
+
+/* --- Status Badges --- */
+.lmb-payments-management .lmb-status-badge {
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.lmb-payments-management .lmb-status-approved { background-color: #28a745; }
+.lmb-payments-management .lmb-status-pending { background-color: #ffc107; color: #333; }
+.lmb-payments-management .lmb-status-denied { background-color: #dc3545; }
+
+
+/* --- Buttons & Actions --- */
+.lmb-payments-management .lmb-btn {
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-decoration: none;
+}
+.lmb-payments-management .lmb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.lmb-payments-management .lmb-btn-sm { padding: 4px 8px; font-size: 12px; }
+
+.lmb-payments-management .lmb-btn-success { background-color: #28a745; border-color: #28a745; color: #fff; }
+.lmb-payments-management .lmb-btn-success:hover { background-color: #218838; }
+.lmb-payments-management .lmb-btn-danger { background-color: #dc3545; border-color: #dc3545; color: #fff; }
+.lmb-payments-management .lmb-btn-danger:hover { background-color: #c82333; }
+.lmb-payments-management .lmb-btn-secondary { background-color: #6c757d; border-color: #6c757d; color: #fff; }
+.lmb-payments-management .lmb-btn-secondary:hover { background-color: #5a6268; }
+.lmb-payments-management .lmb-btn-view { background-color: #f0f0f1; border: 1px solid #ddd; color: #333; }
+.lmb-payments-management .lmb-btn-view:hover { background-color: #e2e6ea; }
+
+.lmb-payments-management .lmb-actions-cell { display: flex; gap: 5px; align-items: center; }
+
+
+/* --- PAGINATION --- */
+.lmb-payments-management .lmb-pagination-container { text-align: center; margin-top: 20px; }
+.lmb-payments-management .lmb-pagination-container a.page-numbers, .lmb-payments-management .lmb-pagination-container span.page-numbers {
+    display: inline-block;
+    padding: 8px 14px;
+    margin: 0 4px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #4a5568;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+.lmb-payments-management .lmb-pagination-container a.page-numbers:hover { background: #edf2f7; }
+.lmb-payments-management .lmb-pagination-container .page-numbers.current { background: #d78808; color: #fff; border-color: #d78808; }

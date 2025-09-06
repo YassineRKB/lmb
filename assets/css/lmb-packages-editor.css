@@ -1,0 +1,138 @@
+/* FILE: assets/css/lmb-packages-editor.css */
+
+/* --- Base Widget Container --- */
+.lmb-packages-editor {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+/* --- Form & List Containers (Cards) --- */
+.lmb-packages-editor .lmb-editor-form-container,
+.lmb-packages-editor .lmb-packages-list-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* --- Widget Header --- */
+.lmb-packages-editor .lmb-widget-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.lmb-packages-editor .lmb-widget-header h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    margin: 0;
+    font-weight: 400;
+    color: #d78808;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Form Styles --- */
+.lmb-packages-editor .lmb-editor-form {
+    padding: 25px;
+}
+.lmb-packages-editor .lmb-form-group {
+    margin-bottom: 20px;
+}
+.lmb-packages-editor .lmb-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 14px;
+}
+.lmb-packages-editor .lmb-input,
+.lmb-packages-editor .lmb-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+.lmb-packages-editor .lmb-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* --- Buttons --- */
+.lmb-packages-editor .lmb-btn {
+    border-radius: 6px;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-decoration: none;
+    width: 100%;
+}
+.lmb-packages-editor .lmb-btn-primary { background-color: #d78808; color: #fff; }
+.lmb-packages-editor .lmb-btn-secondary { background-color: #6c757d; color: #fff; }
+.lmb-packages-editor .lmb-btn-danger { background-color: #dc3545; color: #fff; }
+.lmb-packages-editor .lmb-btn-sm { padding: 4px 8px; font-size: 12px; width: auto; }
+
+/* --- Package List Styles --- */
+.lmb-packages-editor .lmb-packages-list {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.lmb-packages-editor .lmb-package-card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.lmb-packages-editor .lmb-package-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+.lmb-packages-editor .lmb-package-card-title {
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0;
+}
+.lmb-packages-editor .lmb-package-card-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.lmb-packages-editor .lmb-package-card-body p {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 0 0 15px;
+}
+.lmb-packages-editor .lmb-package-card-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+    margin-top: 15px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 991px) {
+    .lmb-packages-editor {
+        grid-template-columns: 1fr;
+    }
+}

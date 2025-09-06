@@ -1,0 +1,416 @@
+/* FILE: assets/css/lmb-user-widgets-v2.css */
+
+/* --- Global V2 Widget Styles --- */
+.lmb-user-widget-v2 {
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+    max-width: 1200px;
+    margin: auto;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* --- WIDGET HEADER FIX --- */
+/* By adding the widget's class, we make this rule more specific */
+.lmb-user-widget-v2 .lmb-widget-header {
+    background: #fff; /* Changed from gradient to plain white */
+    color: #333;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef; /* Changed from #ddd */
+    border-radius: 8px 8px 0 0;
+}
+
+/* --- WIDGET HEADER H3 FIX --- */
+.lmb-user-widget-v2 .lmb-widget-header h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px; /* Adjusted font size */
+    margin: 0;
+    font-weight: 400;
+    color: #d78808;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lmb-user-widget-v2 .lmb-widget-content {
+    padding: 25px;
+}
+
+/* --- FILTERS BOX FIX --- */
+.lmb-user-widget-v2 .lmb-filters-box {
+    padding: 20px;
+    background-color: #f8f9fa; /* Changed background color */
+    border: 1px solid #e9ecef; /* Changed border */
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.lmb-user-widget-v2 .lmb-filters-box-title {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    color: #333;
+}
+
+.lmb-user-widget-v2 .lmb-filter-grid {
+    display: grid;
+    gap: 15px;
+    align-items: center;
+}
+
+.lmb-user-widget-v2 .lmb-filter-grid-user {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.lmb-user-widget-v2 .lmb-filter-input, 
+.lmb-user-widget-v2 .lmb-filter-select {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- Data Table --- */
+.lmb-user-widget-v2 .lmb-table-container {
+    overflow-x: auto;
+}
+
+.lmb-user-widget-v2 .lmb-data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* --- DATA TABLE HEADER FIX --- */
+.lmb-user-widget-v2 .lmb-data-table thead tr {
+    background-color: #d78808; /* Changed to a dark grey for better contrast */
+    color: #fff;
+}
+
+.lmb-user-widget-v2 .lmb-data-table th {
+    font-weight: 600; /* Added font weight */
+}
+
+
+.lmb-user-widget-v2 .lmb-data-table th,
+.lmb-user-widget-v2 .lmb-data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+.lmb-user-widget-v2 .lmb-data-table tbody tr:not(.no-hover):hover {
+    background-color: #fef8f0;
+}
+
+.lmb-data-table tbody tr.clickable-row {
+    cursor: pointer;
+}
+
+
+/* --- Status Badges & Placeholders --- */
+.lmb-user-widget-v2 .lmb-status-badge {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.lmb-user-widget-v2 .lmb-status-published { background-color: #28a745; }
+.lmb-user-widget-v2 .lmb-status-pending_review { background-color: #ffc107; color: #333; }
+.lmb-user-widget-v2 .lmb-status-draft { background-color: #6c757d; }
+.lmb-user-widget-v2 .lmb-status-denied { background-color: #dc3545; }
+.lmb-user-widget-v2 .cell-placeholder { color: #888; }
+.lmb-user-widget-v2 .denial-reason {
+    font-size: 12px;
+    color: #dc3545;
+    margin-top: 4px;
+}
+
+
+/* --- Buttons & Links --- */
+.lmb-user-widget-v2 .lmb-btn {
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.lmb-user-widget-v2 .lmb-btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.lmb-user-widget-v2 .lmb-btn-icon {
+    padding: 8px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+}
+
+.lmb-user-widget-v2 .lmb-btn-success { background-color: #28a745; color: #fff; }
+.lmb-user-widget-v2 .lmb-btn-danger { background-color: #dc3545; color: #fff; }
+.lmb-user-widget-v2 .lmb-btn-primary { background-color: #007bff; color: #fff; }
+.lmb-user-widget-v2 .lmb-btn-view { background-color: #f8f9fa; border-color: #ddd; color: #333; }
+
+.lmb-user-widget-v2 .lmb-btn-text-link {
+    background-color: transparent;
+    border: 1px solid #d78808;
+    color: #d78808;
+}
+.lmb-user-widget-v2 .lmb-btn-text-link:hover {
+    background-color: #d78808;
+    color: #fff;
+}
+
+.lmb-user-widget-v2 .lmb-actions-cell {
+    display: flex;
+    gap: 5px;
+}
+
+/* Pagination & View More */
+ .lmb-user-widget-v2 .lmb-pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+}
+
+/* --- PAGINATION FIX --- */
+ .lmb-user-widget-v2 .lmb-pagination-container a.page-numbers, 
+ .lmb-user-widget-v2 .lmb-pagination-container span.page-numbers {
+    padding: 8px 12px;
+    margin: 0 4px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #d78808;
+    border: 1px solid #eee;
+    background: #fff; /* Added background */
+}
+
+.lmb-user-widget-v2 .lmb-pagination-container a.page-numbers:hover {
+    background: #fef8f0;
+}
+
+.lmb-user-widget-v2 .lmb-pagination-container .current {
+    background: #d78808;
+    color: #fff;
+    border-color: #d78808;
+}
+
+/* --- STYLES FOR FEED V2 WIDGET --- */
+.lmb-feed-v2-widget .feed-list {
+    position: relative;
+    padding-left: 20px;
+}
+/* The timeline bar */
+.lmb-feed-v2-widget .feed-list::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background-color: #e5e7eb;
+}
+
+.lmb-feed-v2-widget .feed-item {
+    display: flex;
+    gap: 20px;
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.lmb-feed-v2-widget .feed-item:last-child {
+    margin-bottom: 0;
+}
+
+.lmb-feed-v2-widget .feed-icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #fff;
+    background-color: #ccc; /* Default color */
+    z-index: 1;
+    border: 3px solid #fff;
+}
+
+.lmb-feed-v2-widget .feed-icon.icon-approve { background-color: #28a745; }
+.lmb-feed-v2-widget .feed-icon.icon-deny { background-color: #dc3545; }
+.lmb-feed-v2-widget .feed-icon.icon-submit { background-color: #007bff; }
+.lmb-feed-v2-widget .feed-icon.icon-create { background-color: #6c757d; }
+.lmb-feed-v2-widget .feed-icon.icon-points { background-color: #d78808; }
+.lmb-feed-v2-widget .feed-icon.icon-upload { background-color: #17a2b8; }
+
+
+.lmb-feed-v2-widget .feed-content {
+    flex-grow: 1;
+    padding-top: 8px;
+}
+
+.lmb-feed-v2-widget .feed-message {
+    font-size: 15px;
+    line-height: 1.5;
+    margin: 0 0 5px 0;
+}
+
+.lmb-feed-v2-widget .feed-message strong {
+    font-weight: 500;
+    color: #000;
+}
+
+.lmb-feed-v2-widget .feed-time {
+    font-size: 13px;
+    color: #777;
+}
+/* --- STYLES FOR UPLOAD BANK PROOF WIDGET --- */
+
+.lmb-upload-bank-proof-widget .lmb-bank-details {
+    padding: 20px 25px;
+    background-color: #f8f9fa; /* Light grey background to distinguish it */
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 8px 8px; /* Curve the bottom corners */
+}
+
+.lmb-upload-bank-proof-widget .lmb-bank-details h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: #333;
+}
+
+.lmb-upload-bank-proof-widget .lmb-bank-details p {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #495057;
+    line-height: 1.5;
+}
+
+.lmb-upload-bank-proof-widget .lmb-bank-details p:last-child {
+    margin-bottom: 0;
+}
+
+.lmb-upload-bank-proof-widget .lmb-bank-details strong {
+    font-weight: 500;
+    color: #000;
+}
+/* --- STYLES FOR SUBSCRIBE PACKAGES WIDGET (PRICING TABLE) --- */
+
+.lmb-pricing-table {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    align-items: stretch; /* Makes cards the same height */
+}
+
+.lmb-package-item {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.07);
+    padding: 30px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    transition: all .3s ease;
+    border: 1px solid #f0f0f1;
+}
+
+.lmb-package-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    border-color: #d78808;
+}
+
+.lmb-package-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0 0 15px;
+    color: #343a40;
+}
+
+.lmb-package-price {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #d78808;
+}
+
+.lmb-package-price span {
+    font-size: 18px;
+    font-weight: 400;
+    vertical-align: middle;
+    margin-right: 5px;
+    color: #6c757d;
+}
+
+.lmb-package-description {
+    color: #6c757d;
+    margin-bottom: 25px;
+    font-size: 14px;
+    line-height: 1.6;
+    flex-grow: 1; /* Pushes the button to the bottom */
+}
+
+.lmb-package-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 30px;
+    text-align: left;
+}
+
+.lmb-package-features li {
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f1;
+    font-size: 15px;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+.lmb-package-features li:last-child {
+    border-bottom: none;
+}
+
+.lmb-package-features strong {
+    color: #000;
+}
+
+.lmb-package-action {
+    margin-top: auto; /* Ensures button is at the bottom */
+}
+
+.lmb-package-action .lmb-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    background-color: #343a40;
+}
+
+.lmb-package-action .lmb-btn:hover {
+    background-color: #d78808;
+}
