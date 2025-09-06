@@ -46,6 +46,8 @@
     border: 1px solid #e9ecef;
     border-radius: 8px;
     margin-bottom: 25px;
+    justify-content: space-evenly;
+    flex-direction: column;
 }
 
 .lmb-ads-directory-v2 .lmb-filter-grid {
@@ -53,6 +55,7 @@
     grid-template-columns: repeat(5, 1fr);
     gap: 15px;
     align-items: center;
+    justify-content: center;
 }
 
 .lmb-ads-directory-v2 .lmb-filter-input, 
@@ -96,6 +99,10 @@
     vertical-align: middle;
     font-size: 14px;
     white-space: nowrap;
+}
+
+.lmb-ads-directory-v2 .lmb-data-table tbody tr.clickable-row {
+    cursor: pointer;
 }
 
 .lmb-ads-directory-v2 .lmb-data-table tbody tr:hover {

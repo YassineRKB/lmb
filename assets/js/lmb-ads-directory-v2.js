@@ -69,7 +69,18 @@ jQuery(document).ready(function($) {
 
         tableBody.on('click', '.lmb-temp-journal-link', function(e) {
             e.preventDefault();
+            e.stopPropagation(); // Prevent row click from firing
             alert('Il sera disponible plus tard.');
+        });
+
+        tableBody.on('click', 'tr.clickable-row', function(e) {
+            // Prevent redirection if a button or link inside the row was clicked
+            if ($(e.target).closest('a, button').length === 0) {
+                const adUrl = $(this).data('href');
+                if (adUrl) {
+                    window.location.href = adUrl;
+                }
+            }
         });
 
         // Initial Load

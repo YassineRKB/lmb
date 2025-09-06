@@ -1574,7 +1574,8 @@ class LMB_Ajax_Handlers {
             while ($query->have_posts()) {
                 $query->the_post();
                 $ad_id = get_the_ID();
-                $html .= '<tr>';
+                $ad_url = get_permalink($ad_id);
+                $html .= '<tr class="clickable-row" data-href="' . esc_url($ad_url) . '">';
                 $html .= '<td>' . $ad_id . '</td>';
                 $html .= '<td>' . esc_html(get_post_meta($ad_id, 'company_name', true) ?: get_the_title()) . '</td>';
                 $html .= '<td>' . esc_html(get_post_meta($ad_id, 'ad_type', true)) . '</td>';
