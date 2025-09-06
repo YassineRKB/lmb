@@ -762,9 +762,9 @@ class LMB_Ajax_Handlers {
                     echo '<button class="lamv2-btn lamv2-btn-icon lamv2-btn-success lamv2-ad-action" data-action="approve" data-id="' . $post_id . '" title="Approve"><i class="fas fa-check-circle"></i></button>';
                     echo '<button class="lamv2-btn lamv2-btn-icon lamv2-btn-danger lamv2-ad-action" data-action="deny" data-id="' . $post_id . '" title="Deny"><i class="fas fa-times-circle"></i></button>';
                 } elseif ($status === 'published') {
-                    if (!$accuse_url) {
+                    /* if (!$accuse_url) {
                         echo '<button class="lamv2-btn lamv2-btn-sm lamv2-btn-info lmb-generate-accuse-btn" data-id="' . $post_id . '" title="Generate Accuse"><i class="fas fa-receipt"></i></button>';
-                    }
+                    } */
                     echo '<button class="lamv2-btn lamv2-btn-sm lamv2-btn-secondary lmb-upload-journal-btn" data-id="' . $post_id . '" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>';
                 } else {
                     echo '<a href="' . esc_url(get_edit_post_link($post_id)) . '" class="lamv2-btn lamv2-btn-sm lamv2-btn-view">View</a>';
@@ -1150,7 +1150,7 @@ class LMB_Ajax_Handlers {
                     echo '</div>';
                     echo '<div class="lmb-client-actions">';
                         echo '<button class="lmb-btn lmb-btn-success lmb-client-action-btn" data-action="approve" data-user-id="' . $user_id . '"><i class="fas fa-check"></i> Approve</button>';
-                        echo '<button class="lmb-btn lmb-btn-danger lmb-client-action-btn" data-action="deny" data-user-id="' . $user_id . '"><i class="fas fa-times"></i> Deny</button>';
+                        //echo '<button class="lmb-btn lmb-btn-danger lmb-client-action-btn" data-action="deny" data-user-id="' . $user_id . '"><i class="fas fa-times"></i> Deny</button>';
                     echo '</div>';
                 echo '</div>';
             }

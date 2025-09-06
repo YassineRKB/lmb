@@ -21,6 +21,7 @@ class LMB_User_Dashboard {
         add_shortcode('lmb_balance_manipulation', [__CLASS__, 'render_balance_manipulation']);
         add_shortcode('lmb_legal_ads_list', [__CLASS__, 'render_legal_ads_list']);
         add_shortcode('lmb_user_list', [__CLASS__, 'render_user_list']);
+        add_shortcode('lmb_auth_v2_form', [__CLASS__, 'render_auth_v2_form']);
     }
 
     // --- REVISED FUNCTION ---
@@ -232,5 +233,14 @@ class LMB_User_Dashboard {
 
     public static function render_user_list() {
         ob_start(); the_widget('LMB_User_List_Widget'); return ob_get_clean();
+    }
+
+    public static function render_auth_v2_form() {
+        if (is_user_logged_in()) {
+            return '<div class="lmb-notice"><p>' . esc_html__('You are already logged in.', 'lmb-core') . '</p></div>';
+        }
+        ob_start();
+        the_widget('LMB_Auth_V2_Widget');
+        return ob_get_clean();
     }
 }

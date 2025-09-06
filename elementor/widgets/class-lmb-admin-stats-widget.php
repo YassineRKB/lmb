@@ -26,7 +26,6 @@ class LMB_Admin_Stats_Widget extends Widget_Base {
         ?>
         <div class="lmb-admin-stats-widget">
             <div class="lmb-stats-grid lmb-stats-grid-admin">
-                <div class="lmb-stat-card lmb-stat-users"><div class="lmb-stat-icon"><i class="fas fa-users"></i></div><div class="lmb-stat-content"><div class="lmb-stat-number"><?php echo number_format($stats['users_total']); ?></div><div class="lmb-stat-label"><?php esc_html_e('Total Clients','lmb-core'); ?></div></div></div>
                 <div class="lmb-stat-card lmb-stat-users"><div class="lmb-stat-icon"><i class="fas fa-users"></i></div><div class="lmb-stat-content"><div class="lmb-stat-number"><?php echo number_format($stats['users_total']); ?></div><div class="lmb-stat-label">Total Clients</div></div></div>
                 <div class="lmb-stat-card lmb-stat-ads-published"><div class="lmb-stat-icon"><i class="fas fa-check-circle"></i></div><div class="lmb-stat-content"><div class="lmb-stat-number"><?php echo number_format($stats['ads_published']); ?></div><div class="lmb-stat-label">Annonces Publiées</div></div></div>
                 <div class="lmb-stat-card lmb-stat-news"><div class="lmb-stat-icon"><i class="far fa-newspaper"></i></div><div class="lmb-stat-content"><div class="lmb-stat-number"><?php echo number_format($stats['news_total']); ?></div><div class="lmb-stat-label">Total Journaux</div></div></div>

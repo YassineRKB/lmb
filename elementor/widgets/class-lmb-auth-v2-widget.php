@@ -57,14 +57,14 @@ class LMB_Auth_V2_Widget extends Widget_Base {
                 <!-- Formulaire d'Inscription -->
                 <form id="lmb-signup-form" class="lmb-auth-form">
                     <div class="lmb-signup-toggle">
-                        <button type="button" class="lmb-signup-toggle-btn active" data-type="regular">Client Régulier</button>
+                        <button type="button" class="lmb-signup-toggle-btn active" data-type="regular">Individuel</button>
                         <button type="button" class="lmb-signup-toggle-btn" data-type="professional">Professional</button>
                     </div>
 
                     <div class="lmb-form-response"></div>
                     <input type="hidden" name="signup_type" value="regular">
 
-                    <!-- Champs Client Régulier -->
+                    <!-- Champs individuel -->
                     <div id="lmb-signup-regular-fields">
                         <div class="lmb-form-group"><label for="signup-firstname">Prénom</label><input type="text" name="first_name" id="signup-firstname" class="lmb-input"></div>
                         <div class="lmb-form-group"><label for="signup-lastname">Nom</label><input type="text" name="last_name" id="signup-lastname" class="lmb-input"></div>

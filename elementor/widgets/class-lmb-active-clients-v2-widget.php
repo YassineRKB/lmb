@@ -77,7 +77,7 @@ class LMB_Active_Clients_V2_Widget extends Widget_Base {
                             <input type="text" name="filter_city" placeholder="Filtrer par Ville..." class="lmb-filter-input">
                             <select name="filter_type" class="lmb-filter-select">
                                 <option value="">Tous les Types</option>
-                                <option value="regular">Régulier</option>
+                                <option value="regular">Individuel</option>
                                 <option value="professional">Professional</option>
                                 <option value="administrator">Administrateur</option>
                             </select>

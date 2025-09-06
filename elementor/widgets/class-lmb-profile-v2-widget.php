@@ -96,7 +96,7 @@ class LMB_Profile_V2_Widget extends Widget_Base {
                                     <div class="lmb-form-group">
                                         <label for="lmb_client_type">Type de Client</label>
                                         <select name="lmb_client_type" id="lmb_client_type" class="lmb-input">
-                                            <option value="regular" <?php selected($client_type, 'regular'); ?>>Régulier</option>
+                                            <option value="regular" <?php selected($client_type, 'regular'); ?>>Individuel</option>
                                             <option value="professional" <?php selected($client_type, 'professional'); ?>>Professional</option>
                                         </select>
                                     </div>
