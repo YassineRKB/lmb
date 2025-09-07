@@ -1283,8 +1283,10 @@ class LMB_Ajax_Handlers {
                 echo '<td>' . ($is_admin ? '-' : esc_html(LMB_Points::get_balance($user_id))) . '</td>';
 
                 echo '<td class="lmb-actions-cell">';
+                
                 // --- THIS IS THE CORRECTED LINE ---
-                $edit_url = home_url('/profile/' . $user_id . '/');
+                // It now points to a standard URL with a query parameter, which is much more reliable.
+                $edit_url = home_url('/user-editor/?user_id=' . $user_id);
                 echo '<a href="' . esc_url($edit_url) . '" class="lmb-btn lmb-btn-icon lmb-btn-primary" title="Edit User"><i class="fas fa-user-edit"></i></a>';
                 
                 if (!$is_admin) {

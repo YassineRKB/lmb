@@ -1,20 +1,19 @@
 <?php
-// FILE: elementor/widgets/class-lmb-profile-v2-widget.php
+// FILE: elementor/widgets/class-lmb-user-editor-widget.php
 
 use Elementor\Widget_Base;
-use Elementor\Controls_Manager;
 
 if (!defined('ABSPATH')) exit;
 
-if (!class_exists('LMB_Profile_V2_Widget')) {
-    class LMB_Profile_V2_Widget extends Widget_Base {
+if (!class_exists('LMB_User_Editor_Widget')) {
+    class LMB_User_Editor_Widget extends Widget_Base {
 
         public function get_name() {
-            return 'lmb_profile_v2';
+            return 'lmb_user_editor';
         }
 
         public function get_title() {
-            return __('Profil V2', 'lmb-core');
+            return __('Éditeur de Profil Utilisateur (Admin)', 'lmb-core');
         }
 
         public function get_icon() {
@@ -22,7 +21,7 @@ if (!class_exists('LMB_Profile_V2_Widget')) {
         }
 
         public function get_categories() {
-            return ['lmb-user-widgets-v2'];
+            return ['lmb-admin-widgets-v2'];
         }
 
         public function get_script_depends() {
@@ -34,15 +33,21 @@ if (!class_exists('LMB_Profile_V2_Widget')) {
         }
 
         protected function render() {
-            if (!is_user_logged_in()) {
-                echo '<p>Vous devez être connecté pour voir cette page.</p>';
+            // This widget is for admins only
+            if (!current_user_can('manage_options')) {
+                echo '<p>Accès refusé. Cette fonctionnalité est réservée aux administrateurs.</p>';
                 return;
             }
 
-            // This widget now ONLY shows the currently logged-in user's profile.
-            // Admin editing is handled by the new "User Editor" widget.
-            $current_user_id = get_current_user_id();
-            $user_to_display = get_user_by('ID', $current_user_id);
+            // Get the user ID from the URL parameter
+            $user_id_to_edit = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+
+            if (empty($user_id_to_edit)) {
+                echo '<p>Aucun utilisateur sélectionné pour la modification.</p>';
+                return;
+            }
+            
+            $user_to_display = get_user_by('ID', $user_id_to_edit);
 
             if (!$user_to_display) {
                 echo '<p>Utilisateur introuvable.</p>';
@@ -50,9 +55,10 @@ if (!class_exists('LMB_Profile_V2_Widget')) {
             }
             
             $user_id = $user_to_display->ID;
+            $user_roles = (array) $user_to_display->roles;
+            $user_role = !empty($user_roles) ? $user_roles[0] : 'client';
             $client_type = get_user_meta($user_id, 'lmb_client_type', true);
             
-            // Data for sidebar
             $balance = LMB_Points::get_balance($user_id);
             $cost_per_ad = LMB_Points::get_cost_per_ad($user_id);
             $cost_per_ad = ($cost_per_ad > 0) ? $cost_per_ad : 10;
@@ -60,20 +66,41 @@ if (!class_exists('LMB_Profile_V2_Widget')) {
             $balance_history = LMB_Points::get_transactions($user_id, 5);
 
             $this->add_render_attribute('wrapper', [
-                'class' => 'lmb-profile-v2-widget',
+                'class' => 'lmb-profile-v2-widget', // Reuse existing profile styles
                 'data-user-id' => $user_id
             ]);
             ?>
             <div <?php echo $this->get_render_attribute_string('wrapper'); ?>>
+                
+                <div class="lmb-admin-editing-notice">
+                    <i class="fas fa-exclamation-triangle"></i> Vous modifiez le profil de <strong><?php echo esc_html($user_to_display->display_name); ?></strong>.
+                </div>
 
                 <form id="lmb-profile-details-form" class="lmb-profile-main-form">
                     <div class="lmb-profile-top-row">
                         <div class="lmb-profile-card">
                             <div class="lmb-widget-header">
-                                <h3><i class="fas fa-user-edit"></i> Mon Profil</h3>
+                                <h3><i class="fas fa-user-edit"></i> Détails du Profil</h3>
                             </div>
                             <div class="lmb-card-content">
                                 <div class="lmb-form-response" id="profile-response"></div>
+
+                                <div class="lmb-admin-controls">
+                                    <div class="lmb-form-group">
+                                        <label for="lmb_client_type">Type de Client</label>
+                                        <select name="lmb_client_type" id="lmb_client_type" class="lmb-input">
+                                            <option value="regular" <?php selected($client_type, 'regular'); ?>>Individuel</option>
+                                            <option value="professional" <?php selected($client_type, 'professional'); ?>>Professional</option>
+                                        </select>
+                                    </div>
+                                    <div class="lmb-form-group">
+                                        <label for="lmb_user_role">Rôle Utilisateur</label>
+                                        <select name="lmb_user_role" id="lmb_user_role" class="lmb-input">
+                                            <option value="client" <?php selected($user_role, 'client'); ?>>Client</option>
+                                            <option value="administrator" <?php selected($user_role, 'administrator'); ?>>Administrateur</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 
                                 <div id="lmb-profile-regular-fields" style="<?php echo ($client_type !== 'regular') ? 'display: none;' : ''; ?>">
                                     <div class="lmb-form-grid">
@@ -105,7 +132,7 @@ if (!class_exists('LMB_Profile_V2_Widget')) {
                         <div class="lmb-profile-sidebar-grid">
                             <div class="lmb-profile-card">
                                 <div class="lmb-widget-header">
-                                    <h3><i class="fas fa-chart-bar"></i> Mon Statut</h3>
+                                    <h3><i class="fas fa-chart-bar"></i> Statut du Compte</h3>
                                 </div>
                                 <div class="lmb-card-content">
                                     <div class="lmb-user-stats">
@@ -117,7 +144,7 @@ if (!class_exists('LMB_Profile_V2_Widget')) {
                             </div>
                             <div class="lmb-profile-card">
                                 <div class="lmb-widget-header">
-                                    <h3><i class="fas fa-history"></i> Mon Historique du Solde</h3>
+                                    <h3><i class="fas fa-history"></i> Historique du Solde</h3>
                                 </div>
                                 <div class="lmb-card-content">
                                     <div class="lmb-balance-history">
@@ -146,7 +173,6 @@ if (!class_exists('LMB_Profile_V2_Widget')) {
                             <div class="lmb-widget-header"><h3><i class="fas fa-key"></i> Changer le Mot de Passe</h3></div>
                             <div class="lmb-card-content">
                                 <div class="lmb-form-response" id="password-response"></div>
-                                <div class="lmb-form-group"><label for="current-password">Mot de Passe Actuel</label><input type="password" name="current_password" id="current-password" class="lmb-input" required></div>
                                 <div class="lmb-form-grid">
                                     <div class="lmb-form-group"><label for="new-password">Nouveau Mot de Passe</label><input type="password" name="new_password" id="new-password" class="lmb-input" required></div>
                                     <div class="lmb-form-group"><label for="confirm-password">Confirmer le Nouveau Mot de Passe</label><input type="password" name="confirm_password" id="confirm-password" class="lmb-input" required></div>
