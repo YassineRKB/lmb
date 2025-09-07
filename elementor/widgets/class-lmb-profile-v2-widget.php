@@ -42,9 +42,14 @@ class LMB_Profile_V2_Widget extends Widget_Base {
         $is_admin = current_user_can('manage_options');
         $user_to_display = null;
         
-        $user_id_from_url = get_query_var('userid', 0);
+        // --- FIX START: More robust way to get user ID from URL ---
+        global $wp;
+        $path_parts = explode('/', rtrim(trailingslashit($wp->request), '/'));
+        $user_id_from_url = is_numeric(end($path_parts)) ? intval(end($path_parts)) : 0;
+        // --- FIX END ---
+
         if ($is_admin && !empty($user_id_from_url)) {
-            $user_to_display = get_user_by('ID', intval($user_id_from_url));
+            $user_to_display = get_user_by('ID', $user_id_from_url);
         }
         
         if (!$user_to_display) {
