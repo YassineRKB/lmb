@@ -31,25 +31,49 @@ class LMB_Ads_Directory_Widget extends Widget_Base {
 
     protected function render_single_ad($ad_id) {
         $ad = get_post($ad_id);
-        if ($ad && $ad->post_type == 'lmb_legal_ad' && $ad->post_status == 'publish') {
-            ?>
-            <div class="lmb-ads-directory-v2 lmb-single-ad-container">
-                <div class="lmb-single-ad-header">
-                    <div>
-                        <h1><?php echo esc_html($ad->post_title); ?></h1>
+
+        // Check if the post exists and is a legal ad
+        if ($ad && $ad->post_type == 'lmb_legal_ad') {
+            $lmb_status = get_post_meta($ad_id, 'lmb_status', true);
+            $is_author = is_user_logged_in() && (get_current_user_id() == $ad->post_author);
+            $is_published = ($lmb_status === 'published');
+            
+            // Allow viewing if the ad is published OR if the current user is the author
+            if ($is_published || $is_author) {
+                $publication_date = get_post_meta($ad_id, 'approved_date', true);
+                if(empty($publication_date)) {
+                    // Fallback to post date if approved date isn't set
+                    $publication_date = get_the_date('d F Y', $ad_id);
+                } else {
+                    // Format the date for French locale
+                    $publication_date = date_i18n('d F Y', strtotime($publication_date));
+                }
+                ?>
+                <div class="lmb-ads-directory-v2 lmb-single-ad-container">
+                    <div class="lmb-single-ad-header">
+                        <div>
+                            <h1><?php echo esc_html($ad->post_title); ?></h1>
+                            <?php if ($is_published): ?>
+                                <p class="lmb-ad-publication-date">Annonce Publiée le <?php echo esc_html($publication_date); ?></p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="lmb-single-ad-actions">
+                            <a href="<?php echo esc_url(remove_query_arg('legal-ad')); ?>" class="lmb-btn lmb-btn-view">
+                                <i class="fas fa-arrow-left"></i> Retour au Répertoire
+                            </a>
+                        </div>
                     </div>
-                    <div class="lmb-single-ad-actions">
-                        <a href="<?php echo esc_url(remove_query_arg('legal-ad')); ?>" class="lmb-btn lmb-btn-view">
-                            <i class="fas fa-arrow-left"></i> Retour au Répertoire
-                        </a>
+                    <div class="lmb-single-ad-content">
+                        <?php echo wp_kses_post(get_post_meta($ad_id, 'full_text', true)); ?>
                     </div>
                 </div>
-                <div class="lmb-single-ad-content">
-                    <?php echo wp_kses_post(get_post_meta($ad_id, 'full_text', true)); ?>
-                </div>
-            </div>
-            <?php
+                <?php
+            } else {
+                // User is not the author and the ad is not published
+                echo '<p>' . esc_html__('Annonce légale introuvable ou non publiée.', 'lmb-core') . '</p>';
+            }
         } else {
+            // Post doesn't exist or is not a legal ad
             echo '<p>' . esc_html__('Annonce légale introuvable ou non publiée.', 'lmb-core') . '</p>';
         }
     }
