@@ -112,7 +112,7 @@ class LMB_Ads_Directory_Widget extends Widget_Base {
                         <thead>
                             <tr>
                                 <th>Réf</th>
-                                <th>Société / Titre</th>
+                                <th>Société</th>
                                 <th>Type</th>
                                 <th>Date</th>
                                 <th>Journal</th>

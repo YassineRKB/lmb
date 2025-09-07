@@ -31,7 +31,6 @@ if (!class_exists('LMB_Newspaper_Directory_Widget')) {
                         <form class="lmb-filters-form">
                             <div class="lmb-filter-grid">
                                 <input type="search" name="filter_ref" placeholder="Rechercher par Réf (ID)..." class="lmb-filter-input" />
-                                <input type="search" name="s" placeholder="Rechercher par Nom..." class="lmb-filter-input" />
                                 <input type="date" name="filter_date" class="lmb-filter-input" />
                                 <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Réinitialiser</button>
                             </div>

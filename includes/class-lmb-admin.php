@@ -379,7 +379,7 @@ class LMB_Admin {
         return [
             'Constitution - SARL', 'Constitution - SARL AU', 'Liquidation - anticipee',
             'Liquidation - definitive', 'Modification - Capital', 'Modification - denomination',
-            'Modification - gerant', 'Modification - objects', 'Modification - parts', 'Modification - seige'
+            'Modification - gerant', 'Modification - objects', 'Modification - parts', 'Modification - seige', 'Redaction Libre',
         ];
     }
 
