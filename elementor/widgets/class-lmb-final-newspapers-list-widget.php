@@ -52,7 +52,7 @@ class LMB_Final_Newspapers_List_Widget extends Widget_Base {
                             <tr>
                                 <th>Numéro du Journal</th>
                                 <th>Date</th>
-                                <th>Annonces Total</th>
+                                <th>Annonces Publier</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
