@@ -27,6 +27,13 @@ spl_autoload_register(function($class) {
     }
 });
 
+// Load plugin textdomain correctly
+function lmb_load_textdomain() {
+    load_plugin_textdomain('lmb-core', false, dirname(plugin_basename(__FILE__)) . '/languages');
+}
+add_action('plugins_loaded', 'lmb_load_textdomain');
+
+
 // Main Initialization Function to control load order
 function lmb_core_init() {
     // Manually load core classes in the correct dependency order
@@ -35,7 +42,7 @@ function lmb_core_init() {
     require_once LMB_CORE_PATH . 'includes/class-lmb-access-control.php';
     require_once LMB_CORE_PATH . 'includes/class-lmb-cpt.php';
     require_once LMB_CORE_PATH . 'includes/class-lmb-points.php';
-    require_once LMB_CORE_PATH . 'includes/class-lmb-pdf-generator.php'; // Must be loaded before Invoice_Handler
+    require_once LMB_CORE_PATH . 'includes/class-lmb-pdf-generator.php'; 
     require_once LMB_CORE_PATH . 'includes/class-lmb-invoice-handler.php';
     require_once LMB_CORE_PATH . 'includes/class-lmb-notification-manager.php';
     require_once LMB_CORE_PATH . 'includes/class-lmb-ad-manager.php';
@@ -128,6 +135,7 @@ function lmb_register_all_assets() {
         'lmb-inactive-clients-v2'       => 'assets/css/lmb-inactive-clients-v2.css',
         'lmb-payments-management'     => 'assets/css/lmb-payments-management.css',
         'lmb-packages-editor'         => 'assets/css/lmb-packages-editor.css',
+        'lmb-final-newspapers-list'   => 'assets/css/lmb-final-newspapers-list.css',
     ];
 
     foreach ($styles as $handle => $path) {
@@ -180,3 +188,4 @@ function lmb_register_query_vars($vars) {
     return $vars;
 }
 add_filter('query_vars', 'lmb_register_query_vars');
+
