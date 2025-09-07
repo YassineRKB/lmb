@@ -172,4 +172,5 @@ class LMB_CPT {
         }
         return $post_link;
     }
+    
 }

@@ -44,7 +44,7 @@
 
 .lmb-newspaper-directory-v2 .lmb-filter-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 15px;
     align-items: center;
     justify-content: center;
