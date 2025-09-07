@@ -1,3 +1,4 @@
+// FILE: assets/js/lmb-auth-v2.js
 jQuery(document).ready(function($) {
     $('.lmb-auth-v2-widget').each(function() {
         const widget = $(this);
@@ -65,6 +66,15 @@ jQuery(document).ready(function($) {
             e.preventDefault();
             const submitBtn = $(this).find('button[type="submit"]');
             signupResponse.removeClass('error success').hide();
+            
+            // Phone validation
+            const phoneInput = signupForm.find('input[type="tel"]:visible');
+            const phoneRegex = /^[0-9]{10}$/;
+            if (!phoneRegex.test(phoneInput.val())) {
+                signupResponse.addClass('error').text('Le numéro de téléphone doit contenir 10 chiffres.').show();
+                return;
+            }
+
             submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Création du compte...').prop('disabled', true);
 
             $.post(lmb_ajax_params.ajaxurl, {

@@ -1,86 +1,86 @@
 <?php
-// FILE: elementor/widgets/class-lmb-feed-v2-widget.php
+// FILE: elementor/widgets/class-lmb-auth-v2-widget.php
 
 use Elementor\Widget_Base;
 use Elementor\Controls_Manager;
 
 if (!defined('ABSPATH')) exit;
 
-class LMB_Feed_V2_Widget extends Widget_Base {
+class LMB_Auth_V2_Widget extends Widget_Base {
     public function get_name() {
-        return 'lmb_feed_v2';
+        return 'lmb_auth_v2';
     }
 
     public function get_title() {
-        return __('Flux d\'Activité V2', 'lmb-core');
+        return __('Authentification V2', 'lmb-core');
     }
 
     public function get_icon() {
-        return 'eicon-history';
+        return 'eicon-lock-user';
     }
 
     public function get_categories() {
-        // Available for both admins and users
-        return ['lmb-admin-widgets-v2', 'lmb-user-widgets-v2'];
-    }
-
-    public function get_script_depends() {
-        return ['lmb-feed-v2'];
-    }
-
-    public function get_style_depends() {
-        // We'll add the new feed styles to the existing V2 user CSS file
+        // This widget can be used in any user-facing area
         return ['lmb-user-widgets-v2'];
     }
 
-    protected function _register_controls() {
-        $this->start_controls_section(
-            'content_section',
-            [
-                'label' => __('Feed Settings', 'lmb-core'),
-                'tab' => Controls_Manager::TAB_CONTENT,
-            ]
-        );
+    public function get_script_depends() {
+        return ['lmb-auth-v2'];
+    }
 
-        $this->add_control(
-            'items_to_show',
-            [
-                'label' => __('Number of Items to Show', 'lmb-core'),
-                'type' => Controls_Manager::NUMBER,
-                'min' => 1,
-                'max' => 50,
-                'step' => 1,
-                'default' => 10,
-            ]
-        );
-
-        $this->end_controls_section();
+    public function get_style_depends() {
+        return ['lmb-auth-v2'];
     }
 
     protected function render() {
-        $settings = $this->get_settings_for_display();
-        $is_admin = current_user_can('manage_options');
-        
-        $this->add_render_attribute('wrapper', [
-            'class' => 'lmb-user-widget-v2 lmb-feed-v2-widget',
-            'data-limit' => $settings['items_to_show'],
-        ]);
         ?>
-        <div <?php echo $this->get_render_attribute_string('wrapper'); ?>>
-            <div class="lmb-widget-header">
-                <?php if ($is_admin): ?>
-                    <h3><i class="fas fa-stream"></i> Flux d'Activité Global</h3>
-                <?php else: ?>
-                    <h3><i class="fas fa-history"></i> Votre Activité Récente</h3>
-                <?php endif; ?>
+        <div class="lmb-auth-v2-widget">
+            <div class="lmb-auth-tabs">
+                <button class="lmb-auth-tab-btn active" data-form="login">Connexion</button>
+                <button class="lmb-auth-tab-btn" data-form="signup">Inscription</button>
             </div>
-            <div class="lmb-widget-content">
-                <div class="feed-list">
-                    <!-- Les éléments du flux seront chargés ici par JavaScript -->
-                    <div class="feed-item-placeholder" style="text-align: center; padding: 20px;">
-                        <i class="fas fa-spinner fa-spin"></i> Chargement du Flux...
+            <div class="lmb-auth-content">
+                <form id="lmb-login-form" class="lmb-auth-form active">
+                    <div class="lmb-form-response"></div>
+                    <div class="lmb-form-group">
+                        <label for="login-email">Nom d'utilisateur ou Email</label>
+                        <input type="text" id="login-email" name="username" class="lmb-input" required>
                     </div>
-                </div>
+                    <div class="lmb-form-group">
+                        <label for="login-password">Mot de passe</label>
+                        <input type="password" id="login-password" name="password" class="lmb-input" required>
+                    </div>
+                    <button type="submit" class="lmb-btn">Se connecter</button>
+                </form>
+
+                <form id="lmb-signup-form" class="lmb-auth-form">
+                    <div class="lmb-signup-toggle">
+                        <button type="button" class="lmb-signup-toggle-btn active" data-type="regular">Individuel</button>
+                        <button type="button" class="lmb-signup-toggle-btn" data-type="professional">Professional</button>
+                    </div>
+
+                    <div class="lmb-form-response"></div>
+                    <input type="hidden" name="signup_type" value="regular">
+
+                    <div id="lmb-signup-regular-fields">
+                        <div class="lmb-form-group"><label for="signup-firstname">Prénom</label><input type="text" name="first_name" id="signup-firstname" class="lmb-input" required></div>
+                        <div class="lmb-form-group"><label for="signup-lastname">Nom</label><input type="text" name="last_name" id="signup-lastname" class="lmb-input" required></div>
+                        <div class="lmb-form-group"><label for="signup-phone-regular">Téléphone</label><input type="tel" name="phone_regular" id="signup-phone-regular" class="lmb-input" required pattern="[0-9]{10}" maxlength="10"></div>
+                        <div class="lmb-form-group"><label for="signup-city-regular">Ville</label><input type="text" name="city_regular" id="signup-city-regular" class="lmb-input" required></div>
+                    </div>
+                    <div id="lmb-signup-professional-fields" style="display: none;">
+                        <div class="lmb-form-group"><label for="signup-company-name">Nom de la Société</label><input type="text" name="company_name" id="signup-company-name" class="lmb-input" required></div>
+                        <div class="lmb-form-group"><label for="signup-company-hq">Adresse du Siège Social</label><input type="text" name="company_hq" id="signup-company-hq" class="lmb-input" required></div>
+                        <div class="lmb-form-group"><label for="signup-company-city">Ville</label><input type="text" name="city_professional" id="signup-company-city" class="lmb-input" required></div>
+                        <div class="lmb-form-group"><label for="signup-company-rc">RC</label><input type="text" name="company_rc" id="signup-company-rc" class="lmb-input" required></div>
+                        <div class="lmb-form-group"><label for="signup-company-phone">Téléphone</label><input type="tel" name="phone_professional" id="signup-company-phone" class="lmb-input" required pattern="[0-9]{10}" maxlength="10"></div>
+                    </div>
+                    
+                    <div class="lmb-form-group"><label for="signup-email">Email</label><input type="email" name="email" id="signup-email" class="lmb-input" required></div>
+                    <div class="lmb-form-group"><label for="signup-password">Mot de passe</label><input type="password" name="password" id="signup-password" class="lmb-input" required></div>
+                    
+                    <button type="submit" class="lmb-btn">Créer un Compte</button>
+                </form>
             </div>
         </div>
         <?php
