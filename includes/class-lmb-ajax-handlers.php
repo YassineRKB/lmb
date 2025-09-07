@@ -1093,7 +1093,7 @@ class LMB_Ajax_Handlers {
         
         wp_send_json_success();
     }
-    // --- NEW FUNCTION: v2 fetch inactive clients with search, pagination, and approve/deny actions ---
+    // --- REVISED FUNCTION: v2 fetch inactive clients with search, pagination, and approve/deny actions ---
     private static function lmb_fetch_inactive_clients_v2() {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Access Denied.'], 403);
@@ -1130,7 +1130,9 @@ class LMB_Ajax_Handlers {
                 $client_type = get_user_meta($user_id, 'lmb_client_type', true);
                 $name = ($client_type === 'professional' && get_user_meta($user_id, 'company_name', true)) ? get_user_meta($user_id, 'company_name', true) : $user->display_name;
                 $edit_url = home_url('/profile/' . $user_id . '/');
-                
+                $ad_count = count_user_posts($user_id, 'lmb_legal_ad', true);
+                $is_new_client = ($ad_count == 0);
+
                 echo '<div class="lmb-client-card" data-user-id="' . $user_id . '">';
                     echo '<div class="lmb-client-info">';
                         echo '<div class="lmb-client-header">';
@@ -1149,8 +1151,10 @@ class LMB_Ajax_Handlers {
                         echo '</div>';
                     echo '</div>';
                     echo '<div class="lmb-client-actions">';
-                        echo '<button class="lmb-btn lmb-btn-success lmb-client-action-btn" data-action="approve" data-user-id="' . $user_id . '"><i class="fas fa-check"></i> Approve</button>';
-                        //echo '<button class="lmb-btn lmb-btn-danger lmb-client-action-btn" data-action="deny" data-user-id="' . $user_id . '"><i class="fas fa-times"></i> Deny</button>';
+                        echo '<button class="lmb-btn lmb-btn-success lmb-client-action-btn" data-action="approve" data-user-id="' . $user_id . '"><i class="fas fa-check"></i> Approuver</button>';
+                        if ($is_new_client) {
+                            echo '<button class="lmb-btn lmb-btn-danger lmb-client-action-btn" data-action="deny" data-user-id="' . $user_id . '"><i class="fas fa-times"></i> Refuser</button>';
+                        }
                     echo '</div>';
                 echo '</div>';
             }
