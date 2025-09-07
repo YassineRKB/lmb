@@ -90,6 +90,12 @@ class LMB_Admin {
 
         // User and Newspaper Counts
         $stats['users_total'] = count_users()['total_users'];
+        $inactive_query = new WP_User_Query([
+            'meta_key' => 'lmb_user_status',
+            'meta_value' => 'inactive',
+            'fields' => 'ID',
+        ]);
+        $stats['inactive_clients'] = $inactive_query->get_total();
         $stats['news_total'] = wp_count_posts('lmb_newspaper')->publish ?? 0;
         
         // Revenue Metrics
