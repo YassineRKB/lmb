@@ -188,4 +188,3 @@ function lmb_register_query_vars($vars) {
     return $vars;
 }
 add_filter('query_vars', 'lmb_register_query_vars');
-
