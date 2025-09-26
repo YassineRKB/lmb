@@ -73,6 +73,7 @@ class LMB_Admin {
         register_setting('lmb_accuse_newspaper_settings', 'lmb_accuse_template_html');
         register_setting('lmb_accuse_newspaper_settings', 'lmb_logo_url');
         register_setting('lmb_accuse_newspaper_settings', 'lmb_signature_url');
+        register_setting('lmb_accuse_newspaper_settings', 'lmb_newspaper_template_html');
         register_setting('lmb_notifications_settings', 'lmb_enable_email_notifications');
         register_setting('lmb_security_settings', 'lmb_protected_pages');
     }
@@ -276,6 +277,19 @@ class LMB_Admin {
             <li><code>{{legal_ad_link}}</code></li>
             <li><code>{{signature_url}}</code></li>
         </ul>
+
+        <h3>Modèle HTML de Journal Final</h3>
+        <p class="description">
+            Ce modèle définit la structure et le style des pages du journal final (A4, 3 colonnes). Utilisez <code><!-- %%ADS_CONTENT%% --></code> comme espace réservé pour les annonces légales.
+        </p>
+        <textarea name="lmb_newspaper_template_html" rows="20" style="width:100%; font-family: monospace;"><?php echo esc_textarea(get_option('lmb_newspaper_template_html', self::get_default_newspaper_template())); ?></textarea>
+        
+        <h4>Espaces Réservés Disponibles pour Journal:</h4>
+        <ul style="list-style: inside; margin-left: 20px;">
+            <li><code>[NUMÉRO DU JOURNAL]</code>, <code>[DATE DE PARUTION]</code>, <code>[DATE DÉBUT]</code>, <code>[DATE FIN]</code></li>
+            <li><code><!-- %%ADS_CONTENT%% --></code> (où les annonces sélectionnées seront injectées)</li>
+        </ul>
+
         <?php
     }
 
@@ -473,4 +487,11 @@ class LMB_Admin {
     </body>
     </html>';
         }
+
+    private static function get_default_newspaper_template() {
+        // This content is derived from the user-approved HTML template
+        return file_get_contents(LMB_CORE_PATH . 'includes/templates/newspaper_template_ads_content.html');
+    }
+
+
 }
