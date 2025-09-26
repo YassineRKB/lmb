@@ -69,6 +69,7 @@ add_action('elementor/widgets/register', function($widgets_manager) {
         'LMB_Payments_Management_Widget' => __DIR__ . '/widgets/class-lmb-payments-management-widget.php',
         'LMB_User_Editor_Widget' => __DIR__ . '/widgets/class-lmb-user-editor-widget.php',
         'LMB_Public_Ads_Dir_Widget' => __DIR__ . '/widgets/class-lmb-public-ads-dir-widget.php',
+        'LMB_Generate_Newspaper_Widget' => __DIR__ . '/widgets/class-lmb-generate-newspaper-widget.php',
     ];
 
     foreach ($widgets as $class_name => $file_path) {
