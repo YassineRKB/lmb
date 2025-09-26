@@ -88,34 +88,42 @@ register_activation_hook(__FILE__, function () {
 
 
 /**
- * UNIFIED ASSET REGISTRATION
+ * UNIFIED ASSET REGISTRATION (Corrected for Elementor loading)
  */
 function lmb_register_all_assets() {
     // --- SCRIPTS ---
+    // Register lmb-core first, dependent only on jquery.
+    wp_register_script('lmb-core', LMB_CORE_URL . 'assets/js/lmb-core.js', ['jquery'], LMB_CORE_VERSION, true);
+
     $scripts = [
-        'lmb-core'                    => 'assets/js/lmb-core.js',
-        'lmb-admin-editor'            => 'assets/js/lmb-admin-editor.js',
-        'lmb-notifications'           => 'assets/js/lmb-notifications.js',
-        'lmb-balance-manipulation'    => 'assets/js/lmb-balance-manipulation.js',
-        'lmb-packages-editor'         => 'assets/js/lmb-packages-editor.js',
-        'lmb-upload-newspaper'        => 'assets/js/lmb-upload-newspaper.js',
-        'lmb-upload-bank-proof'       => 'assets/js/lmb-upload-bank-proof.js',
-        'lmb-legal-ads-management-v2' => 'assets/js/lmb-legal-ads-management-v2.js',
-        'lmb-my-legal-ads-v2'         => 'assets/js/lmb-my-legal-ads-v2.js',
-        'lmb-feed-v2'                 => 'assets/js/lmb-feed-v2.js',
-        'lmb-auth-v2'                 => 'assets/js/lmb-auth-v2.js',
-        'lmb-inactive-clients-v2'     => 'assets/js/lmb-inactive-clients-v2.js',
-        'lmb-active-clients-v2'       => 'assets/js/lmb-active-clients-v2.js',
-        'lmb-profile-v2'              => 'assets/js/lmb-profile-v2.js',
-        'lmb-ads-directory-v2'        => 'assets/js/lmb-ads-directory-v2.js',
-        'lmb-newspaper-directory-v2'  => 'assets/js/lmb-newspaper-directory-v2.js',
-        'lmb-payments-management'     => 'assets/js/lmb-payments-management.js',
-        'lmb-generate-newspaper'      => 'assets/js/lmb-generate-newspaper.js',
+        'lmb-admin-editor'              => 'assets/js/lmb-admin-editor.js',
+        'lmb-notifications'             => 'assets/js/lmb-notifications.js',
+        'lmb-balance-manipulation'      => 'assets/js/lmb-balance-manipulation.js',
+        'lmb-packages-editor'           => 'assets/js/lmb-packages-editor.js',
+        'lmb-upload-newspaper'          => 'assets/js/lmb-upload-newspaper.js',
+        'lmb-upload-bank-proof'         => 'assets/js/lmb-upload-bank-proof.js',
+        'lmb-legal-ads-management-v2'   => 'assets/js/lmb-legal-ads-management-v2.js',
+        'lmb-my-legal-ads-v2'           => 'assets/js/lmb-my-legal-ads-v2.js',
+        'lmb-feed-v2'                   => 'assets/js/lmb-feed-v2.js',
+        'lmb-auth-v2'                   => 'assets/js/lmb-auth-v2.js',
+        'lmb-inactive-clients-v2'       => 'assets/js/lmb-inactive-clients-v2.js',
+        'lmb-active-clients-v2'         => 'assets/js/lmb-active-clients-v2.js',
+        'lmb-profile-v2'                => 'assets/js/lmb-profile-v2.js',
+        'lmb-ads-directory-v2'          => 'assets/js/lmb-ads-directory-v2.js',
+        'lmb-newspaper-directory-v2'    => 'assets/js/lmb-newspaper-directory-v2.js',
+        'lmb-payments-management'       => 'assets/js/lmb-payments-management.js',
+        'lmb-generate-newspaper'        => 'assets/js/lmb-generate-newspaper.js', // Target script
     ];
 
     foreach ($scripts as $handle => $path) {
-        $dependency = ($handle === 'lmb-core') ? ['jquery'] : ['lmb-core', 'elementor-frontend'];
-        wp_register_script($handle, LMB_CORE_URL . $path, $dependency, LMB_CORE_VERSION, true);
+        // Dependencies for all other scripts are lmb-core and elementor-frontend (for widgets)
+        $dependency = ['lmb-core', 'elementor-frontend']; 
+        
+        // Check if the script exists in the repository before registering.
+        $script_path = LMB_CORE_PATH . $path;
+        if (file_exists($script_path)) {
+            wp_register_script($handle, LMB_CORE_URL . $path, $dependency, LMB_CORE_VERSION, true);
+        }
     }
     
     // --- STYLES ---
@@ -134,21 +142,23 @@ function lmb_register_all_assets() {
         'lmb-newspaper-directory-v2'    => 'assets/css/lmb-newspaper-directory-v2.css',
         'lmb-active-clients-v2'         => 'assets/css/lmb-active-clients-v2.css',
         'lmb-inactive-clients-v2'       => 'assets/css/lmb-inactive-clients-v2.css',
-        'lmb-payments-management'     => 'assets/css/lmb-payments-management.css',
-        'lmb-packages-editor'         => 'assets/css/lmb-packages-editor.css',
-        'lmb-final-newspapers-list'   => 'assets/css/lmb-final-newspapers-list.css',
-        'lmb-generate-newspaper'      => 'assets/css/lmb-generate-newspaper.css'
+        'lmb-payments-management'       => 'assets/css/lmb-payments-management.css',
+        'lmb-packages-editor'           => 'assets/css/lmb-packages-editor.css',
+        'lmb-final-newspapers-list'     => 'assets/css/lmb-final-newspapers-list.css',
+        'lmb-generate-newspaper'        => 'assets/css/lmb-generate-newspaper.css'
     ];
 
     foreach ($styles as $handle => $path) {
-        wp_register_style($handle, LMB_CORE_URL . $path, [], LMB_CORE_VERSION);
+        $style_path = LMB_CORE_PATH . $path;
+        if (file_exists($style_path)) {
+            wp_register_style($handle, LMB_CORE_URL . $path, [], LMB_CORE_VERSION);
+        }
     }
 
+    // Localize Script only after core is registered
     wp_localize_script('lmb-core', 'lmb_ajax_params', [
         'ajaxurl'    => admin_url('admin-ajax.php'),
         'nonce'      => wp_create_nonce('lmb_nonce'),
-        // ADDED THIS LINE: It creates a secure logout URL that redirects to the homepage.
-        // please dont remove it, it's important for secure logout functionality
         'logout_url' => wp_logout_url(home_url('/')), 
     ]);
 
@@ -158,15 +168,19 @@ function lmb_register_all_assets() {
     wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
     wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], '3.7.0', true);
 
+
     if (is_admin()) {
         $screen = get_current_screen();
         if ($screen && $screen->post_type === 'lmb_legal_ad' && $screen->base === 'post') {
             wp_enqueue_script('lmb-admin-editor');
         }
+        // Also ensure admin styles/scripts needed in wp-admin are available
+        wp_enqueue_style('lmb-admin-widgets-v2');
     }
 }
 add_action('wp_enqueue_scripts', 'lmb_register_all_assets');
 add_action('admin_enqueue_scripts', 'lmb_register_all_assets');
+
 /**
  * Adds a rewrite rule to handle profile URLs like /profile/{userid}.
  */
@@ -222,9 +236,6 @@ function lmb_handle_pdf_preview() {
         // This is sent with Content-Type: text/html, but it contains the A4 CSS template
         header('Content-Type: text/html; charset=utf-8');
         echo $html_content;
-        
-        // Note: The temporary post is intentionally NOT deleted here to allow the publish action to find the metadata. 
-        // The publish action (lmb_approve_and_publish_newspaper) will handle cleanup.
         
         exit;
     }
