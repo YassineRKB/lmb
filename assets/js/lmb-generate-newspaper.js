@@ -1,5 +1,8 @@
 // FILE: assets/js/lmb-generate-newspaper.js
 jQuery(document).ready(function($) {
+    // Injecting the alert to confirm script execution.
+    // alert("sd"); 
+    
     const widget = $('.lmb-generate-newspaper-widget');
     if (!widget.length) return;
 
@@ -7,6 +10,7 @@ jQuery(document).ready(function($) {
     const tableBody = $('#lmb-ads-to-include-table tbody');
     const visualizeBtn = $('#lmb-visualize-btn');
     const selectAllCheckbox = $('#select-all-ads');
+    const filterAdsBtn = $('#lmb-filter-ads-btn'); 
     
     const step1 = $('#step-1-filters');
     const step2 = $('#step-2-preview');
@@ -14,8 +18,7 @@ jQuery(document).ready(function($) {
     const previewControls = $('#lmb-preview-controls');
     
     let currentSelectedAds = [];
-    let debounceTimer;
-
+    
     // --- Core Functions ---
 
     /**
@@ -30,6 +33,7 @@ jQuery(document).ready(function($) {
         const dateEnd = $('#date_end').val();
 
         if (!journalNo || !dateStart || !dateEnd) {
+            // Display standard prompt if filters are missing
             tableBody.html('<tr><td colspan="6" style="text-align:center;">Veuillez définir le numéro de journal et la période de dates requises.</td></tr>');
             visualizeBtn.prop('disabled', true);
             currentSelectedAds = [];
@@ -39,6 +43,9 @@ jQuery(document).ready(function($) {
         tableBody.html('<tr><td colspan="6" style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Chargement des annonces...</td></tr>');
         visualizeBtn.prop('disabled', true);
         
+        // Disable and show loading state on the filter button
+        filterAdsBtn.prop('disabled', true).addClass('lmb-btn-loading').find('i').removeClass('fa-filter').addClass('fa-spinner fa-spin');
+        
         const formData = filtersForm.serialize();
 
         $.post(lmb_ajax_params.ajaxurl, {
@@ -46,18 +53,20 @@ jQuery(document).ready(function($) {
             nonce: lmb_ajax_params.nonce,
             filters: formData
         }).done(function(response) {
-            if (response.success && response.data.ads.length > 0) {
+            if (response.success && response.data.ads && response.data.ads.length > 0) {
                 renderAdsTable(response.data.ads);
                 
                 const fetchedIds = response.data.ads.map(ad => ad.ID.toString());
-                let initialSelection = currentSelectedAds.filter(id => fetchedIds.includes(id.toString()));
                 
-                if (initialSelection.length === 0) {
-                     initialSelection = fetchedIds; // Default check all on first successful fetch
+                // Keep only selected ads that are still in the filtered list
+                currentSelectedAds = currentSelectedAds.filter(id => fetchedIds.includes(id.toString()));
+                
+                // If selection is empty after filtering, default to selecting all
+                if (currentSelectedAds.length === 0) {
+                     currentSelectedAds = fetchedIds;
                 }
-                currentSelectedAds = initialSelection;
                 
-                // Re-check checkboxes based on currentSelectedAds
+                // Apply selection to checkboxes
                 tableBody.find('.ad-selector').each(function() {
                     const adId = $(this).data('ad-id').toString();
                     $(this).prop('checked', currentSelectedAds.includes(adId));
@@ -72,9 +81,12 @@ jQuery(document).ready(function($) {
             // Update select-all header state
             updateSelectAllState();
         }).fail(function() {
-            tableBody.html('<tr><td colspan="6" style="text-align:center;">Erreur de communication avec le serveur.</td></tr>');
+            tableBody.html('<tr><td colspan="6" style="text-align:center;">Erreur de communication avec le serveur. Vérifiez les logs.</td></tr>');
             visualizeBtn.prop('disabled', true);
             currentSelectedAds = [];
+        }).always(function() {
+            // Reset filter button state
+            filterAdsBtn.prop('disabled', false).removeClass('lmb-btn-loading').find('i').removeClass('fa-spinner fa-spin').addClass('fa-filter');
         });
     }
 
@@ -117,13 +129,12 @@ jQuery(document).ready(function($) {
 
     // --- Event Handlers ---
     
-    // Real-time data fetching on input change
-    filtersForm.on('input change', 'input:not(#select-all-ads)', function() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(fetchAds, 500); // 500ms debounce
+    // NEW: Filter button click listener - Triggers data fetch
+    filterAdsBtn.on('click', function() {
+         fetchAds();
     });
 
-    // Handle single ad selection update
+    // Handle single ad selection update (delegated to table body)
     tableBody.on('change', '.ad-selector', function() {
         const adId = $(this).data('ad-id').toString();
         if ($(this).is(':checked')) {
@@ -220,7 +231,7 @@ jQuery(document).ready(function($) {
         btn.html('<i class="fas fa-spinner fa-spin"></i> Publication...').prop('disabled', true);
         $('#lmb-discard-btn').prop('disabled', true);
         
-        const journalNo = $('#journal_no').val(); // Get latest journal number for potential typo correction
+        const journalNo = $('#journal_no').val();
         const dateStart = $('#date_start').val();
         const dateEnd = $('#date_end').val();
 
@@ -240,14 +251,15 @@ jQuery(document).ready(function($) {
                 step1.fadeIn(300);
                 filtersForm[0].reset();
                 currentSelectedAds = [];
-                fetchAds(); 
+                // Reset table message
+                tableBody.html('<tr><td colspan="6" style="text-align:center;">Veuillez définir la période et cliquer sur \'Filtrer\' pour charger les annonces.</td></tr>');
+                visualizeBtn.prop('disabled', true);
             } else {
                 showLMBModal('error', response.data.message || 'Échec de l\'approbation et de la publication.');
             }
         }).fail(function() {
             showLMBModal('error', 'Erreur serveur lors de la publication.');
         }).always(function() {
-            // Re-enable buttons if failure occurred to allow retry/discard
             btn.html('<i class="fas fa-check-circle"></i> Publier').prop('disabled', false);
             $('#lmb-discard-btn').prop('disabled', false);
         });
@@ -262,6 +274,9 @@ jQuery(document).ready(function($) {
         previewControls.empty();
     });
     
-    // Initial load call
-    fetchAds();
+    // Initial UI setup
+    if (typeof lmb_ajax_params !== 'undefined') {
+        tableBody.html('<tr><td colspan="6" style="text-align:center;">Veuillez définir la période et cliquer sur \'Filtrer\' pour charger les annonces.</td></tr>');
+        visualizeBtn.prop('disabled', true);
+    }
 });

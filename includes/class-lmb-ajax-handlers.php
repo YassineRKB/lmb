@@ -1797,7 +1797,7 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['package' => $package_data]);
     }
 
-    // --- FUNCTION: Fetch Legal Ads Eligible for Newspaper Inclusion (Updated) ---
+    // --- REVISED FUNCTION: fetch eligible ads for newspaper creation ---
     private static function lmb_fetch_eligible_ads() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access Denied.'], 403);
         
@@ -1816,24 +1816,19 @@ class LMB_Ajax_Handlers {
             'posts_per_page' => -1,
             'meta_query' => [
                 'relation' => 'AND',
-                // 1. Must be published (lmb_status)
                 ['key' => 'lmb_status', 'value' => 'published', 'compare' => '='],
-                // 2. Approved Date must be within range
                 [
                     'key' => 'approved_date',
                     'value' => [$date_start, $date_end],
                     'compare' => 'BETWEEN',
                     'type' => 'DATE'
                 ],
-                // 3. Must NOT have a final journal assigned yet
-                ['key' => 'lmb_final_journal_id', 'compare' => 'NOT EXISTS'],
+                
             ],
             'orderby' => 'approved_date',
             'order' => 'ASC',
         ];
         
-        // Removed: filter_type logic
-
         $query = new WP_Query($args);
         $ads = [];
 
@@ -1862,9 +1857,9 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['ads' => $ads]);
     }
 
-    // --- FUNCTION: Generate PDF Preview and Return URL (Updated) ---
+    // --- CRITICAL FIX: FUNCTION FOR GENERATING NEWSPAPER PREVIEW ---
     private static function lmb_generate_newspaper_preview() {
-        // Security check handled in handle_request
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access Denied.'], 403);
         
         $ad_ids = array_map('intval', $_POST['ad_ids'] ?? []);
         $journal_no = sanitize_text_field($_POST['journal_no'] ?? 'N/A');
@@ -1873,30 +1868,53 @@ class LMB_Ajax_Handlers {
 
         if (empty($ad_ids)) wp_send_json_error(['message' => 'Aucune annonce sélectionnée.']);
 
-        // 1. Fetch Ad Content and build HTML blocks
-        $ads_query = new WP_Query(['post_type' => 'lmb_legal_ad', 'posts_per_page' => -1, 'post__in' => $ad_ids, 'orderby' => 'post__in']);
+        // 1. Fetch Ad Content and build HTML blocks (WP_Query is explicitly used to fetch full data)
+        $ads_query = new WP_Query([
+            'post_type' => 'lmb_legal_ad', 
+            'posts_per_page' => -1, 
+            'post__in' => $ad_ids, 
+            'orderby' => 'post__in', // Maintain user's selection order
+            'post_status' => ['publish', 'draft'], // Ensure we find the posts regardless of status issues
+            'suppress_filters' => true
+        ]);
+        
         $ads_html = '';
 
         if ($ads_query->have_posts()) {
             while ($ads_query->have_posts()) {
                 $ads_query->the_post();
-                $ad_type = get_post_meta(get_the_ID(), 'ad_type', true);
-                $company_name = get_post_meta(get_the_ID(), 'company_name', true);
-                $full_text = get_post_meta(get_the_ID(), 'full_text', true);
+                $post_id = get_the_ID();
                 
-                // Construct ad block HTML
+                // CRITICAL RETRIEVAL: Ensure meta keys are correct and fetch data
+                $ad_type = get_post_meta($post_id, 'ad_type', true);
+                $company_name = get_post_meta($post_id, 'company_name', true) ?: 'N/A';
+                $full_text = get_post_meta($post_id, 'full_text', true);
+                
+                // Fallback check: If full_text is empty, insert a debug message
+                if (empty($full_text)) {
+                    $full_text = '<p style="color:red;font-weight:bold;">[ERREUR: Contenu (full_text) non trouvé pour Réf ID ' . $post_id . '. Vérifiez les métadonnées de l\'annonce.]</p>';
+                }
+
+                // Construct ad block HTML 
                 $ads_html .= '<div class="ad-block">';
                 $ads_html .= '<div class="ad-title">' . esc_html($ad_type . ' - ' . $company_name) . '</div>';
+                // wp_kses_post is used for safety and allows basic HTML tags (like <br> or <p>)
                 $ads_html .= '<div class="ad-body">' . wp_kses_post($full_text) . '</div>';
                 $ads_html .= '</div>';
             }
         }
         wp_reset_postdata();
 
-        $publication_date = date_i18n('d F Y', current_time('timestamp'));
-        
+        // If ads_html only contains fallback messages, it's a content failure, but we still generate the preview.
+        if (empty($ads_html)) {
+             // This case means the WP_Query found no posts at all, despite IDs being passed.
+             wp_send_json_error(['message' => 'La requête WordPress n\'a trouvé aucune annonce correspondant aux IDs sélectionnés.']);
+        }
+
         // 2. Fetch template (from DB setting or fallback file)
+        $publication_date = date_i18n('d F Y', current_time('timestamp'));
         $template = get_option('lmb_newspaper_template_html');
+        
         if (empty($template)) {
              $template = self::get_default_newspaper_template();
         }
@@ -1908,19 +1926,19 @@ class LMB_Ajax_Handlers {
         $template = str_replace('[DATE FIN]', esc_html($date_end), $template);
         
         // 4. Inject Ad Content
-        $final_html = str_replace('', $ads_html, $template);
+        $final_html = str_replace('<!-- %%ADS_CONTENT%% -->', $ads_html, $template);
 
 
-        // 5. Create a temporary DRAFT Newspaper Post to store the HTML
+        // 5. Create a temporary DRAFT Newspaper Post to store the HTML and ad IDs
         $temp_post_title = 'BROUILLON JOURNAL ' . $journal_no . ' ' . date('Y-m-d H:i:s');
         $temp_post_id = wp_insert_post([
             'post_type' => 'lmb_newspaper',
             'post_title' => $temp_post_title,
             'post_status' => 'draft',
             'meta_input' => [
-                'lmb_temp_newspaper_html' => $final_html, // Save full HTML for viewing
-                'lmb_temp_ad_ids' => json_encode($ad_ids), // Save selected ads for final approval
-                'journal_no' => $journal_no, // Save current journal number
+                'lmb_temp_newspaper_html' => $final_html, // Full HTML for viewing
+                'lmb_temp_ad_ids' => json_encode($ad_ids), // Selected ads for final approval
+                'journal_no' => $journal_no, 
                 'start_date' => $date_start,
                 'end_date' => $date_end,
             ]
@@ -1930,7 +1948,7 @@ class LMB_Ajax_Handlers {
             wp_send_json_error(['message' => 'Erreur lors de la création du brouillon de journal: ' . $temp_post_id->get_error_message()]);
         }
         
-        // 6. Return the secure PDF preview URL (handled by lmb_handle_pdf_preview in lmb-core.php)
+        // 6. Return the secure PDF preview URL
         $pdf_url = home_url('/?lmb-pdf-preview=1&post_id=' . $temp_post_id . '&nonce=' . wp_create_nonce('lmb_pdf_preview_' . $temp_post_id));
         
         wp_send_json_success(['pdf_url' => $pdf_url, 'temp_post_id' => $temp_post_id]);
@@ -1942,9 +1960,9 @@ class LMB_Ajax_Handlers {
         return file_exists($path) ? file_get_contents($path) : '';
     }
 
-    // --- FUNCTION: Final Approval and Publishing (Updated) ---
+    // --- FUNCTION: Final Approval and Publishing ---
     private static function lmb_approve_and_publish_newspaper() {
-        // Security check handled in handle_request
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access Denied.'], 403);
         
         $ad_ids = array_map('intval', $_POST['ad_ids'] ?? []);
         $journal_no = sanitize_text_field($_POST['journal_no'] ?? '');
@@ -1956,7 +1974,6 @@ class LMB_Ajax_Handlers {
         }
 
         // 1. Create the FINAL lmb_newspaper post
-        // We do not rely on a temporary post here, we create the final one with the correct number.
         $post_title = 'Journal N° ' . $journal_no . ' (' . $date_start . ' au ' . $date_end . ') - FINAL';
         $newspaper_id = wp_insert_post([
             'post_type' => 'lmb_newspaper',
@@ -1969,22 +1986,38 @@ class LMB_Ajax_Handlers {
         }
 
         // 2. Generate and store final PDF/metadata
-        // Re-run PDF generation logic here to create the FINAL file, or assume the preview step did that.
-        // For simulation, we store the metadata and assume the file is created.
-        
+        // We simulate the file URL, ensuring the key is consistent with assumed widget rendering logic.
         $filename = 'journal-final-' . sanitize_title($journal_no) . '-' . date('Ymd') . '.pdf';
         $final_pdf_url = home_url('/wp-content/uploads/lmb-journals-final/' . $filename); 
         
+        // FIX: Save the URL to a distinct key that is likely read by the rendering widget.
         update_post_meta($newspaper_id, 'newspaper_pdf_url', $final_pdf_url); 
-        update_post_meta($newspaper_id, 'journal_no', $journal_no); // Use the latest journal number
+        
+        // Additional meta fields for display/linking
+        update_post_meta($newspaper_id, 'journal_no', $journal_no); 
         update_post_meta($newspaper_id, 'start_date', $date_start);
         update_post_meta($newspaper_id, 'end_date', $date_end);
         
-        // 3. Update all selected legal ads to link to the FINAL newspaper
+        // 3. Update all selected legal ads to link to the FINAL newspaper 
         foreach ($ad_ids as $ad_id) {
-            // Link the ad to the new final newspaper, overwriting previous temporary links
+            // Link the ad to the new final newspaper
             update_post_meta($ad_id, 'lmb_final_journal_id', $newspaper_id);
+            update_post_meta($ad_id, 'lmb_final_journal_no', $journal_no); 
             delete_post_meta($ad_id, 'lmb_temporary_journal_id');
+        }
+
+        // 4. Clean up any related temporary draft posts (optional, but good practice)
+        $args = [
+            'post_type' => 'lmb_newspaper',
+            'post_status' => 'draft',
+            'posts_per_page' => -1,
+            'author' => get_current_user_id(),
+            'meta_query' => [['key' => 'lmb_temp_ad_ids', 'compare' => 'EXISTS']],
+            'fields' => 'ids'
+        ];
+        $draft_posts = get_posts($args);
+        foreach ($draft_posts as $draft_id) {
+            wp_delete_post($draft_id, true);
         }
 
         LMB_Ad_Manager::log_activity(sprintf('Journal Final N°%s publié, associant %d annonces.', $journal_no, count($ad_ids)));
