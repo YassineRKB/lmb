@@ -265,6 +265,8 @@ class LMB_Admin {
                 </td>
             </tr>
         </table>
+        
+        <hr>
 
         <h3>Modèle HTML d'Accusé</h3>
         <textarea name="lmb_accuse_template_html" rows="20" style="width:100%; font-family: monospace;"><?php echo esc_textarea(get_option('lmb_accuse_template_html', self::get_default_accuse_template())); ?></textarea>
@@ -277,6 +279,8 @@ class LMB_Admin {
             <li><code>{{legal_ad_link}}</code></li>
             <li><code>{{signature_url}}</code></li>
         </ul>
+        
+        <hr>
 
         <h3>Modèle HTML de Journal Final</h3>
         <p class="description">
