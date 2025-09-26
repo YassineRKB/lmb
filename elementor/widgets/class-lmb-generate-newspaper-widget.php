@@ -30,32 +30,18 @@ class LMB_Generate_Newspaper_Widget extends Widget_Base {
                     <h4>Étape 1: Filtrer les Annonces Légales Publiées</h4>
                     <div class="lmb-filters-box">
                         <form id="lmb-newspaper-filters-form">
-                            <div class="lmb-form-row">
+                            <div class="lmb-form-row three-columns">
                                 <div class="lmb-form-group">
                                     <label for="journal_no">Numéro du Journal <span class="required">*</span></label>
-                                    <input type="text" name="journal_no" id="journal_no" class="lmb-input" required>
+                                    <input type="text" name="journal_no" id="journal_no" class="lmb-input" required placeholder="Ex: 2025-01-1">
                                 </div>
                                 <div class="lmb-form-group">
-                                    <label for="date_start">Date de Début (Publiée Après) <span class="required">*</span></label>
+                                    <label for="date_start">Date de Début (Approuvée Après) <span class="required">*</span></label>
                                     <input type="date" name="date_start" id="date_start" class="lmb-input" required>
                                 </div>
                                 <div class="lmb-form-group">
-                                    <label for="date_end">Date de Fin (Publiée Avant) <span class="required">*</span></label>
+                                    <label for="date_end">Date de Fin (Approuvée Avant) <span class="required">*</span></label>
                                     <input type="date" name="date_end" id="date_end" class="lmb-input" required>
-                                </div>
-                                <div class="lmb-form-group">
-                                    <label for="filter_type">Filtrer par Type d'Annonce</label>
-                                    <select name="filter_type" id="filter_type" class="lmb-input">
-                                        <option value="">Tous les Types</option>
-                                        <?php
-                                        // Fetch distinct ad types dynamically
-                                        global $wpdb;
-                                        $ad_types = $wpdb->get_col("SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key = 'ad_type' AND meta_value != '' ORDER BY meta_value ASC");
-                                        foreach ($ad_types as $type) {
-                                            echo '<option value="'.esc_attr($type).'">'.esc_html($type).'</option>';
-                                        }
-                                        ?>
-                                    </select>
                                 </div>
                             </div>
                         </form>
@@ -87,16 +73,13 @@ class LMB_Generate_Newspaper_Widget extends Widget_Base {
                 </div>
 
                 <div id="step-2-preview" class="lmb-newspaper-step" style="display: none;">
-                    <h4>Étape 2: Prévisualiser et Confirmer la Publication</h4>
-                    <div class="lmb-preview-controls">
-                        <button type="button" id="lmb-back-to-selection-btn" class="lmb-btn lmb-btn-secondary"><i class="fas fa-arrow-left"></i> Retour à la Sélection</button>
-                    </div>
+                    <h4>Étape 2: Prévisualisation du Journal</h4>
+                    
                     <div id="lmb-newspaper-preview-area" class="newspaper-preview-area">
-                        <p style="text-align: center;">Chargement de la prévisualisation...</p>
-                    </div>
-                     <div class="lmb-form-actions" style="margin-top: 20px;">
-                        <button type="button" id="lmb-approve-btn" class="lmb-btn lmb-btn-success lmb-btn-large"><i class="fas fa-check-circle"></i> Approuver et Publier le Journal</button>
-                    </div>
+                        </div>
+                    
+                    <div class="lmb-form-actions three-columns" id="lmb-preview-controls" style="margin-top: 20px; justify-content: center;">
+                        </div>
                 </div>
 
             </div>
