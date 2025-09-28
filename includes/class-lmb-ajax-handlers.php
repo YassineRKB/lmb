@@ -1,4 +1,5 @@
 <?php
+// FILE: includes/class-lmb-ajax-handlers.php
 if (!defined('ABSPATH')) exit;
 
 class LMB_Ajax_Handlers {
@@ -32,6 +33,7 @@ class LMB_Ajax_Handlers {
             'lmb_fetch_eligible_ads',
             'lmb_generate_newspaper_preview',
             'lmb_approve_and_publish_newspaper',
+            'lmb_discard_newspaper_draft', // <-- NEW ACTION ADDED
             
         ];
         // --- MODIFICATION: Make auth actions public ---
@@ -319,61 +321,7 @@ class LMB_Ajax_Handlers {
             'package' => ['id' => $new_pkg_id, 'name' => $name, 'price' => $price, 'points' => $points, 'cost_per_ad' => $cost, 'description' => $desc, 'trimmed_description' => wp_trim_words($desc, 20)]
         ]);
     }
-
-    private static function lmb_ad_status_change() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
-        
-        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
-        $ad_action = isset($_POST['ad_action']) ? sanitize_key($_POST['ad_action']) : '';
-        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : '';
-        
-        if (!$ad_id || !$ad_action) wp_send_json_error(['message' => 'Missing parameters.'], 400);
-
-        if ($ad_action === 'approve') {
-            $result = LMB_Ad_Manager::approve_ad($ad_id);
-            if ($result['success']) wp_send_json_success(['message' => $result['message']]);
-            else wp_send_json_error(['message' => $result['message']]);
-        } elseif ($ad_action === 'deny') {
-            LMB_Ad_Manager::deny_ad($ad_id, $reason);
-            wp_send_json_success(['message' => 'Ad has been denied.']);
-        }
-    }
     
-    private static function lmb_user_submit_for_review() {
-        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
-        $ad = get_post($ad_id);
-        
-        if (!$ad || $ad->post_type !== 'lmb_legal_ad' || $ad->post_author != get_current_user_id()) {
-            wp_send_json_error(['message' => 'Permission denied.']);
-        }
-
-        update_post_meta($ad_id, 'lmb_status', 'pending_review');
-        LMB_Ad_Manager::log_activity(sprintf('Ad #%d ("%s") submitted for review.', $ad_id, $ad->post_title));
-        LMB_Notification_Manager::notify_admins_ad_pending($ad_id);
-        wp_send_json_success(['message' => 'Ad submitted for review.']);
-    }
-
-    private static function lmb_payment_action() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
-        
-        $payment_id = isset($_POST['payment_id']) ? intval($_POST['payment_id']) : 0;
-        $action = isset($_POST['payment_action']) ? sanitize_key($_POST['payment_action']) : '';
-        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : 'No reason provided.';
-        LMB_Payment_Verifier::handle_payment_action($payment_id, $action, $reason);
-    }
-    
-    private static function lmb_get_balance_history() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
-        
-        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
-        if (!$user_id) wp_send_json_error(['message' => 'Invalid user ID'], 400);
-        
-        wp_send_json_success([
-            'current_balance' => LMB_Points::get_balance($user_id),
-            'history' => LMB_Points::get_transactions($user_id, 10)
-        ]);
-    }
-
     private static function lmb_load_admin_tab() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
         
@@ -550,6 +498,60 @@ class LMB_Ajax_Handlers {
         
         LMB_Ad_Manager::log_activity(sprintf('Package "%s" deleted', $package->post_title));
         wp_send_json_success(['message' => 'Package deleted.']);
+    }
+
+    private static function lmb_ad_status_change() {
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
+        
+        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
+        $ad_action = isset($_POST['ad_action']) ? sanitize_key($_POST['ad_action']) : '';
+        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : '';
+        
+        if (!$ad_id || !$ad_action) wp_send_json_error(['message' => 'Missing parameters.'], 400);
+
+        if ($ad_action === 'approve') {
+            $result = LMB_Ad_Manager::approve_ad($ad_id);
+            if ($result['success']) wp_send_json_success(['message' => $result['message']]);
+            else wp_send_json_error(['message' => $result['message']]);
+        } elseif ($ad_action === 'deny') {
+            LMB_Ad_Manager::deny_ad($ad_id, $reason);
+            wp_send_json_success(['message' => 'Ad has been denied.']);
+        }
+    }
+    
+    private static function lmb_user_submit_for_review() {
+        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
+        $ad = get_post($ad_id);
+        
+        if (!$ad || $ad->post_type !== 'lmb_legal_ad' || $ad->post_author != get_current_user_id()) {
+            wp_send_json_error(['message' => 'Permission denied.']);
+        }
+
+        update_post_meta($ad_id, 'lmb_status', 'pending_review');
+        LMB_Ad_Manager::log_activity(sprintf('Ad #%d ("%s") submitted for review.', $ad_id, $ad->post_title));
+        LMB_Notification_Manager::notify_admins_ad_pending($ad_id);
+        wp_send_json_success(['message' => 'Ad submitted for review.']);
+    }
+
+    private static function lmb_payment_action() {
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
+        
+        $payment_id = isset($_POST['payment_id']) ? intval($_POST['payment_id']) : 0;
+        $action = isset($_POST['payment_action']) ? sanitize_key($_POST['payment_action']) : '';
+        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : 'No reason provided.';
+        LMB_Payment_Verifier::handle_payment_action($payment_id, $action, $reason);
+    }
+    
+    private static function lmb_get_balance_history() {
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
+        
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        if (!$user_id) wp_send_json_error(['message' => 'Invalid user ID'], 400);
+        
+        wp_send_json_success([
+            'current_balance' => LMB_Points::get_balance($user_id),
+            'history' => LMB_Points::get_transactions($user_id, 10)
+        ]);
     }
 
     private static function lmb_get_pending_accuse_ads() {
@@ -795,99 +797,6 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
     }
     
-    // --- NEW FUNCTION: v2 my ads management fetch with filters ---
-    private static function lmb_fetch_my_ads_v2() {
-        $user_id = get_current_user_id();
-        
-        $status = isset($_POST['status']) ? sanitize_key($_POST['status']) : 'published';
-        $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
-        $posts_per_page = isset($_POST['posts_per_page']) ? intval($_POST['posts_per_page']) : 10;
-        
-        parse_str(isset($_POST['filters']) ? $_POST['filters'] : '', $filters);
-
-        $args = [
-            'post_type' => 'lmb_legal_ad',
-            'author' => $user_id,
-            'post_status' => ['publish', 'draft', 'pending'],
-            'posts_per_page' => $posts_per_page,
-            'paged' => $paged,
-            'meta_query' => ['relation' => 'AND'],
-        ];
-
-        // Set the main status from Elementor control
-        if ($status === 'drafts') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'draft'];
-        if ($status === 'pending') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'pending_review'];
-        if ($status === 'published') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'published'];
-        if ($status === 'denied') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'denied'];
-
-        // Apply live filters from the user
-        if (!empty($filters['filter_ref'])) $args['p'] = intval($filters['filter_ref']);
-        if (!empty($filters['filter_company'])) $args['meta_query'][] = ['key' => 'company_name', 'value' => sanitize_text_field($filters['filter_company']), 'compare' => 'LIKE'];
-        if (!empty($filters['filter_type'])) $args['meta_query'][] = ['key' => 'ad_type', 'value' => sanitize_text_field($filters['filter_type']), 'compare' => 'LIKE'];
-        if (!empty($filters['filter_date'])) $args['date_query'] = [['year' => date('Y', strtotime($filters['filter_date'])), 'month' => date('m', strtotime($filters['filter_date'])), 'day' => date('d', strtotime($filters['filter_date']))]];
-        
-        $query = new WP_Query($args);
-        
-        ob_start();
-        if ($query->have_posts()) {
-            while ($query->have_posts()) {
-                $query->the_post();
-                $post_id = get_the_ID();
-                $ad_url = get_permalink($post_id);
-                echo '<tr class="clickable-row" data-href="' . esc_url($ad_url) . '">';
-
-                switch ($status) {
-                    case 'published':
-                        $accuse_id = get_post_meta($post_id, 'lmb_accuse_attachment_id', true);
-                        echo '<td>' . $post_id . '</td>';
-                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
-                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
-                        echo '<td>' . esc_html(get_the_date()) . '</td>';
-                        echo '<td>' . (get_post_meta($post_id, 'approved_by', true) ? get_the_author_meta('display_name', get_post_meta($post_id, 'approved_by', true)) : 'N/A') . '</td>';
-                        echo '<td>' . ($accuse_id ? '<a href="'.wp_get_attachment_url($accuse_id).'" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Accuse</a>' : '<span class="cell-placeholder">-</span>') . '</td>';
-                        echo '<td><span class="cell-placeholder">-</span></td>'; // Journal column placeholder
-                        break;
-                    case 'pending':
-                        echo '<td>' . $post_id . '</td>';
-                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
-                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
-                        echo '<td>' . esc_html(get_the_date()) . '</td>';
-                        break;
-                    case 'drafts':
-                        echo '<td>' . $post_id . '</td>';
-                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
-                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
-                        echo '<td>' . esc_html(get_the_date()) . '</td>';
-                        echo '<td class="lmb-actions-cell no-hover"><button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-submit-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-paper-plane"></i> Submit</button><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-trash"></i> Delete</button></td>';
-                        break;
-                    case 'denied':
-                        echo '<td>' . $post_id . '</td>';
-                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
-                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
-                        echo '<td>' . esc_html(get_the_modified_date()) . '</td>';
-                        echo '<td class="denial-reason">' . esc_html(get_post_meta($post_id, 'denial_reason', true)) . '</td>';
-                        echo '<td class="lmb-actions-cell no-hover"><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-trash"></i> Delete</button></td>';
-                        break;
-                }
-                echo '</tr>';
-            }
-        } else {
-            echo '<tr><td colspan="7" style="text-align:center;">No ads found for this status.</td></tr>';
-        }
-        $html = ob_get_clean();
-        
-        $pagination_html = paginate_links([
-            'base' => add_query_arg('paged', '%#%'),
-            'format' => '?paged=%#%',
-            'current' => max(1, $paged),
-            'total' => $query->max_num_pages,
-            'prev_text' => '&laquo;',
-            'next_text' => '&raquo;',
-        ]);
-
-        wp_reset_postdata();
-        wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
-    }
     // --- NEW FUNCTION: v2 submit draft ad for review ---
     private static function lmb_submit_draft_ad_v2() {
         $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
@@ -1132,7 +1041,7 @@ class LMB_Ajax_Handlers {
                 $user_id = $user->ID;
                 $client_type = get_user_meta($user_id, 'lmb_client_type', true);
                 $name = ($client_type === 'professional' && get_user_meta($user_id, 'company_name', true)) ? get_user_meta($user_id, 'company_name', true) : $user->display_name;
-                $edit_url = home_url('/profile/' . $user_id . '/');
+                $edit_url = home_url('/user-editor/?user_id=' . $user_id);
                 $ad_count = count_user_posts($user_id, 'lmb_legal_ad', true);
                 $is_new_client = ($ad_count == 0);
 
@@ -1314,6 +1223,7 @@ class LMB_Ajax_Handlers {
 
         wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
     }
+
     // --- NEW FUNCTION: v2 lock (set to inactive) an active client ---
     private static function lmb_lock_active_client_v2() {
         $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
@@ -1331,7 +1241,6 @@ class LMB_Ajax_Handlers {
     }
 
     // --- UPDATED FUNCTION: v2 update user profile with role-based field restrictions ---
-    
     private static function lmb_update_profile_v2() {
         $user_id_to_update = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
         parse_str($_POST['form_data'], $data);
@@ -1510,13 +1419,31 @@ class LMB_Ajax_Handlers {
         $start_date = sanitize_text_field($_POST['start_date']);
         $end_date = sanitize_text_field($_POST['end_date']);
 
+        // Set date meta for filtering
+        update_post_meta($post_id, 'start_date', $start_date);
+        update_post_meta($post_id, 'end_date', $end_date);
+
+
         // Simplified logic since date range is now mandatory
         $args = [
             'post_type'      => 'lmb_legal_ad',
             'post_status'    => 'publish',
             'posts_per_page' => -1,
             'fields'         => 'ids',
-            'date_query'     => [['after' => $start_date, 'before' => $end_date, 'inclusive' => true]],
+            'meta_query'     => [
+                'relation' => 'AND',
+                [
+                    'key'     => 'approved_date',
+                    'value'   => [$start_date, $end_date],
+                    'compare' => 'BETWEEN',
+                    'type'    => 'DATE',
+                ],
+                // Only associate if no final journal is already linked
+                [
+                    'key'     => 'lmb_final_journal_id',
+                    'compare' => 'NOT EXISTS'
+                ]
+            ],
         ];
 
         $ads_query = new WP_Query($args);
@@ -1580,8 +1507,8 @@ class LMB_Ajax_Handlers {
                 $company_name = get_post_meta($ad_id, 'company_name', true);
                 $ad_type = get_post_meta($ad_id, 'ad_type', true);
                 $approved_date = get_post_meta($ad_id, 'approved_date', true);
-                $newspaper_id = get_post_meta($ad_id, 'newspaper_id', true);
-                $newspaper_title = $newspaper_id ? get_the_title($newspaper_id) : 'N/A';
+                $newspaper_id = get_post_meta($ad_id, 'lmb_final_journal_id', true); // Use final journal ID
+                $newspaper_title = $newspaper_id ? get_post_meta($newspaper_id, 'journal_no', true) : 'N/A'; // Get Journal No
 
                 // --- MODIFICATION START ---
                 // Manually construct the URL for the public-facing page
@@ -1735,7 +1662,7 @@ class LMB_Ajax_Handlers {
 
                 echo '<tr>';
                 echo '<td>' . esc_html(get_post_meta($payment_id, 'payment_reference', true)) . '</td>';
-                echo '<td>' . ($client ? '<a href="' . home_url('/profile/' . $client->ID . '/') . '">' . esc_html($client->display_name) . '</a>' : 'N/A') . '</td>';
+                echo '<td>' . ($client ? '<a href="' . home_url('/user-editor/?user_id=' . $client->ID) . '">' . esc_html($client->display_name) . '</a>' : 'N/A') . '</td>';
                 echo '<td>' . ($package_id ? esc_html(get_the_title($package_id)) : 'N/A') . '</td>';
                 echo '<td>' . esc_html(get_post_meta($payment_id, 'package_price', true)) . ' MAD</td>';
                 echo '<td>' . esc_html(get_the_date('Y-m-d H:i', $payment_id)) . '</td>';
@@ -1814,6 +1741,7 @@ class LMB_Ajax_Handlers {
             'post_type' => 'lmb_legal_ad',
             'post_status' => 'publish',
             'posts_per_page' => -1,
+            'fields' => 'ids',
             'meta_query' => [
                 'relation' => 'AND',
                 ['key' => 'lmb_status', 'value' => 'published', 'compare' => '='],
@@ -1823,7 +1751,8 @@ class LMB_Ajax_Handlers {
                     'compare' => 'BETWEEN',
                     'type' => 'DATE'
                 ],
-                //['key' => 'lmb_final_journal_id', 'compare' => 'NOT EXISTS'],
+                // CRITICAL: Exclude ads already associated with a final journal
+                //[    'key' => 'lmb_final_journal_id','compare' => 'NOT EXISTS' ],
             ],
             'orderby' => 'approved_date',
             'order' => 'ASC',
@@ -1833,9 +1762,7 @@ class LMB_Ajax_Handlers {
         $ads = [];
 
         if ($query->have_posts()) {
-            while ($query->have_posts()) {
-                $query->the_post();
-                $post_id = get_the_ID();
+            foreach ($query->posts as $post_id) {
                 $journal_status = get_post_meta($post_id, 'lmb_temporary_journal_id', true) ? 'Journal Temporaire' : 'Aucun';
 
                 $ads[] = [
@@ -1893,9 +1820,12 @@ class LMB_Ajax_Handlers {
                     $full_text = '<p style="color:red;font-weight:bold;">[ERREUR: Contenu (full_text) non trouvé pour Réf ID ' . $post_id . '. Vérifiez les métadonnées de l\'annonce.]</p>';
                 }
 
+                // Preserve line breaks for MultiCell/layout effect
+                $display_text = str_replace(['<br>', '<br/>', '<br />'], "\n", $full_text);
+
                 $ads_html .= '<div class="ad-block">';
                 $ads_html .= '<div class="ad-title">' . esc_html($ad_type . ' - ' . $company_name) . '</div>';
-                $ads_html .= '<div class="ad-body">' . wp_kses_post($full_text) . '</div>';
+                $ads_html .= '<div class="ad-body">' . wp_kses_post($display_text) . '</div>';
                 $ads_html .= '</div>';
             }
         }
@@ -1967,8 +1897,7 @@ class LMB_Ajax_Handlers {
             wp_send_json_error(['message' => 'Données de journal ou annonces manquantes.']);
         }
         
-        // --- 1. RETRIEVE THE HTML CONTENT FROM THE LATEST DRAFT (REPLICATE FILE UPLOAD) ---
-        // Find the most recent draft post based on the current form criteria
+        // --- 1. RETRIEVE THE DRAFT AND ITS HTML CONTENT ---
         $draft_args = [
             'post_type' => 'lmb_newspaper',
             'post_status' => 'draft',
@@ -1991,6 +1920,7 @@ class LMB_Ajax_Handlers {
         }
         
         $draft_post_id = $draft_posts[0]->ID;
+        // In a real flow, this is where you would call the PDF generation library with the raw HTML
         $final_html_content = get_post_meta($draft_post_id, 'lmb_temp_newspaper_html', true);
 
         if (empty($final_html_content)) {
@@ -2009,17 +1939,12 @@ class LMB_Ajax_Handlers {
             wp_send_json_error(['message' => 'Erreur lors de la création du post Journal Final: ' . $newspaper_id->get_error_message()]);
         }
         
-        // --- 3. PUBLISH THE PDF FILE (Simulated File Upload Process) ---
+        // --- 3. SIMULATE FINAL PDF LINK (CRITICAL for directory to work) ---
+        // We do not have PDF generation capability here, so we simulate the required meta fields.
+        $dummy_pdf_path = wp_upload_dir()['baseurl'] . '/lmb-journals-final/journal-' . sanitize_title($journal_no) . '-' . date('Ymd') . '.pdf';
         
-        // Generate the final file URL, ensuring the path matches standard expectations.
-        $filename = 'journal-final-' . sanitize_title($journal_no) . '-' . date('Ymd') . '.pdf';
-        $final_pdf_url = content_url("uploads/lmb-journals-final/{$filename}"); 
-        
-        // CRITICAL SYNC FIX: Save the URL to 'newspaper_pdf_url'. This is the most reliable key for the front-end to read.
-        update_post_meta($newspaper_id, 'newspaper_pdf_url', $final_pdf_url); 
-        
-        // Copy the generated HTML to the FINAL post for archiving/debugging (optional)
-        update_post_meta($newspaper_id, 'lmb_final_newspaper_html', $final_html_content);
+        update_post_meta($newspaper_id, 'newspaper_pdf', 0); // Set dummy ID or 0
+        update_post_meta($newspaper_id, 'newspaper_pdf_url', $dummy_pdf_path); 
         
         // Additional meta fields for display/linking
         update_post_meta($newspaper_id, 'journal_no', $journal_no); 
@@ -2027,21 +1952,47 @@ class LMB_Ajax_Handlers {
         update_post_meta($newspaper_id, 'end_date', $date_end);
         
         // --- 4. UPDATE ADS AND CLEANUP ---
-        
+        $temp_journals_to_delete = [];
         // Update all selected legal ads to link to the FINAL newspaper 
         foreach ($ad_ids as $ad_id) {
+            $temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
+            if (!empty($temp_journal_id)) { $temp_journals_to_delete[] = $temp_journal_id; }
+            
             update_post_meta($ad_id, 'lmb_final_journal_id', $newspaper_id);
             update_post_meta($ad_id, 'lmb_final_journal_no', $journal_no); 
             delete_post_meta($ad_id, 'lmb_temporary_journal_id');
         }
 
-        // Delete the temporary draft post
-        wp_delete_post($draft_post_id, true);
+        // Delete temporary attachments associated with the ads
+        if (!empty($temp_journals_to_delete)) {
+            $unique_ids_to_delete = array_unique($temp_journals_to_delete);
+            foreach ($unique_ids_to_delete as $attachment_id) { wp_delete_attachment($attachment_id, true); }
+        }
 
+        // 5. Delete the temporary draft post
+        wp_delete_post($draft_post_id, true);
 
         LMB_Ad_Manager::log_activity(sprintf('Journal Final N°%s publié, associant %d annonces.', $journal_no, count($ad_ids)));
         
         wp_send_json_success(['message' => 'Journal publié avec succès et annonces mises à jour.']);
+    }
+    
+    // --- NEW FUNCTION: Discard Draft Action ---
+    private static function lmb_discard_newspaper_draft() {
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access Denied.'], 403);
+        
+        $temp_post_id = isset($_POST['temp_post_id']) ? intval($_POST['temp_post_id']) : 0;
+        $draft_post = get_post($temp_post_id);
+
+        if (!$draft_post || $draft_post->post_type !== 'lmb_newspaper' || $draft_post->post_status !== 'draft') {
+            wp_send_json_error(['message' => 'Invalid or already deleted draft post ID.'], 400);
+        }
+
+        if (wp_delete_post($temp_post_id, true)) {
+            wp_send_json_success(['message' => 'Draft deleted successfully.']);
+        } else {
+            wp_send_json_error(['message' => 'Failed to delete the draft post.']);
+        }
     }
 
 }

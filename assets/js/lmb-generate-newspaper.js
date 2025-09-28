@@ -18,6 +18,8 @@ jQuery(document).ready(function($) {
     const previewControls = $('#lmb-preview-controls');
     
     let currentSelectedAds = [];
+    let currentTempPostId = 0; // <-- NEW: Store the temporary post ID
+
     
     // --- Core Functions ---
 
@@ -190,6 +192,9 @@ jQuery(document).ready(function($) {
             date_end: dateEnd
         }).done(function(response) {
             if (response.success && response.data.pdf_url) {
+                
+                currentTempPostId = response.data.temp_post_id; // <-- STORE ID
+
                 // Open PDF in new tab
                 window.open(response.data.pdf_url, '_blank');
                 
@@ -226,6 +231,11 @@ jQuery(document).ready(function($) {
     // Handle Publish Button Click
     step2.on('click', '#lmb-publish-btn', function() {
         const btn = $(this);
+        if (!currentTempPostId || currentSelectedAds.length === 0) {
+            showLMBModal('error', 'Erreur: Le brouillon de journal est introuvable.');
+            return;
+        }
+
         if (!confirm('ATTENTION: Confirmez-vous la publication du Journal ? Cette action est irréversible et associera le Journal FINAL à toutes les annonces sélectionnées.')) return;
         
         btn.html('<i class="fas fa-spinner fa-spin"></i> Publication...').prop('disabled', true);
@@ -251,6 +261,7 @@ jQuery(document).ready(function($) {
                 step1.fadeIn(300);
                 filtersForm[0].reset();
                 currentSelectedAds = [];
+                currentTempPostId = 0; // <-- RESET ID
                 // Reset table message
                 tableBody.html('<tr><td colspan="6" style="text-align:center;">Veuillez définir la période et cliquer sur \'Filtrer\' pour charger les annonces.</td></tr>');
                 visualizeBtn.prop('disabled', true);
@@ -267,11 +278,31 @@ jQuery(document).ready(function($) {
 
     // Handle Discard Button Click
     step2.on('click', '#lmb-discard-btn', function() {
-        // Reset UI to step 1 (selection screen)
-        step2.hide();
-        step1.fadeIn(300);
-        previewArea.empty();
-        previewControls.empty();
+        const btn = $(this);
+        btn.html('<i class="fas fa-spinner fa-spin"></i> Deleting...').prop('disabled', true);
+        $('#lmb-publish-btn').prop('disabled', true);
+        
+        // AJAX call to delete the draft post
+        $.post(lmb_ajax_params.ajaxurl, {
+            action: 'lmb_discard_newspaper_draft', // <-- NEW ACTION
+            nonce: lmb_ajax_params.nonce,
+            temp_post_id: currentTempPostId
+        }).done(function(response) {
+            if (response.success) {
+                showLMBModal('success', 'Brouillon de journal supprimé.');
+            } else {
+                showLMBModal('error', response.data.message || 'Échec de la suppression du brouillon.');
+            }
+        }).fail(function() {
+            showLMBModal('error', 'Erreur serveur lors de la suppression.');
+        }).always(function() {
+            // Always reset UI to step 1
+            step2.hide();
+            step1.fadeIn(300);
+            previewArea.empty();
+            previewControls.empty();
+            currentTempPostId = 0; // <-- RESET ID
+        });
     });
     
     // Initial UI setup
