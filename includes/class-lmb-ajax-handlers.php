@@ -1543,6 +1543,99 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['html' => $html, 'pagination' => $pagination]);
     }
 
+    private static function lmb_fetch_my_ads_v2() {
+        $user_id = get_current_user_id();
+        
+        $status = isset($_POST['status']) ? sanitize_key($_POST['status']) : 'published';
+        $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
+        $posts_per_page = isset($_POST['posts_per_page']) ? intval($_POST['posts_per_page']) : 10;
+        
+        parse_str(isset($_POST['filters']) ? $_POST['filters'] : '', $filters);
+
+        $args = [
+            'post_type' => 'lmb_legal_ad',
+            'author' => $user_id,
+            'post_status' => ['publish', 'draft', 'pending'],
+            'posts_per_page' => $posts_per_page,
+            'paged' => $paged,
+            'meta_query' => ['relation' => 'AND'],
+        ];
+
+        // Set the main status from Elementor control
+        if ($status === 'drafts') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'draft'];
+        if ($status === 'pending') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'pending_review'];
+        if ($status === 'published') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'published'];
+        if ($status === 'denied') $args['meta_query'][] = ['key' => 'lmb_status', 'value' => 'denied'];
+
+        // Apply live filters from the user
+        if (!empty($filters['filter_ref'])) $args['p'] = intval($filters['filter_ref']);
+        if (!empty($filters['filter_company'])) $args['meta_query'][] = ['key' => 'company_name', 'value' => sanitize_text_field($filters['filter_company']), 'compare' => 'LIKE'];
+        if (!empty($filters['filter_type'])) $args['meta_query'][] = ['key' => 'ad_type', 'value' => sanitize_text_field($filters['filter_type']), 'compare' => 'LIKE'];
+        if (!empty($filters['filter_date'])) $args['date_query'] = [['year' => date('Y', strtotime($filters['filter_date'])), 'month' => date('m', strtotime($filters['filter_date'])), 'day' => date('d', strtotime($filters['filter_date']))]];
+        
+        $query = new WP_Query($args);
+        
+        ob_start();
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $post_id = get_the_ID();
+                $ad_url = get_permalink($post_id);
+                echo '<tr class="clickable-row" data-href="' . esc_url($ad_url) . '">';
+
+                switch ($status) {
+                    case 'published':
+                        $accuse_id = get_post_meta($post_id, 'lmb_accuse_attachment_id', true);
+                        echo '<td>' . $post_id . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
+                        echo '<td>' . esc_html(get_the_date()) . '</td>';
+                        echo '<td>' . (get_post_meta($post_id, 'approved_by', true) ? get_the_author_meta('display_name', get_post_meta($post_id, 'approved_by', true)) : 'N/A') . '</td>';
+                        echo '<td>' . ($accuse_id ? '<a href="'.wp_get_attachment_url($accuse_id).'" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Accuse</a>' : '<span class="cell-placeholder">-</span>') . '</td>';
+                        echo '<td><span class="cell-placeholder">-</span></td>'; // Journal column placeholder
+                        break;
+                    case 'pending':
+                        echo '<td>' . $post_id . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
+                        echo '<td>' . esc_html(get_the_date()) . '</td>';
+                        break;
+                    case 'drafts':
+                        echo '<td>' . $post_id . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
+                        echo '<td>' . esc_html(get_the_date()) . '</td>';
+                        echo '<td class="lmb-actions-cell no-hover"><button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-submit-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-paper-plane"></i> Submit</button><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-trash"></i> Delete</button></td>';
+                        break;
+                    case 'denied':
+                        echo '<td>' . $post_id . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
+                        echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
+                        echo '<td>' . esc_html(get_the_modified_date()) . '</td>';
+                        echo '<td class="denial-reason">' . esc_html(get_post_meta($post_id, 'denial_reason', true)) . '</td>';
+                        echo '<td class="lmb-actions-cell no-hover"><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-trash"></i> Delete</button></td>';
+                        break;
+                }
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="7" style="text-align:center;">No ads found for this status.</td></tr>';
+        }
+        $html = ob_get_clean();
+        
+        $pagination_html = paginate_links([
+            'base' => add_query_arg('paged', '%#%'),
+            'format' => '?paged=%#%',
+            'current' => max(1, $paged),
+            'total' => $query->max_num_pages,
+            'prev_text' => '&laquo;',
+            'next_text' => '&raquo;',
+        ]);
+
+        wp_reset_postdata();
+        wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
+    }
+
     // --- REVISED FUNCTION for Newspaper Directory ---
     private static function lmb_fetch_newspapers_v2() {
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
