@@ -21,17 +21,24 @@ jQuery(document).ready(function($) {
         // Signup Type Toggle
         signupForm.on('click', '.lmb-signup-toggle-btn', function() {
             const btn = $(this);
+            const professionalFields = $('#lmb-signup-professional-fields');
+            const regularFields = $('#lmb-signup-regular-fields');
+            
             signupForm.find('.lmb-signup-toggle-btn.active').removeClass('active');
             btn.addClass('active');
             const type = btn.data('type');
             signupForm.find('input[name="signup_type"]').val(type);
 
             if (type === 'regular') {
-                $('#lmb-signup-regular-fields').show();
-                $('#lmb-signup-professional-fields').hide();
+                regularFields.show();
+                professionalFields.hide();
+                professionalFields.find('input').prop('required', false); // Remove required
+                regularFields.find('input').prop('required', true);   // Add required
             } else {
-                $('#lmb-signup-regular-fields').hide();
-                $('#lmb-signup-professional-fields').show();
+                regularFields.hide();
+                professionalFields.show();
+                professionalFields.find('input').prop('required', true);    // Add required
+                regularFields.find('input').prop('required', false);  // Remove required
             }
         });
         
