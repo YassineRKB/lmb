@@ -1510,6 +1510,17 @@ class LMB_Ajax_Handlers {
                 $newspaper_id = get_post_meta($ad_id, 'lmb_final_journal_id', true); // Use final journal ID
                 $newspaper_title = $newspaper_id ? get_post_meta($newspaper_id, 'journal_no', true) : 'N/A'; // Get Journal No
 
+                $journal_html = esc_html($newspaper_title);
+                if ($newspaper_id) {
+                    $pdf_id = get_post_meta($newspaper_id, 'newspaper_pdf', true);
+                    if ($pdf_id) {
+                        $pdf_url = wp_get_attachment_url($pdf_id);
+                        if ($pdf_url) {
+                            $journal_html = '<a style="text-decoration: underline;" href="' . esc_url($pdf_url) . '" target="_blank">' . esc_html($newspaper_title) . '</a>';
+                        }
+                    }
+                }
+
                 // --- MODIFICATION START ---
                 // Manually construct the URL for the public-facing page
                 $public_announces_url = home_url('/les-annonces/');
@@ -1521,7 +1532,7 @@ class LMB_Ajax_Handlers {
                 $html .= '<td>' . esc_html($company_name) . '</td>';
                 $html .= '<td>' . esc_html($ad_type) . '</td>';
                 $html .= '<td>' . esc_html(date_i18n('d/m/Y', strtotime($approved_date))) . '</td>';
-                $html .= '<td>' . esc_html($newspaper_title) . '</td>';
+                $html .= '<td>' . $journal_html . '</td>';
                 $html .= '</tr>';
             }
         } else {
