@@ -83,7 +83,7 @@ class LMB_Form_Handler {
         }
 
         // --- NEW: Save all form data as a single JSON object ---
-        update_post_meta($post_id, '_lmb_form_data_json', wp_json_encode($form_data));
+        update_post_meta($post_id, '_lmb_form_data_json', wp_json_encode($form_data, JSON_UNESCAPED_UNICODE));
 
         // Also save ad_type separately for easy querying
         if (isset($form_data['ad_type'])) {
