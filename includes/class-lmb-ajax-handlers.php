@@ -719,24 +719,59 @@ class LMB_Ajax_Handlers {
                 $query->the_post();
                 $post_id = get_the_ID();
                 $status = get_post_meta($post_id, 'lmb_status', true) ?: 'draft';
-                $client = get_userdata(get_post_field('post_author', $post_id));
+                
+                // Client Name Logic
+                $client_author_id = get_post_field('post_author', $post_id);
+                $client = get_userdata($client_author_id);
+                $client_name_to_display = 'N/A'; 
+
+                if ($client) {
+                    $client_type = get_user_meta($client_author_id, 'lmb_client_type', true);
+                    $company_name = get_user_meta($client_author_id, 'company_name', true);
+                    if ($client_type === 'professional' && !empty($company_name)) {
+                        $client_name_to_display = $company_name;
+                    } else {
+                        $client_name_to_display = $client->display_name;
+                    }
+                    if (empty(trim($client_name_to_display))) {
+                        $client_name_to_display = $client->user_login;
+                    }
+                }
+                
+                // =========================================================================
+                // START: CORRECTED "APPROVED BY" LOGIC
+                // =========================================================================
                 $approved_by_id = get_post_meta($post_id, 'approved_by', true);
                 $approved_by = $approved_by_id ? get_userdata($approved_by_id) : null;
+
+                // If 'approved_by' meta is not set, check if the ad was published by an admin.
+                if (!$approved_by && $status === 'published') {
+                    $author_data = get_userdata($client_author_id); // We already have the author object in $client
+                    
+                    // Check if the author is an administrator
+                    if ($client && in_array('administrator', (array)$client->roles)) {
+                        // If so, the author is considered the approver.
+                        $approved_by = $client;
+                    }
+                }
+                // =========================================================================
+                // END: CORRECTED "APPROVED BY" LOGIC
+                // =========================================================================
+
                 $accuse_url = get_post_meta($post_id, 'lmb_accuse_pdf_url', true);
-                
                 $journal_display = '<span class="lamv2-cell-placeholder">-</span>';
                 $final_journal_id = get_post_meta($post_id, 'lmb_final_journal_id', true);
                 $temp_journal_id = get_post_meta($post_id, 'lmb_temporary_journal_id', true);
 
                 if ($final_journal_id) {
                     $journal_title = get_the_title($final_journal_id);
-                    $journal_url = wp_get_attachment_url(get_post_meta($final_journal_id, 'newspaper_pdf', true)); // Get PDF url
+                    $journal_url = wp_get_attachment_url(get_post_meta($final_journal_id, 'newspaper_pdf', true));
                     if ($journal_url) {
                        $journal_display = '<a href="' . esc_url($journal_url) . '" target="_blank" class="lamv2-btn lamv2-btn-sm lamv2-btn-text-link">' . esc_html($journal_title) . '</a>';
                     }
                 } elseif ($temp_journal_id) {
                     $journal_title = get_the_title($temp_journal_id);
-                    $journal_url = wp_get_attachment_url($temp_journal_id); // Attachments are posts
+                    $journal_url = wp_get_attachment_url($temp_journal_id);
                      if ($journal_url) {
                         $journal_display = '<a href="' . esc_url($journal_url) . '" target="_blank" class="lamv2-btn lamv2-btn-sm lamv2-btn-text-link">' . esc_html($journal_title) . '</a>';
                     }
@@ -747,8 +782,10 @@ class LMB_Ajax_Handlers {
                 echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
                 echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
                 echo '<td>' . get_the_date('Y-m-d') . '</td>';
-                echo '<td>' . ($client ? esc_html($client->display_name) : 'N/A') . '</td>';
+                echo '<td>' . esc_html($client_name_to_display) . '</td>';
                 echo '<td><span class="lamv2-status-badge lamv2-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td>';
+                
+                // This column is now fixed
                 echo '<td>' . ($approved_by ? esc_html($approved_by->display_name) : '<span class="lamv2-cell-placeholder">N/A</span>') . '</td>';
                 
                 echo '<td>';

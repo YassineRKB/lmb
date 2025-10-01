@@ -243,3 +243,14 @@ function lmb_handle_pdf_preview() {
 add_action('init', 'lmb_handle_pdf_preview');
 // Hide WordPress Admin Bar
 add_filter('show_admin_bar', '__return_false');
+// Shortcode to display current logged-in user's display name
+function lmb_show_current_user_name_shortcode() {
+    if ( is_user_logged_in() ) {
+        $current_user = wp_get_current_user();
+        if ( $current_user->exists() ) {
+            return esc_html( $current_user->display_name );
+        }
+    }
+    return ''; // Return nothing if the user is not logged in.
+}
+add_shortcode('show_username', 'lmb_show_current_user_name_shortcode');
