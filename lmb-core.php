@@ -241,3 +241,5 @@ function lmb_handle_pdf_preview() {
     }
 }
 add_action('init', 'lmb_handle_pdf_preview');
+// Hide WordPress Admin Bar
+add_filter('show_admin_bar', '__return_false');
