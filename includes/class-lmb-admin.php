@@ -23,6 +23,7 @@ class LMB_Admin {
 
         add_action('admin_menu', [__CLASS__, 'add_admin_menu']);
         add_action('admin_init', [__CLASS__, 'register_settings']);
+        add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_scripts']);
     }
 
     public static function add_admin_menu() {
@@ -76,6 +77,25 @@ class LMB_Admin {
         register_setting('lmb_accuse_newspaper_settings', 'lmb_newspaper_template_html');
         register_setting('lmb_notifications_settings', 'lmb_enable_email_notifications');
         register_setting('lmb_security_settings', 'lmb_protected_pages');
+    }
+
+    // Enqueue admin scripts conditionally
+    public static function enqueue_scripts($hook) {
+        // First, check if we are on a post edit screen.
+        if ('post.php' !== $hook && 'post-new.php' !== $hook) {
+            return;
+        }
+
+        // Only load the script if we are editing a 'lmb_legal_ad'.
+        if ('lmb_legal_ad' === get_post_type()) {
+            wp_enqueue_script(
+                'lmb-admin-editor', // A unique name for our script
+                LMB_CORE_URL . 'assets/js/lmb-admin-editor.js', // The path to the file
+                ['jquery'], // It needs jQuery to work
+                '1.0.0',    // Version number
+                true        // Load it in the footer for better performance
+            );
+        }
     }
 
     // REVISED FUNCTION for collecting stats

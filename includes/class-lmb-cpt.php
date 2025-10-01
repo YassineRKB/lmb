@@ -10,6 +10,9 @@ class LMB_CPT {
         add_action('save_post_lmb_package', [__CLASS__, 'save_package_meta']);
         add_action('save_post_lmb_newspaper', [__CLASS__, 'save_newspaper_meta']);
         add_filter('post_type_link', [__CLASS__, 'custom_post_type_link'], 10, 2);
+        add_filter('post_row_actions', [__CLASS__, 'add_regenerate_row_action'], 10, 2);
+        add_action('admin_init', [__CLASS__, 'handle_regenerate_action']);
+        add_action('admin_notices', [__CLASS__, 'show_regenerated_notice']);
     }
 
     public static function register_post_types() {
@@ -173,4 +176,52 @@ class LMB_CPT {
         return $post_link;
     }
     
+    /**
+     * Adds a "Regenerate" link to the quick actions on the Legal Ads list page.
+     */
+    public static function add_regenerate_row_action($actions, $post) {
+        if ($post->post_type === 'lmb_legal_ad') {
+            $nonce = wp_create_nonce('lmb_regenerate_ad_' . $post->ID);
+            $url = admin_url('edit.php?post_type=lmb_legal_ad&lmb_action=regenerate&post_id=' . $post->ID . '&_wpnonce=' . $nonce);
+            $actions['lmb_regenerate'] = '<a href="' . esc_url($url) . '">' . __('Régénérer', 'lmb-core') . '</a>';
+        }
+        return $actions;
+    }
+
+    /**
+     * Handles the regeneration logic when the quick action link is clicked.
+     */
+    public static function handle_regenerate_action() {
+        // Check if our action, post_id, and nonce are set
+        if (
+            isset($_GET['lmb_action']) &&
+            $_GET['lmb_action'] === 'regenerate' &&
+            isset($_GET['post_id']) &&
+            isset($_GET['_wpnonce'])
+        ) {
+            $post_id = intval($_GET['post_id']);
+
+            // Verify the nonce to make sure the request is legitimate
+            if (wp_verify_nonce($_GET['_wpnonce'], 'lmb_regenerate_ad_' . $post_id)) {
+                // Call the existing function to regenerate the ad content
+                LMB_Form_Handler::generate_and_save_formatted_text($post_id);
+
+                // Redirect back to the ads list with a success message
+                wp_redirect(admin_url('edit.php?post_type=lmb_legal_ad&lmb_regenerated=1'));
+                exit;
+            } else {
+                // Nonce is invalid, show an error
+                wp_die(__('Invalid security token.', 'lmb-core'));
+            }
+        }
+    }
+
+    /**
+     * Shows an admin notice when an ad has been successfully regenerated.
+     */
+    public static function show_regenerated_notice() {
+        if (isset($_GET['lmb_regenerated']) && $_GET['lmb_regenerated'] == '1') {
+            echo '<div class="notice notice-success is-dismissible"><p>' . __('Annonce régénérée avec succès.', 'lmb-core') . '</p></div>';
+        }
+    }
 }
