@@ -1596,14 +1596,26 @@ class LMB_Ajax_Handlers {
 
                 switch ($status) {
                     case 'published':
-                        $accuse_id = get_post_meta($post_id, 'lmb_accuse_attachment_id', true);
+                        $approved_by = get_user_by('id', get_post_meta($post_id, 'approved_by', true));
+                        $accuse_url = get_post_meta($post_id, 'lmb_accuse_pdf_url', true);
+                        
+                        $journal_display = '<span class="cell-placeholder">-</span>';
+                        $final_journal_id = get_post_meta($post_id, 'lmb_final_journal_id', true);
+                        $temp_journal_id = get_post_meta($post_id, 'lmb_temporary_journal_id', true);
+
+                        if ($final_journal_id && ($pdf_id = get_post_meta($final_journal_id, 'newspaper_pdf', true)) && ($pdf_url = wp_get_attachment_url($pdf_id))) {
+                            $journal_display = '<a href="' . esc_url($pdf_url) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">' . esc_html(get_post_meta($final_journal_id, 'journal_no', true)) . '</a>';
+                        } elseif ($temp_journal_id && ($pdf_url = wp_get_attachment_url($temp_journal_id))) {
+                            $journal_display = '<a href="' . esc_url($pdf_url) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">' . esc_html(get_post_meta($temp_journal_id, 'journal_no', true)) . '</a>';
+                        }
+                        
                         echo '<td>' . $post_id . '</td>';
                         echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
                         echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
                         echo '<td>' . esc_html(get_the_date()) . '</td>';
-                        echo '<td>' . (get_post_meta($post_id, 'approved_by', true) ? get_the_author_meta('display_name', get_post_meta($post_id, 'approved_by', true)) : 'N/A') . '</td>';
-                        echo '<td>' . ($accuse_id ? '<a href="'.wp_get_attachment_url($accuse_id).'" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Accuse</a>' : '<span class="cell-placeholder">-</span>') . '</td>';
-                        echo '<td><span class="cell-placeholder">-</span></td>'; // Journal column placeholder
+                        echo '<td>' . ($approved_by ? esc_html($approved_by->display_name) : 'N/A') . '</td>';
+                        echo '<td>' . ($accuse_url ? '<a href="'.esc_url($accuse_url).'" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Accusé</a>' : '<span class="cell-placeholder">-</span>') . '</td>';
+                        echo '<td>' . $journal_display . '</td>';
                         break;
                     case 'pending':
                         echo '<td>' . $post_id . '</td>';
