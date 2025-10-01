@@ -836,18 +836,40 @@ class LMB_Ajax_Handlers {
     
     // --- NEW FUNCTION: v2 submit draft ad for review ---
     private static function lmb_submit_draft_ad_v2() {
-        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
-        $ad = get_post($ad_id);
-
-        if (!$ad || $ad->post_author != get_current_user_id()) {
-            wp_send_json_error(['message' => 'Permission denied.'], 403);
-            return;
+        if (!isset($_POST['ad_id']) || !is_numeric($_POST['ad_id'])) {
+            wp_send_json_error(['message' => 'Invalid Ad ID.'], 400);
         }
 
-        update_post_meta($ad_id, 'lmb_status', 'pending_review');
-        LMB_Notification_Manager::notify_admins_ad_pending($ad_id);
+        $ad_id = intval($_POST['ad_id']);
+        $ad = get_post($ad_id);
 
-        wp_send_json_success(['message' => 'Ad submitted for review.']);
+        if (!$ad || $ad->post_type !== 'lmb_legal_ad') {
+            wp_send_json_error(['message' => 'Ad not found.'], 404);
+        }
+        
+        if ($ad->post_author != get_current_user_id() && !current_user_can('edit_others_posts')) {
+             wp_send_json_error(['message' => 'You do not have permission to edit this ad.'], 403);
+        }
+        
+        // --- NEW BALANCE CHECK ---
+        $user_id = $ad->post_author;
+        $current_balance = (int) LMB_Points::get_balance($user_id);
+        $ad_cost = (int) get_post_meta($ad_id, 'ad_cost', true);
+
+        if ($current_balance < $ad_cost) {
+            // If balance is insufficient, send the custom error message.
+            $error_message = 'Vous n\'avez pas assez de solde, veuillez contacter l\'administrateur pour plus d\'instructions. 0674406197';
+            wp_send_json_error(['message' => $error_message], 402); // 402 Payment Required is a fitting HTTP status
+            return; // Stop execution
+        }
+        
+        // If the balance is sufficient, proceed with submission.
+        update_post_meta($ad_id, 'lmb_status', 'pending_review');
+        
+        $notification_manager = new LMB_Notification_Manager();
+        $notification_manager->add_notification(0, 'ad_submission', $ad_id);
+
+        wp_send_json_success(['message' => 'Annonce soumise pour révision avec succès.']);
     }
     // --- NEW FUNCTION: v2 delete draft ad ---
     private static function lmb_delete_draft_ad_v2() {
