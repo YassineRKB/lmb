@@ -1399,10 +1399,9 @@ class LMB_Ajax_Handlers {
             return;
         }
 
-        parse_str($_POST['form_data'], $form_data);
-
-        $amount = isset($form_data['amount']) ? intval($form_data['amount']) : 0;
-        $reason = isset($form_data['reason']) ? sanitize_textarea_field($form_data['reason']) : '';
+        // MODIFICATION: Data is now sent directly, not in 'form_data'
+        $amount = isset($_POST['amount']) ? floatval($_POST['amount']) : 0;
+        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : '';
 
         if (empty($amount)) {
             wp_send_json_error(['message' => 'Le montant ne peut pas être zéro.'], 400);
@@ -1413,13 +1412,42 @@ class LMB_Ajax_Handlers {
             return;
         }
 
-        $result = LMB_Points::manipulate_balance($user_id, $amount, $reason);
+        // IMPORTANT: Assuming LMB_Points::add_balance exists and handles +/- amounts
+        $new_balance = LMB_Points::add_balance($user_id, $amount, $reason);
 
-        if ($result !== false) {
-             wp_send_json_success(['message' => 'Le solde du client a été mis à jour avec succès.']);
-        } else {
-             wp_send_json_error(['message' => 'Une erreur s\'est produite lors de la mise à jour du solde.'], 500);
+        if (is_wp_error($new_balance)) {
+            wp_send_json_error(['message' => $new_balance->get_error_message()], 500);
+            return;
         }
+        
+        // --- START OF NEW DYNAMIC RESPONSE CODE ---
+        $balance_history = LMB_Points::get_transactions($user_id, 5);
+        ob_start();
+        if (!empty($balance_history)) {
+            foreach ($balance_history as $item) {
+                $is_credit = $item->amount >= 0;
+                ?>
+                <div class="history-item">
+                    <div class="history-icon <?php echo $is_credit ? 'credit' : 'debit'; ?>"><i class="fas <?php echo $is_credit ? 'fa-plus' : 'fa-minus'; ?>"></i></div>
+                    <div class="history-details">
+                        <span class="history-reason"><?php echo esc_html($item->reason); ?></span>
+                        <span class="history-time"><?php echo esc_html(human_time_diff(strtotime($item->created_at))) . ' ago'; ?></span>
+                    </div>
+                    <div class="history-amount <?php echo $is_credit ? 'credit' : 'debit'; ?>"><?php echo ($is_credit ? '+' : '') . esc_html($item->amount); ?></div>
+                </div>
+                <?php
+            }
+        } else {
+            echo '<p class="no-history">Aucune transaction récente.</p>';
+        }
+        $history_html = ob_get_clean();
+        // --- END OF NEW DYNAMIC RESPONSE CODE ---
+
+        wp_send_json_success([
+            'message' => 'Le solde du client a été mis à jour avec succès.',
+            'new_balance' => $new_balance,
+            'history_html' => $history_html
+        ]);
     }
 
     // --- NEW FUNCTION: Generate Accuse on-demand ---
