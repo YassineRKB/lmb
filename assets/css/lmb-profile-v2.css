@@ -205,3 +205,25 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* --- NEW STYLES balance manipulation --- */
+.lmb-bottom-grid {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.lmb-password-box {
+    flex: 0 0 40%;
+}
+
+.lmb-balance-box {
+    flex: 0 0 60%;
+}
+
+/* Responsive adjustment for the new bottom grid */
+@media (max-width: 767px) {
+    .lmb-bottom-grid {
+        flex-direction: column;
+    }
+}

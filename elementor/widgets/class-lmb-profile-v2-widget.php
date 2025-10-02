@@ -26,7 +26,8 @@ if (!class_exists('LMB_Profile_V2_Widget')) {
         }
 
         public function get_script_depends() {
-            return ['lmb-profile-v2'];
+            // We will add a new script handle for the balance manipulation later
+            return ['lmb-profile-v2', 'lmb-balance-manipulation'];
         }
 
         public function get_style_depends() {
@@ -39,10 +40,13 @@ if (!class_exists('LMB_Profile_V2_Widget')) {
                 return;
             }
 
-            // This widget now ONLY shows the currently logged-in user's profile.
-            // Admin editing is handled by the new "User Editor" widget.
-            $current_user_id = get_current_user_id();
-            $user_to_display = get_user_by('ID', $current_user_id);
+            // MODIFICATION: Allow admin to view a specific user's profile via URL parameter
+            $user_id_to_view = get_current_user_id();
+            if (isset($_GET['user_id']) && current_user_can('manage_options')) {
+                $user_id_to_view = intval($_GET['user_id']);
+            }
+
+            $user_to_display = get_user_by('ID', $user_id_to_view);
 
             if (!$user_to_display) {
                 echo '<p>Utilisateur introuvable.</p>';
@@ -141,19 +145,48 @@ if (!class_exists('LMB_Profile_V2_Widget')) {
                 </form>
 
                 <div class="lmb-profile-bottom-row">
-                     <div class="lmb-profile-card">
-                        <form id="lmb-password-change-form">
-                            <div class="lmb-widget-header"><h3><i class="fas fa-key"></i> Changer le Mot de Passe</h3></div>
-                            <div class="lmb-card-content">
-                                <div class="lmb-form-response" id="password-response"></div>
-                                <div class="lmb-form-group"><label for="current-password">Mot de Passe Actuel</label><input type="password" name="current_password" id="current-password" class="lmb-input" required></div>
-                                <div class="lmb-form-grid">
-                                    <div class="lmb-form-group"><label for="new-password">Nouveau Mot de Passe</label><input type="password" name="new_password" id="new-password" class="lmb-input" required></div>
-                                    <div class="lmb-form-group"><label for="confirm-password">Confirmer le Nouveau Mot de Passe</label><input type="password" name="confirm_password" id="confirm-password" class="lmb-input" required></div>
-                                </div>
-                                <button type="submit" class="lmb-btn lmb-btn-secondary">Mettre à Jour le Mot de Passe</button>
+                    <div class="lmb-bottom-grid">
+                        
+                        <div class="lmb-password-box">
+                            <div class="lmb-profile-card">
+                                <form id="lmb-password-change-form">
+                                    <div class="lmb-widget-header"><h3><i class="fas fa-key"></i> Changer le Mot de Passe</h3></div>
+                                    <div class="lmb-card-content">
+                                        <div class="lmb-form-response" id="password-response"></div>
+                                        <div class="lmb-form-group"><label for="current-password">Mot de Passe Actuel</label><input type="password" name="current_password" id="current-password" class="lmb-input" required></div>
+                                        <div class="lmb-form-grid">
+                                            <div class="lmb-form-group"><label for="new-password">Nouveau Mot de Passe</label><input type="password" name="new_password" id="new-password" class="lmb-input" required></div>
+                                            <div class="lmb-form-group"><label for="confirm-password">Confirmer le Nouveau Mot de Passe</label><input type="password" name="confirm_password" id="confirm-password" class="lmb-input" required></div>
+                                        </div>
+                                        <button type="submit" class="lmb-btn lmb-btn-secondary">Mettre à Jour le Mot de Passe</button>
+                                    </div>
+                                </form>
                             </div>
-                        </form>
+                        </div>
+
+                        <?php if (current_user_can('manage_options')) : ?>
+                        <div class="lmb-balance-box">
+                             <div class="lmb-profile-card">
+                                <form id="lmb-balance-manipulation-form">
+                                    <div class="lmb-widget-header"><h3><i class="fas fa-coins"></i> Manipuler le Solde du Client</h3></div>
+                                    <div class="lmb-card-content">
+                                        <div class="lmb-form-response" id="balance-response"></div>
+                                        <div class="lmb-form-group">
+                                            <label for="lmb-balance-amount">Montant (utiliser un - pour débiter)</label>
+                                            <input type="number" name="amount" id="lmb-balance-amount" class="lmb-input" required>
+                                        </div>
+                                        <div class="lmb-form-group">
+                                            <label for="lmb-balance-reason">Raison</label>
+                                            <textarea name="reason" id="lmb-balance-reason" class="lmb-input" rows="3" required></textarea>
+                                        </div>
+                                        <input type="hidden" name="user_id" value="<?php echo esc_attr($user_id); ?>">
+                                        <button type="submit" class="lmb-btn">Appliquer la Modification</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                     </div>
                 </div>
             </div>

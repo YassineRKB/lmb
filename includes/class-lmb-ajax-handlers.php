@@ -33,7 +33,7 @@ class LMB_Ajax_Handlers {
             'lmb_fetch_eligible_ads',
             'lmb_generate_newspaper_preview',
             'lmb_approve_and_publish_newspaper',
-            'lmb_discard_newspaper_draft', // <-- NEW ACTION ADDED
+            'lmb_discard_newspaper_draft', 'lmb_manipulate_balance',
             
         ];
         // --- MODIFICATION: Make auth actions public ---
@@ -854,13 +854,12 @@ class LMB_Ajax_Handlers {
         // --- NEW BALANCE CHECK ---
         $user_id = $ad->post_author;
         $current_balance = (int) LMB_Points::get_balance($user_id);
-        $ad_cost = (int) get_post_meta($ad_id, 'ad_cost', true);
+        $ad_cost = (int) LMB_Points::get_cost_per_ad($user_id); // Correct way to get the cost
 
         if ($current_balance < $ad_cost) {
-            // If balance is insufficient, send the custom error message.
-            $error_message = 'Vous n\'avez pas assez de solde, veuillez contacter l\'administrateur pour plus d\'instructions. 0674406197';
-            wp_send_json_error(['message' => $error_message], 402); // 402 Payment Required is a fitting HTTP status
-            return; // Stop execution
+            $error_message = 'Vous n\'avez pas assez de solde, veuillez contacter l\'administrateur pour plus d\'instructions. ste.lmbgroupe@gmail.com ou 0674406197';
+            wp_send_json_error(['message' => $error_message], 402);
+            return;
         }
         
         // If the balance is sufficient, proceed with submission.
@@ -1385,6 +1384,42 @@ class LMB_Ajax_Handlers {
         wp_set_password($new_pass, $user_id_to_update);
         
         wp_send_json_success();
+    }
+
+    // --- NEW FUNCTION: v2 manipulate client balance with admin-only access and validation ---
+    private static function lmb_manipulate_balance() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Action non autorisée.'], 403);
+            return;
+        }
+
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        if (empty($user_id)) {
+            wp_send_json_error(['message' => 'ID utilisateur cible manquant.'], 400);
+            return;
+        }
+
+        parse_str($_POST['form_data'], $form_data);
+
+        $amount = isset($form_data['amount']) ? intval($form_data['amount']) : 0;
+        $reason = isset($form_data['reason']) ? sanitize_textarea_field($form_data['reason']) : '';
+
+        if (empty($amount)) {
+            wp_send_json_error(['message' => 'Le montant ne peut pas être zéro.'], 400);
+            return;
+        }
+        if (empty($reason)) {
+            wp_send_json_error(['message' => 'La raison est obligatoire.'], 400);
+            return;
+        }
+
+        $result = LMB_Points::manipulate_balance($user_id, $amount, $reason);
+
+        if ($result !== false) {
+             wp_send_json_success(['message' => 'Le solde du client a été mis à jour avec succès.']);
+        } else {
+             wp_send_json_error(['message' => 'Une erreur s\'est produite lors de la mise à jour du solde.'], 500);
+        }
     }
 
     // --- NEW FUNCTION: Generate Accuse on-demand ---
