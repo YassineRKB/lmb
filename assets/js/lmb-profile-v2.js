@@ -7,11 +7,22 @@ jQuery(document).ready(function($) {
         // Form & Response Div Selectors
         const mainForm = widget.find('#lmb-profile-details-form');
         const passwordForm = widget.find('#lmb-password-change-form');
-        const balanceForm = widget.find('#lmb-balance-manipulation-form'); // New form
+        
+        // FIX: Target the balance form globally by its ID to ensure the handler is always attached,
+        // even if the balance widget is placed outside the profile widget.
+        const balanceForm = $('#lmb-balance-manipulation-form'); 
         
         const profileResponse = widget.find('#profile-response');
         const passwordResponse = widget.find('#password-response');
-        const balanceResponse = widget.find('#balance-response'); // New response div
+        const balanceResponse = widget.find('#balance-response'); 
+
+        // --- NEW: Selectors for dynamic update ---
+        const balanceDisplay = widget.find('.lmb-user-stats .stat-item:nth-child(1) .stat-value');
+        const remainingAdsDisplay = widget.find('.lmb-user-stats .stat-item:nth-child(3) .stat-value');
+        // Extract cost per ad number. Assuming 'X PTS' format.
+        const costPerAdText = widget.find('.lmb-user-stats .stat-item:nth-child(2) .stat-value-small').text();
+        const costPerAd = parseFloat(costPerAdText.replace(' PTS', '').trim());
+        const historyContainer = widget.find('.lmb-balance-history');
 
         // --- Handle Client Type Toggle for Admins ---
         mainForm.on('change', 'select[name="lmb_client_type"]', function() {
@@ -95,9 +106,24 @@ jQuery(document).ready(function($) {
                 form_data: $(this).serialize(),
             }).done(function(response) {
                 if (response.success) {
-                    balanceResponse.addClass('success').text(response.data.message || 'Solde mis à jour. Actualisation...').show();
-                    // Refresh after a short delay to see the message and updated stats
-                    setTimeout(() => location.reload(), 1500);
+                    const newBalance = response.data.new_balance;
+                    
+                    // 1. Update Balance Display
+                    balanceDisplay.text(newBalance + ' PTS');
+                    
+                    // 2. Update Remaining Ads Quota (calculate client-side)
+                    const remainingAds = costPerAd > 0 ? Math.floor(newBalance / costPerAd) : '∞';
+                    remainingAdsDisplay.text(remainingAds);
+
+                    // 3. Update History
+                    historyContainer.html(response.data.history_html);
+
+                    // 4. Clear Form
+                    balanceForm[0].reset();
+
+                    // 5. Show Success Message
+                    balanceResponse.addClass('success').text(response.data.message || 'Solde mis à jour avec succès.').show();
+                    
                 } else {
                     balanceResponse.addClass('error').text(response.data.message || 'Une erreur inconnue s\'est produite.').show();
                 }

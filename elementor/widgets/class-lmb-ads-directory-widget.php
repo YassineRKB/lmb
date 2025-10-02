@@ -36,15 +36,19 @@ class LMB_Ads_Directory_Widget extends Widget_Base {
 
     protected function render_single_ad($ad_id) {
         $ad = get_post($ad_id);
+        $current_user_id = get_current_user_id();
 
         // Check if the post exists and is a legal ad
         if ($ad && $ad->post_type == 'lmb_legal_ad') {
             $lmb_status = get_post_meta($ad_id, 'lmb_status', true);
             
-            // A non-logged-in user can only see published ads.
-            // A logged-in user can see any ad they have permission to edit (authors, admins)
-            // or any ad that is published.
-            $can_view = ($lmb_status === 'published') || current_user_can('edit_post', $ad_id);
+            // --- MODIFIED PER USER REQUEST: Allow logged-in client to see their own ads in any status ---
+            $is_ad_author = ($current_user_id > 0 && $ad->post_author == $current_user_id);
+            $is_published = ($lmb_status === 'published');
+            $is_admin = current_user_can('manage_options');
+
+            // The ad can be viewed if it's published OR the user is the author OR the user is an admin.
+            $can_view = $is_published || $is_ad_author || $is_admin;
             
             if ($can_view) {
                 $publication_date = get_post_meta($ad_id, 'approved_date', true);
@@ -62,16 +66,13 @@ class LMB_Ads_Directory_Widget extends Widget_Base {
                             <h1><?php echo esc_html($ad->post_title); ?></h1>
                             <?php if ($lmb_status === 'published'): ?>
                                 <p class="lmb-ad-publication-date">Annonce Publiée le <?php echo esc_html($publication_date); ?></p>
-                            <?php else: ?>
-                                 <p class="lmb-ad-publication-date">Statut: <?php echo esc_html(ucfirst($lmb_status)); ?></p>
+                            <?php else: 
+                                // Show the actual status if not published, which addresses the 'draft' requirement
+                                ?>
+                                 <p class="lmb-ad-publication-date">Statut: <?php echo esc_html(ucfirst(str_replace('_', ' ', $lmb_status))); ?></p>
                             <?php endif; ?>
                         </div>
-                        <!-- <div class="lmb-single-ad-actions">
-                            <a href="<?php echo esc_url(remove_query_arg('legal-ad')); ?>" class="lmb-btn lmb-btn-view">
-                                <i class="fas fa-arrow-left"></i> Retour au Répertoire
-                            </a>
-                        </div> -->
-                    </div>
+                        </div>
                     <div class="lmb-single-ad-content">
                         <?php echo wp_kses_post(get_post_meta($ad_id, 'full_text', true)); ?>
                     </div>
@@ -79,6 +80,7 @@ class LMB_Ads_Directory_Widget extends Widget_Base {
                 <?php
             } else {
                 // User does not have permission and the ad is not published
+                // This message is only shown if the current user is NOT the author and NOT an admin, and the ad is NOT published.
                 echo '<p>' . esc_html__('Annonce légale introuvable ou vous n\'avez pas la permission de la voir.', 'lmb-core') . '</p>';
             }
         } else {

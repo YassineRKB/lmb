@@ -838,6 +838,7 @@ class LMB_Ajax_Handlers {
     private static function lmb_submit_draft_ad_v2() {
         if (!isset($_POST['ad_id']) || !is_numeric($_POST['ad_id'])) {
             wp_send_json_error(['message' => 'Invalid Ad ID.'], 400);
+            return;
         }
 
         $ad_id = intval($_POST['ad_id']);
@@ -845,19 +846,31 @@ class LMB_Ajax_Handlers {
 
         if (!$ad || $ad->post_type !== 'lmb_legal_ad') {
             wp_send_json_error(['message' => 'Ad not found.'], 404);
+            return;
         }
         
         if ($ad->post_author != get_current_user_id() && !current_user_can('edit_others_posts')) {
              wp_send_json_error(['message' => 'You do not have permission to edit this ad.'], 403);
+            return;
         }
         
         // --- NEW BALANCE CHECK ---
         $user_id = $ad->post_author;
         $current_balance = (int) LMB_Points::get_balance($user_id);
-        $ad_cost = (int) LMB_Points::get_cost_per_ad($user_id); // Correct way to get the cost
+        $ad_cost = (int) LMB_Points::get_cost_per_ad($user_id); 
+
+        // CRITICAL CHECK: Ensure cost is greater than zero to prevent 0 < 0 from failing the check
+        if ($ad_cost <= 0) {
+            // This suggests a missing package setting for the user/system. Block until fixed.
+            //$error_message = 'Le coût de l\'annonce n\'est pas défini. Veuillez contacter l\'administrateur pour finaliser la configuration, ste.lmbgroup@gmail.com ou 06.';
+            $error_message = "Vous ne disposez d’aucun point disponible. Merci de recharger votre solde afin de pouvoir publier votre annonce. Contactez-nous pour plus d'informations via email  ste.lmbgroup@gmail.com ou whatsapp 0674406197";
+            wp_send_json_error(['message' => $error_message], 500);
+            return;
+        }
 
         if ($current_balance < $ad_cost) {
             $error_message = 'Vous n\'avez pas assez de solde, veuillez contacter l\'administrateur pour plus d\'instructions. ste.lmbgroupe@gmail.com ou 0674406197';
+            // Correctly block submission and return the error message.
             wp_send_json_error(['message' => $error_message], 402);
             return;
         }
@@ -865,11 +878,14 @@ class LMB_Ajax_Handlers {
         // If the balance is sufficient, proceed with submission.
         update_post_meta($ad_id, 'lmb_status', 'pending_review');
         
-        $notification_manager = new LMB_Notification_Manager();
-        $notification_manager->add_notification(0, 'ad_submission', $ad_id);
+        // FIX: Replaced outdated/incorrect object-oriented call with the established static method
+        if (class_exists('LMB_Notification_Manager')) {
+            LMB_Notification_Manager::notify_admins_ad_pending($ad_id);
+        }
 
         wp_send_json_success(['message' => 'Annonce soumise pour révision avec succès.']);
     }
+
     // --- NEW FUNCTION: v2 delete draft ad ---
     private static function lmb_delete_draft_ad_v2() {
         $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
@@ -1399,9 +1415,10 @@ class LMB_Ajax_Handlers {
             return;
         }
 
-        // MODIFICATION: Data is now sent directly, not in 'form_data'
-        $amount = isset($_POST['amount']) ? floatval($_POST['amount']) : 0;
-        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : '';
+        // --- START CORRECTION: Parse form data and use appropriate LMB_Points function ---
+        parse_str($_POST['form_data'], $data);
+        $amount = isset($data['amount']) ? floatval($data['amount']) : 0;
+        $reason = isset($data['reason']) ? sanitize_textarea_field($data['reason']) : '';
 
         if (empty($amount)) {
             wp_send_json_error(['message' => 'Le montant ne peut pas être zéro.'], 400);
@@ -1412,15 +1429,21 @@ class LMB_Ajax_Handlers {
             return;
         }
 
-        // IMPORTANT: Assuming LMB_Points::add_balance exists and handles +/- amounts
-        $new_balance = LMB_Points::add_balance($user_id, $amount, $reason);
-
-        if (is_wp_error($new_balance)) {
-            wp_send_json_error(['message' => $new_balance->get_error_message()], 500);
-            return;
+        $new_balance = null;
+        if ($amount > 0) {
+            // Credit (Add)
+            $new_balance = LMB_Points::add($user_id, abs($amount), $reason);
+        } elseif ($amount < 0) {
+            // Debit (Deduct)
+            $new_balance = LMB_Points::deduct($user_id, abs($amount), $reason);
+            if ($new_balance === false) {
+                 wp_send_json_error(['message' => 'Solde insuffisant pour débiter ce montant.'], 402);
+                 return;
+            }
         }
-        
-        // --- START OF NEW DYNAMIC RESPONSE CODE ---
+        // --- END CORRECTION ---
+
+        // The remaining part of the original function is kept to generate the necessary HTML response
         $balance_history = LMB_Points::get_transactions($user_id, 5);
         ob_start();
         if (!empty($balance_history)) {
@@ -1441,7 +1464,6 @@ class LMB_Ajax_Handlers {
             echo '<p class="no-history">Aucune transaction récente.</p>';
         }
         $history_html = ob_get_clean();
-        // --- END OF NEW DYNAMIC RESPONSE CODE ---
 
         wp_send_json_success([
             'message' => 'Le solde du client a été mis à jour avec succès.',

@@ -1,3 +1,4 @@
+// FILE: assets/js/lmb-my-legal-ads-v2.js
 jQuery(document).ready(function($) {
     
     // Find each instance of the V2 user widget on the page
@@ -86,7 +87,8 @@ jQuery(document).ready(function($) {
             e.preventDefault();
             const button = $(this);
             const adId = button.data('ad-id');
-            const actionType = button.hasClass('lmb-submit-ad-btn') ? 'lmb_submit_draft_ad_v2' : 'lmb_delete_draft_ad_v2';
+            const isSubmit = button.hasClass('lmb-submit-ad-btn');
+            const actionType = isSubmit ? 'lmb_submit_draft_ad_v2' : 'lmb_delete_draft_ad_v2';
             
             if (actionType === 'lmb_delete_draft_ad_v2' && !confirm('Êtes-vous sûr de vouloir supprimer ce brouillon ? Cela ne peut pas être annulé.')) {
                 return;
@@ -99,14 +101,45 @@ jQuery(document).ready(function($) {
                 nonce: lmb_ajax_params.nonce,
                 ad_id: adId
             }).done(function(response) {
+                // This handles successful submissions (HTTP 200)
                 if(response.success) {
+                    if (typeof showLMBModal === 'function') {
+                        showLMBModal('success', response.data.message || 'Opération réussie.');
+                    } else {
+                        alert(response.data.message || 'Opération réussie.');
+                    }
                     // Refresh the entire page to update all widget instances.
-                    location.reload();
+                    setTimeout(() => location.reload(), 500);
                 } else {
-                    alert(response.data.message || 'Une erreur s\'est produite.');
-                    // Restore button on failure
-                    button.html(button.hasClass('lmb-submit-ad-btn') ? '<i class="fas fa-paper-plane"></i> Soumettre' : '<i class="fas fa-trash"></i> Supprimer').prop('disabled', false);
+                    // This handles PHP errors returning a 200 status but success=false
+                    const errorMessage = response.data.message || 'Une erreur s\'est produite.';
+                    if (typeof showLMBModal === 'function') {
+                        showLMBModal('error', errorMessage);
+                    } else {
+                        alert(errorMessage);
+                    }
                 }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                 // CRITICAL FIX: This correctly captures the error from the PHP non-200 response (402 or 500)
+                 let errorMessage = 'Une erreur de communication serveur s\'est produite.';
+                 
+                 if (jqXHR.responseJSON && jqXHR.responseJSON.data && jqXHR.responseJSON.data.message) {
+                     // Extract the custom error message from the PHP JSON response
+                     errorMessage = jqXHR.responseJSON.data.message;
+                 } else if (textStatus === 'error' && errorThrown) {
+                     errorMessage = 'Erreur: ' + errorThrown;
+                 }
+                 
+                 // Display the message using the preferred method (Modal or Alert)
+                 if (typeof showLMBModal === 'function') {
+                    showLMBModal('error', errorMessage);
+                 } else {
+                    alert(errorMessage);
+                 }
+            }).always(function() {
+                // Restore button state (using the ternary operator to check if it's the submit button)
+                const originalHtml = isSubmit ? '<i class="fas fa-paper-plane"></i> Submit' : '<i class="fas fa-trash"></i> Delete';
+                button.html(originalHtml).prop('disabled', false);
             });
         });
 
