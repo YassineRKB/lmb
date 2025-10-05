@@ -39,7 +39,16 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
                 'tab' => Controls_Manager::TAB_CONTENT,
             ]
         );
-
+        $this->add_control(
+            'custom_title',
+            [
+                'label' => __('Titre du Widget (Personnalisé)', 'lmb-core'),
+                'type' => Controls_Manager::TEXT,
+                'default' => __('Mes Annonces Légales', 'lmb-core'),
+                'placeholder' => __('Entrez votre titre personnalisé', 'lmb-core'),
+                'title' => __('Ce titre sera affiché avant le statut d\'annonce.', 'lmb-core'),
+            ]
+        );
         $this->add_control(
             'default_status',
             [
@@ -89,6 +98,7 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
         $settings = $this->get_settings_for_display();
         $status_to_display = $settings['default_status'];
         $view_more_url = $settings['view_more_link']['url'];
+        $custom_title = !empty($settings['custom_title']) ? $settings['custom_title'] : __('Mes Annonces Légales', 'lmb-core');
 
         // Pass settings to JavaScript via data attributes
         $this->add_render_attribute('wrapper', [
@@ -99,7 +109,7 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
         ?>
         <div <?php echo $this->get_render_attribute_string('wrapper'); ?>>
             <div class="lmb-widget-header">
-                <h3><i class="fas fa-list-alt"></i> Mes Annonces Légales: <?php echo esc_html(ucfirst($status_to_display)); ?></h3>
+                <h3><i class="fas fa-list-alt"></i> <?php echo esc_html($custom_title); ?></h3>
             </div>
             <div class="lmb-widget-content">
                 
@@ -123,7 +133,7 @@ class LMB_My_Legal_Ads_V2_Widget extends Widget_Base {
                                 // Render table headers based on the selected status
                                 switch ($status_to_display) {
                                     case 'published':
-                                        echo '<th>ID (Réf)</th><th>Société</th><th>Type</th><th>Date</th><th>Approuvé Par</th><th>Accusé</th><th>Journal</th>';
+                                        echo '<th>ID (Réf)</th><th>Société</th><th>Type</th><th>Date</th><th>Accusé</th><th>Journal</th>';
                                         break;
                                     case 'pending':
                                         echo '<th>ID (Réf)</th><th>Société</th><th>Type</th><th>Date de Soumission</th>';

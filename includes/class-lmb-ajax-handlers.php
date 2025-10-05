@@ -54,7 +54,7 @@ class LMB_Ajax_Handlers {
         $action = isset($_POST['action']) ? sanitize_key($_POST['action']) : '';
 
         if (!in_array($action, $public_actions) && !is_user_logged_in()) {
-            wp_send_json_error(['message' => 'You must be logged in.'], 403);
+            wp_send_json_error(['message' => 'Vous devez être connecté.'], 403);
             return;
         }
 
@@ -65,14 +65,14 @@ class LMB_Ajax_Handlers {
             'lmb_fetch_active_clients_v2', 'lmb_lock_active_client_v2'
         ];
         if (in_array($action, $admin_only_actions) && !current_user_can('manage_options')) {
-             wp_send_json_error(['message' => 'You do not have permission to perform this action.'], 403);
+             wp_send_json_error(['message' => 'Vous n\'avez pas la permission d\'effectuer cette action.'], 403);
             return;
         }
 
         if (method_exists(__CLASS__, $action)) {
             self::$action();
         } else {
-            wp_send_json_error(['message' => 'Invalid AJAX Action specified.'], 400);
+            wp_send_json_error(['message' => 'Action AJAX non valide spécifiée.'], 400);
         }
     }
 
@@ -116,30 +116,30 @@ class LMB_Ajax_Handlers {
 
     private static function lmb_upload_accuse() {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Permission denied.']);
+            wp_send_json_error(['message' => 'Permission refusée.']);
         }
         if (empty($_POST['legal_ad_id']) || empty($_FILES['accuse_file'])) {
-            wp_send_json_error(['message' => 'Missing required fields: Ad ID and file are required.']);
+            wp_send_json_error(['message' => 'Champs requis manquants : L\'ID de l\'annonce et le fichier sont obligatoires.']);
         }
 
         $ad_id = intval($_POST['legal_ad_id']);
         $ad = get_post($ad_id);
 
         if (!$ad || $ad->post_type !== 'lmb_legal_ad') {
-            wp_send_json_error(['message' => 'Invalid Ad ID. No legal ad found with this ID.']);
+            wp_send_json_error(['message' => 'ID d\'annonce non valide. Aucune annonce légale trouvée avec cet ID.']);
         }
         if (get_post_meta($ad_id, 'lmb_status', true) !== 'published') {
-            wp_send_json_error(['message' => 'This ad is not published. You can only upload an accuse for published ads.']);
+            wp_send_json_error(['message' => 'Cette annonce n\'est pas publiée. Vous ne pouvez télécharger un accusé que pour les annonces publiées.']);
         }
         if (get_post_meta($ad_id, 'lmb_accuse_attachment_id', true)) {
-            wp_send_json_error(['message' => 'An accuse document has already been uploaded for this ad.']);
+            wp_send_json_error(['message' => 'Un accusé a déjà été téléchargé pour cette annonce.']);
         }
 
         require_once(ABSPATH . 'wp-admin/includes/file.php');
         $attachment_id = media_handle_upload('accuse_file', 0);
 
         if (is_wp_error($attachment_id)) {
-            wp_send_json_error(['message' => $attachment_id->get_error_message()]);
+            wp_send_json_error(['message' => 'Erreur de téléchargement du fichier : ' . $attachment_id->get_error_message()]);
         }
 
         update_post_meta($attachment_id, 'lmb_accuse_for_ad', $ad_id);
@@ -152,12 +152,12 @@ class LMB_Ajax_Handlers {
             LMB_Notification_Manager::add($client_id, 'receipt_ready', $title, $msg, ['ad_id' => $ad_id]);
         }
         
-        wp_send_json_success(['message' => 'Accuse uploaded and attached successfully. The client has been notified.']);
+        wp_send_json_success(['message' => 'Accusé téléchargé et joint avec succès. Le client a été notifié.']);
     }
 
     private static function lmb_fetch_ads() {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Access Denied.']);
+            wp_send_json_error(['message' => 'Accès refusé.']);
         }
 
         $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
@@ -200,7 +200,7 @@ class LMB_Ajax_Handlers {
                 $client = get_userdata(get_post_field('post_author', $post_id));
                 echo '<tr><td>' . esc_html($post_id) . '</td><td><a href="' . get_edit_post_link($post_id) . '" target="_blank">' . get_the_title() . '</a></td><td>' . ($client ? esc_html($client->display_name) : 'N/A') . '</td><td><span class="lmb-status-badge lmb-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td><td>' . get_the_date() . '</td><td class="lmb-actions-cell">';
                 if ($status === 'pending_review') {
-                    echo '<button class="lmb-btn lmb-btn-sm lmb-ad-action" data-action="approve" data-id="'.$post_id.'">Approve</button><button class="lmb-btn lmb-btn-sm lmb-ad-action" data-action="deny" data-id="'.$post_id.'">Deny</button>';
+                    echo '<button class="lmb-btn lmb-btn-sm lmb-ad-action" data-action="approve" data-id="'.$post_id.'">Approuver</button><button class="lmb-btn lmb-btn-sm lmb-ad-action" data-action="deny" data-id="'.$post_id.'">Refuser</button>';
                 } else { echo '—'; }
                 echo '</td></tr>';
             }
@@ -210,7 +210,7 @@ class LMB_Ajax_Handlers {
                 echo '<div class="lmb-pagination">' . paginate_links(['total' => $query->max_num_pages, 'current' => $paged, 'format' => '?paged=%#%', 'base' => '#%#%']) . '</div>';
             }
         } else {
-            echo '<div class="lmb-no-results">No ads found matching your criteria.</div>';
+            echo '<div class="lmb-no-results">Aucune annonce trouvée correspondant à vos critères.</div>';
         }
         $html = ob_get_clean();
         
@@ -234,13 +234,13 @@ class LMB_Ajax_Handlers {
         
         ob_start();
         if (!empty($user_query->get_results())) {
-            echo '<table class="lmb-users-table"><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Balance</th><th>Actions</th></tr></thead><tbody>';
+            echo '<table class="lmb-users-table"><thead><tr><th>ID</th><th>Nom</th><th>Email</th><th>Solde</th><th>Actions</th></tr></thead><tbody>';
             foreach ($user_query->get_results() as $user) {
-                echo '<tr><td>' . esc_html($user->ID) . '</td><td>' . esc_html($user->display_name) . '</td><td>' . esc_html($user->user_email) . '</td><td>' . LMB_Points::get_balance($user->ID) . '</td><td><a href="' . get_edit_user_link($user->ID) . '" target="_blank" class="lmb-btn lmb-btn-sm">Edit</a></td></tr>';
+                echo '<tr><td>' . esc_html($user->ID) . '</td><td>' . esc_html($user->display_name) . '</td><td>' . esc_html($user->user_email) . '</td><td>' . LMB_Points::get_balance($user->ID) . '</td><td><a href="' . get_edit_user_link($user->ID) . '" target="_blank" class="lmb-btn lmb-btn-sm">Modifier</a></td></tr>';
             }
             echo '</tbody></table>';
         } else {
-            echo '<div class="lmb-no-results">No users found.</div>';
+            echo '<div class="lmb-no-results">Aucun utilisateur trouvé.</div>';
         }
         $html = ob_get_clean();
 
@@ -249,7 +249,7 @@ class LMB_Ajax_Handlers {
 
     private static function lmb_upload_bank_proof() {
         if (empty($_POST['payment_id']) || empty($_FILES['proof_file'])) {
-            wp_send_json_error(['message' => 'Missing required fields. Please select an invoice and a proof file.']);
+            wp_send_json_error(['message' => 'Champs requis manquants. Veuillez sélectionner une facture et un justificatif de paiement.']);
         }
         
         $user_id = get_current_user_id();
@@ -257,7 +257,7 @@ class LMB_Ajax_Handlers {
         $payment_post = get_post($payment_id);
 
         if (!$payment_post || $payment_post->post_author != $user_id) {
-            wp_send_json_error(['message' => 'Invalid invoice selected.']);
+            wp_send_json_error(['message' => 'Facture sélectionnée non valide.']);
         }
 
         require_once(ABSPATH . 'wp-admin/includes/file.php');
@@ -266,17 +266,17 @@ class LMB_Ajax_Handlers {
         
         $attachment_id = media_handle_upload('proof_file', $payment_id);
         if (is_wp_error($attachment_id)) {
-            wp_send_json_error(['message' => 'File Upload Error: ' . $attachment_id->get_error_message()]);
+            wp_send_json_error(['message' => 'Erreur de téléchargement du fichier : ' . $attachment_id->get_error_message()]);
         }
 
         update_post_meta($payment_id, 'proof_attachment_id', $attachment_id);
-        LMB_Ad_Manager::log_activity(sprintf('Payment proof for invoice #%d submitted.', $payment_id));
+        LMB_Ad_Manager::log_activity(sprintf('Justificatif de paiement pour la facture #%d soumis.', $payment_id));
         
         if(class_exists('LMB_Notification_Manager')) {
             $user = wp_get_current_user();
             $package_id = get_post_meta($payment_id, 'package_id', true);
-            $title = 'New Payment Proof Submitted';
-            $msg = sprintf('User %s has submitted proof for invoice #%s ("%s").', $user->display_name, get_post_meta($payment_id, 'payment_reference', true), get_the_title($package_id));
+            $title = 'Nouveau justificatif de paiement soumis';
+            $msg = sprintf('L\'utilisateur %s a soumis un justificatif pour la facture #%s ("%s").', $user->display_name, get_post_meta($payment_id, 'payment_reference', true), get_the_title($package_id));
             
             $admin_ids = get_users(['role' => 'administrator', 'fields' => 'ID']);
             foreach ($admin_ids as $admin_id) {
@@ -284,11 +284,11 @@ class LMB_Ajax_Handlers {
             }
         }
 
-        wp_send_json_success(['message' => 'Your proof has been submitted for review. You will be notified once it is approved.']);
+        wp_send_json_success(['message' => 'Votre justificatif a été soumis pour examen. Vous serez averti dès son approbation.']);
     }
 
     private static function lmb_save_package() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied']);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé']);
         
         $package_id = isset($_POST['package_id']) && !empty($_POST['package_id']) ? intval($_POST['package_id']) : 0;
         $name = sanitize_text_field($_POST['name']);
@@ -298,7 +298,7 @@ class LMB_Ajax_Handlers {
         $desc = wp_kses_post($_POST['description']);
 
         if (!$name || !$price || !$points || !$cost) {
-            wp_send_json_error(['message' => 'All fields except description are required.']);
+            wp_send_json_error(['message' => 'Tous les champs sauf la description sont obligatoires.']);
         }
 
         $post_data = ['post_title' => $name, 'post_content' => $desc, 'post_type' => 'lmb_package', 'post_status' => 'publish'];
@@ -314,16 +314,16 @@ class LMB_Ajax_Handlers {
         update_post_meta($new_pkg_id, 'points', $points);
         update_post_meta($new_pkg_id, 'cost_per_ad', $cost);
         
-        LMB_Ad_Manager::log_activity(sprintf('Package "%s" %s', $name, $package_id ? 'updated' : 'created'));
+        LMB_Ad_Manager::log_activity(sprintf('Forfait "%s" %s', $name, $package_id ? 'mis à jour' : 'créé'));
         
         wp_send_json_success([
-            'message' => 'Package saved successfully.',
+            'message' => 'Forfait enregistré avec succès.',
             'package' => ['id' => $new_pkg_id, 'name' => $name, 'price' => $price, 'points' => $points, 'cost_per_ad' => $cost, 'description' => $desc, 'trimmed_description' => wp_trim_words($desc, 20)]
         ]);
     }
     
     private static function lmb_load_admin_tab() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé'], 403);
         
         $tab = isset($_POST['tab']) ? sanitize_key($_POST['tab']) : 'feed';
         $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
@@ -410,9 +410,9 @@ class LMB_Ajax_Handlers {
                     <div class="lmb-feed-meta"><i class="fas fa-user"></i> <?php echo esc_html($user ? $user->display_name : 'Unknown'); ?></div>
                 </div>
                 <div class="lmb-feed-actions">
-                    <?php if ($proof_url): ?><a href="<?php echo esc_url($proof_url); ?>" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-paperclip"></i> Show Proof</a><?php endif; ?>
-                    <button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-payment-action" data-action="approve" data-id="<?php echo $payment->ID; ?>"><i class="fas fa-check"></i> Approve</button>
-                    <button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-payment-action" data-action="reject" data-id="<?php echo $payment->ID; ?>"><i class="fas fa-times"></i> Reject</button>
+                    <?php if ($proof_url): ?><a href="<?php echo esc_url($proof_url); ?>" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-paperclip"></i> Voir Justificatif</a><?php endif; ?>
+                    <button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-payment-action" data-action="approve" data-id="<?php echo $payment->ID; ?>"><i class="fas fa-check"></i> Approuver</button>
+                    <button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-payment-action" data-action="reject" data-id="<?php echo $payment->ID; ?>"><i class="fas fa-times"></i> Rejeter</button>
                 </div>
             </div>
             <?php
@@ -422,52 +422,52 @@ class LMB_Ajax_Handlers {
 
 
     private static function lmb_search_user() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé'], 403);
         
         $term = isset($_POST['search_term']) ? sanitize_text_field($_POST['search_term']) : '';
-        if (empty($term)) wp_send_json_error(['message' => 'Search term is empty.'], 400);
+        if (empty($term)) wp_send_json_error(['message' => 'Le terme de recherche est vide.'], 400);
 
         $user_query = new WP_User_Query(['search' => '*' . esc_attr($term) . '*', 'search_columns' => ['ID', 'user_login', 'user_email', 'display_name'], 'number' => 10, 'fields' => ['ID', 'display_name', 'user_email']]);
         
         if (!empty($user_query->get_results())) {
             wp_send_json_success(['users' => $user_query->get_results()]);
         } else {
-            wp_send_json_error(['message' => 'No users found.'], 404);
+            wp_send_json_error(['message' => 'Aucun utilisateur trouvé.'], 404);
         }
     }
 
     private static function lmb_update_balance() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé'], 403);
         
         $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
         $amount  = isset($_POST['amount']) ? absint($_POST['amount']) : 0;
-        $reason  = !empty($_POST['reason']) ? sanitize_text_field($_POST['reason']) : 'Manual balance adjustment';
+        $reason  = !empty($_POST['reason']) ? sanitize_text_field($_POST['reason']) : 'Ajustement manuel du solde';
         $action  = isset($_POST['balance_action']) ? sanitize_key($_POST['balance_action']) : '';
 
-        if (!$user_id || !$action) wp_send_json_error(['message' => 'Missing user ID or action.'], 400);
+        if (!$user_id || !$action) wp_send_json_error(['message' => 'ID utilisateur ou action manquant.'], 400);
         
         switch ($action) {
             case 'add': $new_balance = LMB_Points::add($user_id, $amount, $reason); break;
             case 'subtract': $new_balance = LMB_Points::deduct($user_id, $amount, $reason); break;
             case 'set': $new_balance = LMB_Points::set_balance($user_id, $amount, $reason); break;
-            default: wp_send_json_error(['message' => 'Invalid action.'], 400);
+            default: wp_send_json_error(['message' => 'Action non valide.'], 400);
         }
         
         if ($new_balance === false) {
-            wp_send_json_error(['message' => 'Insufficient balance for this operation.'], 400);
+            wp_send_json_error(['message' => 'Solde insuffisant pour cette opération.'], 400);
         }
-        wp_send_json_success(['message' => 'Balance updated successfully!', 'new_balance' => $new_balance]);
+        wp_send_json_success(['message' => 'Solde mis à jour avec succès!', 'new_balance' => $new_balance]);
     }
 
     private static function lmb_generate_package_invoice() {
-        if (!is_user_logged_in() || !isset($_POST['pkg_id'])) wp_send_json_error(['message' => 'Invalid request.'], 403);
+        if (!is_user_logged_in() || !isset($_POST['pkg_id'])) wp_send_json_error(['message' => 'Requête invalide.'], 403);
 
         $pdf_url = LMB_Invoice_Handler::create_invoice_for_package(get_current_user_id(), intval($_POST['pkg_id']));
         
         if ($pdf_url) {
             wp_send_json_success(['pdf_url' => $pdf_url]);
         } else {
-            wp_send_json_error(['message' => 'Could not generate invoice. Please try again.']);
+            wp_send_json_error(['message' => 'Impossible de générer la facture. Veuillez réessayer.']);
         }
     }
 
@@ -486,28 +486,28 @@ class LMB_Ajax_Handlers {
     }
 
     private static function lmb_delete_package() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied']);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé']);
         
         $pkg_id = isset($_POST['package_id']) ? intval($_POST['package_id']) : 0;
-        if (!$pkg_id) wp_send_json_error(['message' => 'Invalid package ID']);
+        if (!$pkg_id) wp_send_json_error(['message' => 'ID de forfait non valide']);
         
         $package = get_post($pkg_id);
-        if (!$package || $package->post_type !== 'lmb_package') wp_send_json_error(['message' => 'Package not found']);
+        if (!$package || $package->post_type !== 'lmb_package') wp_send_json_error(['message' => 'Forfait non trouvé']);
         
-        if (!wp_delete_post($pkg_id, true)) wp_send_json_error(['message' => 'Failed to delete package']);
+        if (!wp_delete_post($pkg_id, true)) wp_send_json_error(['message' => 'Échec de la suppression du forfait']);
         
-        LMB_Ad_Manager::log_activity(sprintf('Package "%s" deleted', $package->post_title));
-        wp_send_json_success(['message' => 'Package deleted.']);
+        LMB_Ad_Manager::log_activity(sprintf('Forfait "%s" supprimé', $package->post_title));
+        wp_send_json_success(['message' => 'Forfait supprimé avec succès.']);
     }
 
     private static function lmb_ad_status_change() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission refusée.']);
         
         $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
         $ad_action = isset($_POST['ad_action']) ? sanitize_key($_POST['ad_action']) : '';
         $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : '';
         
-        if (!$ad_id || !$ad_action) wp_send_json_error(['message' => 'Missing parameters.'], 400);
+        if (!$ad_id || !$ad_action) wp_send_json_error(['message' => 'Paramètres manquants.'], 400);
 
         if ($ad_action === 'approve') {
             $result = LMB_Ad_Manager::approve_ad($ad_id);
@@ -515,7 +515,7 @@ class LMB_Ajax_Handlers {
             else wp_send_json_error(['message' => $result['message']]);
         } elseif ($ad_action === 'deny') {
             LMB_Ad_Manager::deny_ad($ad_id, $reason);
-            wp_send_json_success(['message' => 'Ad has been denied.']);
+            wp_send_json_success(['message' => 'L\'annonce a été refusée.']);
         }
     }
     
@@ -524,29 +524,29 @@ class LMB_Ajax_Handlers {
         $ad = get_post($ad_id);
         
         if (!$ad || $ad->post_type !== 'lmb_legal_ad' || $ad->post_author != get_current_user_id()) {
-            wp_send_json_error(['message' => 'Permission denied.']);
+            wp_send_json_error(['message' => 'Permission refusée.']);
         }
 
         update_post_meta($ad_id, 'lmb_status', 'pending_review');
-        LMB_Ad_Manager::log_activity(sprintf('Ad #%d ("%s") submitted for review.', $ad_id, $ad->post_title));
+        LMB_Ad_Manager::log_activity(sprintf('Ad #%d ("%s") soumis pour examen.', $ad_id, $ad->post_title));
         LMB_Notification_Manager::notify_admins_ad_pending($ad_id);
-        wp_send_json_success(['message' => 'Ad submitted for review.']);
+        wp_send_json_success(['message' => 'Annonce soumise pour examen.']);
     }
 
     private static function lmb_payment_action() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission refusée.']);
         
         $payment_id = isset($_POST['payment_id']) ? intval($_POST['payment_id']) : 0;
         $action = isset($_POST['payment_action']) ? sanitize_key($_POST['payment_action']) : '';
-        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : 'No reason provided.';
+        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : 'Aucune raison fournie.';
         LMB_Payment_Verifier::handle_payment_action($payment_id, $action, $reason);
     }
     
     private static function lmb_get_balance_history() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access denied'], 403);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé'], 403);
         
         $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
-        if (!$user_id) wp_send_json_error(['message' => 'Invalid user ID'], 400);
+        if (!$user_id) wp_send_json_error(['message' => 'ID utilisateur non valide'], 400);
         
         wp_send_json_success([
             'current_balance' => LMB_Points::get_balance($user_id),
@@ -555,7 +555,7 @@ class LMB_Ajax_Handlers {
     }
 
     private static function lmb_get_pending_accuse_ads() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access Denied.']);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé.']);
         
         $paged = isset($_POST['page']) ? intval($_POST['page']) : 1;
         $query = new WP_Query(['post_type' => 'lmb_legal_ad', 'posts_per_page' => 5, 'paged' => $paged, 'meta_query' => ['relation' => 'AND', ['key' => 'lmb_status', 'value' => 'published'], ['key' => 'lmb_accuse_attachment_id', 'compare' => 'NOT EXISTS']], 'orderby' => 'date', 'order' => 'DESC']);
@@ -567,27 +567,27 @@ class LMB_Ajax_Handlers {
                 $query->the_post();
                 $ad_id = get_the_ID();
                 $client = get_userdata(get_post_field('post_author', $ad_id));
-                echo '<form class="lmb-accuse-item lmb-accuse-upload-form" enctype="multipart/form-data"><div class="lmb-accuse-info"><strong>' . get_the_title() . '</strong> (ID: ' . $ad_id . ')<br><small>Client: ' . ($client ? esc_html($client->display_name) : 'N/A') . ' | Published: ' . get_the_date() . '</small></div><div class="lmb-accuse-actions"><input type="file" name="accuse_file" class="lmb-file-input-accuse" required accept=".pdf,.jpg,.jpeg,.png"><input type="hidden" name="legal_ad_id" value="' . $ad_id . '"><button type="submit" class="lmb-btn lmb-btn-sm lmb-btn-primary"><i class="fas fa-upload"></i> Upload</button></div></form>';
+                echo '<form class="lmb-accuse-item lmb-accuse-upload-form" enctype="multipart/form-data"><div class="lmb-accuse-info"><strong>' . get_the_title() . '</strong> (ID: ' . $ad_id . ')<br><small>Client: ' . ($client ? esc_html($client->display_name) : 'N/A') . ' | Publiée: ' . get_the_date() . '</small></div><div class="lmb-accuse-actions"><input type="file" name="accuse_file" class="lmb-file-input-accuse" required accept=".pdf,.jpg,.jpeg,.png"><input type="hidden" name="legal_ad_id" value="' . $ad_id . '"><button type="submit" class="lmb-btn lmb-btn-sm lmb-btn-primary"><i class="fas fa-upload"></i> Télécharger</button></div></form>';
             }
             echo '</div>';
             if ($query->max_num_pages > 1) {
                 echo '<div class="lmb-pagination">' . paginate_links(['total' => $query->max_num_pages, 'current' => $paged, 'format' => '?paged=%#%', 'base' => '#%#%']) . '</div>';
             }
         } else {
-            echo '<div class="lmb-empty-state"><i class="fas fa-check-circle fa-3x"></i><h4>All Caught Up!</h4><p>No published ads are waiting for an accuse document.</p></div>';
+            echo '<div class="lmb-empty-state"><i class="fas fa-check-circle fa-3x"></i><h4>Tout est à jour !</h4><p>Aucune annonce publiée n\'attend de document d\'accusé.</p></div>';
         }
         wp_reset_postdata();
         wp_send_json_success(['html' => ob_get_clean()]);
     }
 
     private static function lmb_attach_accuse_to_ad() {
-        if (!current_user_can('manage_options') || !isset($_POST['ad_id'], $_POST['attachment_id'])) wp_send_json_error(['message' => 'Permission denied or missing data.']);
+        if (!current_user_can('manage_options') || !isset($_POST['ad_id'], $_POST['attachment_id'])) wp_send_json_error(['message' => 'Permission refusée ou données manquantes.']);
 
         $ad_id = intval($_POST['ad_id']);
         $attachment_id = intval($_POST['attachment_id']);
         $ad = get_post($ad_id);
 
-        if (!$ad || $ad->post_type !== 'lmb_legal_ad') wp_send_json_error(['message' => 'Invalid Ad ID.']);
+        if (!$ad || $ad->post_type !== 'lmb_legal_ad') wp_send_json_error(['message' => 'ID d\'annonce non valide.']);
         
         update_post_meta($attachment_id, 'lmb_accuse_for_ad', $ad_id);
         update_post_meta($ad_id, 'lmb_accuse_attachment_id', $attachment_id);
@@ -599,7 +599,7 @@ class LMB_Ajax_Handlers {
             LMB_Notification_Manager::add($client_id, 'receipt_ready', $title, $msg, ['ad_id' => $ad_id]);
         }
         
-        wp_send_json_success(['message' => 'Accuse attached successfully! The client has been notified.']);
+        wp_send_json_success(['message' => 'Accusé joint avec succès ! Le client a été notifié.']);
     }
 
     private static function lmb_get_pending_invoices_form() {
@@ -625,7 +625,7 @@ class LMB_Ajax_Handlers {
         $payment_post = get_post($payment_id);
 
         if (!$payment_post || $payment_post->post_author != get_current_user_id()) {
-            wp_send_json_error(['message' => 'Permission denied.'], 403);
+            wp_send_json_error(['message' => 'Permission refusée.'], 403);
         }
 
         $pdf_url = LMB_Invoice_Handler::generate_invoice_pdf($payment_id);
@@ -633,12 +633,12 @@ class LMB_Ajax_Handlers {
         if ($pdf_url) {
             wp_send_json_success(['pdf_url' => $pdf_url]);
         } else {
-            wp_send_json_error(['message' => 'Could not generate PDF invoice.']);
+            wp_send_json_error(['message' => 'Impossible de générer la facture PDF.']);
         }
     }
 
     private static function lmb_regenerate_ad_text() {
-        if (!current_user_can('edit_posts')) wp_send_json_error(['message' => 'Permission Denied.']);
+        if (!current_user_can('edit_posts')) wp_send_json_error(['message' => 'Permission refusée.']);
         
         $post_id = intval($_POST['post_id']);
         LMB_Form_Handler::generate_and_save_formatted_text($post_id);
@@ -647,23 +647,23 @@ class LMB_Ajax_Handlers {
     }
 
     private static function lmb_admin_generate_pdf() {
-        if (!current_user_can('edit_posts')) wp_send_json_error(['message' => 'Permission Denied.']);
+        if (!current_user_can('edit_posts')) wp_send_json_error(['message' => 'Permission refusée.']);
         
         $post_id = intval($_POST['post_id']);
         $pdf_url = LMB_PDF_Generator::create_ad_pdf_from_fulltext($post_id);
         
         if ($pdf_url) {
             update_post_meta($post_id, 'ad_pdf_url', $pdf_url);
-            wp_send_json_success(['message' => 'PDF generated successfully!', 'pdf_url' => $pdf_url]);
+            wp_send_json_success(['message' => 'PDF généré avec succès !', 'pdf_url' => $pdf_url]);
         } else {
-            wp_send_json_error(['message' => 'Failed to generate PDF.']);
+            wp_send_json_error(['message' => 'Échec de la génération du PDF.']);
         }
     }
 
     // Enhanced ad fetching with multiple filters
     private static function lmb_fetch_ads_v2() {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Access Denied.'], 403);
+            wp_send_json_error(['message' => 'Accès refusé.'], 403);
         }
 
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
@@ -790,7 +790,7 @@ class LMB_Ajax_Handlers {
                 
                 echo '<td>';
                 if ($accuse_url) {
-                    echo '<a href="' . esc_url($accuse_url) . '" target="_blank" class="lamv2-btn lamv2-btn-sm lamv2-btn-text-link">View</a>';
+                    echo '<a href="' . esc_url($accuse_url) . '" target="_blank" class="lamv2-btn lamv2-btn-sm lamv2-btn-text-link">Voir</a>';
                 } else {
                     echo '<span class="lamv2-cell-placeholder">-</span>';
                 }
@@ -803,12 +803,12 @@ class LMB_Ajax_Handlers {
                     echo '<span class="lamv2-cell-placeholder">Terminé</span>';
                 } else {
                     if ($status === 'pending_review') {
-                        echo '<button class="lamv2-btn lamv2-btn-icon lamv2-btn-success lamv2-ad-action" data-action="approve" data-id="' . $post_id . '" title="Approve"><i class="fas fa-check-circle"></i></button>';
-                        echo '<button class="lamv2-btn lamv2-btn-icon lamv2-btn-danger lamv2-ad-action" data-action="deny" data-id="' . $post_id . '" title="Deny"><i class="fas fa-times-circle"></i></button>';
+                        echo '<button class="lamv2-btn lamv2-btn-icon lamv2-btn-success lamv2-ad-action" data-action="approve" data-id="' . $post_id . '" title="Approuver"><i class="fas fa-check-circle"></i></button>';
+                        echo '<button class="lamv2-btn lamv2-btn-icon lamv2-btn-danger lamv2-ad-action" data-action="deny" data-id="' . $post_id . '" title="Refuser"><i class="fas fa-times-circle"></i></button>';
                     } elseif ($status === 'published') {
-                        echo '<button class="lamv2-btn lamv2-btn-sm lamv2-btn-secondary lmb-upload-journal-btn" data-id="' . $post_id . '" title="Upload Temporary Journal"><i class="fas fa-newspaper"></i></button>';
+                        echo '<button class="lamv2-btn lamv2-btn-sm lamv2-btn-secondary lmb-upload-journal-btn" data-id="' . $post_id . '" title="Télécharger Journal Temporaire"><i class="fas fa-newspaper"></i></button>';
                     } else {
-                        echo '<a href="' . esc_url(get_edit_post_link($post_id)) . '" class="lamv2-btn lamv2-btn-sm lamv2-btn-view">View</a>';
+                        echo '<a href="' . esc_url(get_edit_post_link($post_id)) . '" class="lamv2-btn lamv2-btn-sm lamv2-btn-view">Voir</a>';
                     }
                 }
                 echo '</td>';
@@ -816,7 +816,7 @@ class LMB_Ajax_Handlers {
                 echo '</tr>';
             }
         } else {
-            echo '<tr><td colspan="10" style="text-align:center;">No ads found matching your criteria.</td></tr>';
+            echo '<tr><td colspan="10" style="text-align:center;">Aucune annonce trouvée correspondant à vos critères.</td></tr>';
         }
         $html = ob_get_clean();
         wp_reset_postdata();
@@ -837,7 +837,7 @@ class LMB_Ajax_Handlers {
     // --- NEW FUNCTION: v2 submit draft ad for review ---
     private static function lmb_submit_draft_ad_v2() {
         if (!isset($_POST['ad_id']) || !is_numeric($_POST['ad_id'])) {
-            wp_send_json_error(['message' => 'Invalid Ad ID.'], 400);
+            wp_send_json_error(['message' => 'ID d\'annonce non valide.'], 400);
             return;
         }
 
@@ -845,12 +845,12 @@ class LMB_Ajax_Handlers {
         $ad = get_post($ad_id);
 
         if (!$ad || $ad->post_type !== 'lmb_legal_ad') {
-            wp_send_json_error(['message' => 'Ad not found.'], 404);
+            wp_send_json_error(['message' => 'Annonce non trouvée.'], 404);
             return;
         }
         
         if ($ad->post_author != get_current_user_id() && !current_user_can('edit_others_posts')) {
-             wp_send_json_error(['message' => 'You do not have permission to edit this ad.'], 403);
+             wp_send_json_error(['message' => 'Vous n\'avez pas la permission de modifier cette annonce.'], 403);
             return;
         }
         
@@ -862,8 +862,7 @@ class LMB_Ajax_Handlers {
         // CRITICAL CHECK: Ensure cost is greater than zero to prevent 0 < 0 from failing the check
         if ($ad_cost <= 0) {
             // This suggests a missing package setting for the user/system. Block until fixed.
-            //$error_message = 'Le coût de l\'annonce n\'est pas défini. Veuillez contacter l\'administrateur pour finaliser la configuration, ste.lmbgroup@gmail.com ou 06.';
-            $error_message = "Vous ne disposez d’aucun point disponible. Merci de recharger votre solde afin de pouvoir publier votre annonce. Contactez-nous pour plus d'informations via email  ste.lmbgroup@gmail.com ou whatsapp 0674406197";
+            $error_message = "Vous ne disposez d’aucun point disponible. Merci de recharger votre solde afin de pouvoir publier votre annonce. Contactez-nous pour plus d'informations via email ste.lmbgroup@gmail.com ou whatsapp 0674406197";
             wp_send_json_error(['message' => $error_message], 500);
             return;
         }
@@ -892,14 +891,14 @@ class LMB_Ajax_Handlers {
         $ad = get_post($ad_id);
 
         if (!$ad || $ad->post_author != get_current_user_id()) {
-            wp_send_json_error(['message' => 'Permission denied.'], 403);
+            wp_send_json_error(['message' => 'Permission refusée.'], 403);
             return;
         }
 
         if (wp_delete_post($ad_id, true)) {
-            wp_send_json_success(['message' => 'Draft deleted successfully.']);
+            wp_send_json_success(['message' => 'Brouillon supprimé avec succès.']);
         } else {
-            wp_send_json_error(['message' => 'Failed to delete draft.']);
+            wp_send_json_error(['message' => 'Échec de la suppression du brouillon.']);
         }
     }
     
@@ -917,12 +916,12 @@ class LMB_Ajax_Handlers {
             $log_paged = array_slice($log, 0, $limit);
 
             if (empty($log_paged)) {
-                echo '<div style="text-align: center; padding: 20px;">No global activity yet.</div>';
+                echo '<div style="text-align: center; padding: 20px;">Aucune activité globale pour le moment.</div>';
             } else {
                 foreach ($log_paged as $entry) {
                     $user = $entry['user'] ? get_userdata($entry['user']) : null;
-                    $user_name = $user ? $user->display_name : 'System';
-                    $time_ago = human_time_diff(strtotime($entry['time'])) . ' ago';
+                    $user_name = $user ? $user->display_name : 'Système';
+                    $time_ago = human_time_diff(strtotime($entry['time'])) . ' il y a';
                     
                     $msg_lower = strtolower($entry['msg']);
                     $icon_class = 'icon-create'; $fa_icon = 'fas fa-info-circle';
@@ -937,7 +936,7 @@ class LMB_Ajax_Handlers {
                         <div class="feed-icon <?php echo esc_attr($icon_class); ?>"><i class="<?php echo esc_attr($fa_icon); ?>"></i></div>
                         <div class="feed-content">
                             <p class="feed-message"><?php echo esc_html($entry['msg']); ?></p>
-                            <p class="feed-time"><?php echo esc_html($time_ago); ?> by <strong><?php echo esc_html($user_name); ?></strong></p>
+                            <p class="feed-time"><?php echo esc_html($time_ago); ?> par <strong><?php echo esc_html($user_name); ?></strong></p>
                         </div>
                     </div>
                     <?php
@@ -949,7 +948,7 @@ class LMB_Ajax_Handlers {
             $notifications = LMB_Notification_Manager::get_latest($user_id, $limit);
 
             if (empty($notifications)) {
-                echo '<div style="text-align: center; padding: 20px;">You have no recent activity.</div>';
+                echo '<div style="text-align: center; padding: 20px;">Vous n\'avez aucune activité récente.</div>';
             } else {
                 foreach ($notifications as $item) {
                     $icon_details = self::get_feed_icon_details($item['type']);
@@ -1006,7 +1005,7 @@ class LMB_Ajax_Handlers {
         $user = wp_signon($creds, is_ssl());
 
         if (is_wp_error($user)) {
-            wp_send_json_error(['message' => 'Invalid username or password.'], 401);
+            wp_send_json_error(['message' => 'Nom d\'utilisateur ou mot de passe non valide.'], 401);
             return;
         }
         
@@ -1014,7 +1013,7 @@ class LMB_Ajax_Handlers {
         $status = get_user_meta($user->ID, 'lmb_user_status', true);
         if ($status === 'inactive') {
             wp_logout();
-            wp_send_json_error(['message' => 'Your account is pending admin approval.'], 403);
+            wp_send_json_error(['message' => 'Votre compte est en attente d\'approbation par l\'administrateur.'], 403);
             return;
         }
 
@@ -1044,9 +1043,9 @@ class LMB_Ajax_Handlers {
         $type = sanitize_key($data['signup_type']);
 
         // Basic validation
-        if (!is_email($email)) wp_send_json_error(['message' => 'Invalid email address.']);
-        if (email_exists($email)) wp_send_json_error(['message' => 'This email is already registered.']);
-        if (strlen($password) < 6) wp_send_json_error(['message' => 'Password must be at least 6 characters long.']);
+        if (!is_email($email)) wp_send_json_error(['message' => 'Adresse e-mail non valide.']);
+        if (email_exists($email)) wp_send_json_error(['message' => 'Cet e-mail est déjà enregistré.']);
+        if (strlen($password) < 6) wp_send_json_error(['message' => 'Le mot de passe doit contenir au moins 6 caractères.']);
 
         $user_id = wp_create_user($email, $password, $email);
 
@@ -1075,14 +1074,14 @@ class LMB_Ajax_Handlers {
         }
 
         // Notify admins of new registration
-        LMB_Notification_Manager::add(1, 'new_user', 'New User Registration', "A new user ($email) has registered and requires approval.");
+        LMB_Notification_Manager::add(1, 'new_user', 'Nouvelle Inscription Utilisateur', "Un nouvel utilisateur ($email) s'est inscrit et nécessite une approbation.");
         
         wp_send_json_success();
     }
     // --- REVISED FUNCTION: v2 fetch inactive clients with search, pagination, and approve/deny actions ---
     private static function lmb_fetch_inactive_clients_v2() {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Access Denied.'], 403);
+            wp_send_json_error(['message' => 'Accès refusé.'], 403);
         }
 
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
@@ -1133,7 +1132,7 @@ class LMB_Ajax_Handlers {
                                 echo '<div><i class="fas fa-id-card"></i> RC:<strong>' . esc_html(get_user_meta($user_id, 'company_rc', true)) . '</strong></div>';
                                 echo '<div><i class="fas fa-building"></i> HQ:<strong>' . esc_html(get_user_meta($user_id, 'company_hq', true)) . '</strong></div>';
                             }
-                            echo '<div><i class="fas fa-calendar-alt"></i> Registered:<strong>' . human_time_diff(strtotime($user->user_registered)) . ' ago</strong></div>';
+                            echo '<div><i class="fas fa-calendar-alt"></i> Inscrit:<strong>' . human_time_diff(strtotime($user->user_registered)) . ' il y a</strong></div>';
                         echo '</div>';
                     echo '</div>';
                     echo '<div class="lmb-client-actions">';
@@ -1145,7 +1144,7 @@ class LMB_Ajax_Handlers {
                 echo '</div>';
             }
         } else {
-            echo '<div style="text-align:center; padding: 20px;">No inactive clients found.</div>';
+            echo '<div style="text-align:center; padding: 20px;">Aucun client inactif trouvé.</div>';
         }
         $html = ob_get_clean();
 
@@ -1166,32 +1165,32 @@ class LMB_Ajax_Handlers {
         $approval_action = isset($_POST['approval_action']) ? sanitize_key($_POST['approval_action']) : '';
 
         if (!$user_id || !$approval_action) {
-            wp_send_json_error(['message' => 'Missing parameters.'], 400);
+            wp_send_json_error(['message' => 'Paramètres manquants.'], 400);
         }
 
         if ($approval_action === 'approve') {
             update_user_meta($user_id, 'lmb_user_status', 'active');
             // Optionally, send a welcome email
             wp_new_user_notification($user_id, null, 'user');
-            LMB_Ad_Manager::log_activity(sprintf('Approved new client #%d.', $user_id));
-            wp_send_json_success(['message' => 'Client approved.']);
+            LMB_Ad_Manager::log_activity(sprintf('Client #%d approuvé.', $user_id));
+            wp_send_json_success(['message' => 'Client approuvé.']);
         } elseif ($approval_action === 'deny') {
             require_once(ABSPATH.'wp-admin/includes/user.php');
             if (wp_delete_user($user_id)) {
-                LMB_Ad_Manager::log_activity(sprintf('Denied and deleted new client #%d.', $user_id));
-                wp_send_json_success(['message' => 'Client denied and deleted.']);
+                LMB_Ad_Manager::log_activity(sprintf('Client #%d refusé et supprimé.', $user_id));
+                wp_send_json_success(['message' => 'Client refusé et supprimé.']);
             } else {
-                wp_send_json_error(['message' => 'Could not delete user.']);
+                wp_send_json_error(['message' => 'Impossible de supprimer l\'utilisateur.']);
             }
         } else {
-            wp_send_json_error(['message' => 'Invalid action.'], 400);
+            wp_send_json_error(['message' => 'Action non valide.'], 400);
         }
     }
 
     // --- NEW FUNCTION: v2 fetch active clients with search, filters, pagination, and lock action ---
     private static function lmb_fetch_active_clients_v2() {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Access Denied.'], 403);
+            wp_send_json_error(['message' => 'Accès refusé.'], 403);
         }
 
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
@@ -1273,16 +1272,16 @@ class LMB_Ajax_Handlers {
                 // --- THIS IS THE CORRECTED LINE ---
                 // It now points to a standard URL with a query parameter, which is much more reliable.
                 $edit_url = home_url('/user-editor/?user_id=' . $user_id);
-                echo '<a href="' . esc_url($edit_url) . '" class="lmb-btn lmb-btn-icon lmb-btn-primary" title="Edit User"><i class="fas fa-user-edit"></i></a>';
+                echo '<a href="' . esc_url($edit_url) . '" class="lmb-btn lmb-btn-icon lmb-btn-primary" title="Modifier l\'utilisateur"><i class="fas fa-user-edit"></i></a>';
                 
                 if (!$is_admin) {
-                    echo '<button class="lmb-btn lmb-btn-icon lmb-btn-warning lmb-lock-user-btn" data-user-id="' . $user_id . '" title="Lock User (set to inactive)"><i class="fas fa-user-lock"></i></button>';
+                    echo '<button class="lmb-btn lmb-btn-icon lmb-btn-warning lmb-lock-user-btn" data-user-id="' . $user_id . '" title="Verrouiller l\'utilisateur (définir comme inactif)"><i class="fas fa-user-lock"></i></button>';
                 }
                 echo '</td>';
                 echo '</tr>';
             }
         } else {
-            echo '<tr><td colspan="7" style="text-align:center;">No active clients found.</td></tr>';
+            echo '<tr><td colspan="7" style="text-align:center;">Aucun client actif trouvé.</td></tr>';
         }
         $html = ob_get_clean();
 
@@ -1301,17 +1300,17 @@ class LMB_Ajax_Handlers {
     // --- NEW FUNCTION: v2 lock (set to inactive) an active client ---
     private static function lmb_lock_active_client_v2() {
         $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
-        if (!$user_id) wp_send_json_error(['message' => 'Missing user ID.'], 400);
+        if (!$user_id) wp_send_json_error(['message' => 'ID utilisateur manquant.'], 400);
         
         // Prevent locking an admin
         if (user_can($user_id, 'manage_options')) {
-            wp_send_json_error(['message' => 'Administrators cannot be locked.'], 403);
+            wp_send_json_error(['message' => 'Les administrateurs ne peuvent pas être verrouillés.'], 403);
         }
 
         update_user_meta($user_id, 'lmb_user_status', 'inactive');
-        LMB_Ad_Manager::log_activity(sprintf('Locked client account #%d.', $user_id));
+        LMB_Ad_Manager::log_activity(sprintf('Compte client #%d verrouillé.', $user_id));
         
-        wp_send_json_success(['message' => 'Client account has been locked.']);
+        wp_send_json_success(['message' => 'Le compte client a été verrouillé.']);
     }
 
     // --- UPDATED FUNCTION: v2 update user profile with role-based field restrictions ---
@@ -1324,7 +1323,7 @@ class LMB_Ajax_Handlers {
 
         // Security check: Either you are an admin, or you are editing your own profile.
         if (!$is_admin && $current_user_id !== $user_id_to_update) {
-            wp_send_json_error(['message' => 'You do not have permission to edit this profile.'], 403);
+            wp_send_json_error(['message' => 'Vous n\'avez pas la permission de modifier ce profil.'], 403);
             return;
         }
         
@@ -1374,17 +1373,17 @@ class LMB_Ajax_Handlers {
 
         // Security check
         if (!$is_admin && $current_user_id !== $user_id_to_update) {
-            wp_send_json_error(['message' => 'You do not have permission to change this password.'], 403);
+            wp_send_json_error(['message' => 'Vous n\'avez pas la permission de changer ce mot de passe.'], 403);
         }
         
         $new_pass = $data['new_password'];
         $confirm_pass = $data['confirm_password'];
 
         if (empty($new_pass) || empty($confirm_pass)) {
-            wp_send_json_error(['message' => 'Please fill out both new password fields.']);
+            wp_send_json_error(['message' => 'Veuillez remplir les deux champs du nouveau mot de passe.']);
         }
         if ($new_pass !== $confirm_pass) {
-            wp_send_json_error(['message' => 'New passwords do not match.']);
+            wp_send_json_error(['message' => 'Les nouveaux mots de passe ne correspondent pas.']);
         }
         
         // If a non-admin is changing their own password, we must verify their current password
@@ -1392,7 +1391,7 @@ class LMB_Ajax_Handlers {
             $current_pass = $data['current_password'];
             $user = get_user_by('ID', $user_id_to_update);
             if (!wp_check_password($current_pass, $user->user_pass, $user->ID)) {
-                wp_send_json_error(['message' => 'Your current password is not correct.']);
+                wp_send_json_error(['message' => 'Votre mot de passe actuel n\'est pas correct.']);
             }
         }
         
@@ -1454,7 +1453,7 @@ class LMB_Ajax_Handlers {
                     <div class="history-icon <?php echo $is_credit ? 'credit' : 'debit'; ?>"><i class="fas <?php echo $is_credit ? 'fa-plus' : 'fa-minus'; ?>"></i></div>
                     <div class="history-details">
                         <span class="history-reason"><?php echo esc_html($item->reason); ?></span>
-                        <span class="history-time"><?php echo esc_html(human_time_diff(strtotime($item->created_at))) . ' ago'; ?></span>
+                        <span class="history-time"><?php echo esc_html(human_time_diff(strtotime($item->created_at))) . ' il y a'; ?></span>
                     </div>
                     <div class="history-amount <?php echo $is_credit ? 'credit' : 'debit'; ?>"><?php echo ($is_credit ? '+' : '') . esc_html($item->amount); ?></div>
                 </div>
@@ -1465,8 +1464,7 @@ class LMB_Ajax_Handlers {
         }
         $history_html = ob_get_clean();
 
-        wp_send_json_success([
-            'message' => 'Le solde du client a été mis à jour avec succès.',
+        wp_send_json_success(['message' => 'Le solde du client a été mis à jour avec succès.',
             'new_balance' => $new_balance,
             'history_html' => $history_html
         ]);
@@ -1475,32 +1473,32 @@ class LMB_Ajax_Handlers {
     // --- NEW FUNCTION: Generate Accuse on-demand ---
     private static function lmb_admin_generate_accuse() {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Permission denied.'], 403);
+            wp_send_json_error(['message' => 'Permission refusée.'], 403);
         }
         $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
         if (!$ad_id) {
-            wp_send_json_error(['message' => 'Invalid Ad ID.'], 400);
+            wp_send_json_error(['message' => 'ID d\'annonce non valide.'], 400);
         }
 
         $accuse_url = LMB_Invoice_Handler::generate_accuse_pdf($ad_id);
         if ($accuse_url) {
             update_post_meta($ad_id, 'lmb_accuse_pdf_url', $accuse_url);
-            wp_send_json_success(['message' => 'Accuse PDF generated successfully.']);
+            wp_send_json_success(['message' => 'PDF d\'Accusé généré avec succès.']);
         } else {
-            wp_send_json_error(['message' => 'Failed to generate Accuse PDF.']);
+            wp_send_json_error(['message' => 'Échec de la génération du PDF d\'Accusé.']);
         }
     }
 
     // --- NEW FUNCTION: Upload Temporary Journal ---
     private static function lmb_admin_upload_temporary_journal() {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Permission denied.'], 403);
+            wp_send_json_error(['message' => 'Permission refusée.'], 403);
         }
         $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
         $journal_no = isset($_POST['journal_no']) ? sanitize_text_field($_POST['journal_no']) : '';
 
         if (!$ad_id || empty($_FILES['journal_file']) || empty($journal_no)) {
-            wp_send_json_error(['message' => 'Missing Ad ID, file, or Journal Number.'], 400);
+            wp_send_json_error(['message' => 'ID d\'annonce, fichier ou numéro de journal manquant.'], 400);
         }
         // Clean up old journal associations to ensure a clean slate.
         $old_temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
@@ -1523,9 +1521,9 @@ class LMB_Ajax_Handlers {
         $accuse_url = LMB_Invoice_Handler::generate_accuse_pdf($ad_id);
         if ($accuse_url) {
             update_post_meta($ad_id, 'lmb_accuse_pdf_url', $accuse_url);
-            $message = 'Temporary journal uploaded and Accuse PDF generated successfully.';
+            $message = 'Journal temporaire téléchargé et PDF d\'Accusé généré avec succès.';
         } else {
-            $message = 'Temporary journal uploaded, but failed to generate Accuse PDF. A journal number might be missing or another error occurred.';
+            $message = 'Journal temporaire téléchargé, mais échec de la génération du PDF d\'Accusé. Un numéro de journal pourrait être manquant ou une autre erreur s\'est produite.';
         }
 
         wp_send_json_success(['message' => $message]);
@@ -1533,11 +1531,11 @@ class LMB_Ajax_Handlers {
 
     // --- MODIFIED FUNCTION: Upload FINAL Newspaper ---
     private static function lmb_upload_newspaper() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission denied.']);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission refusée.']);
         
         // Updated validation for required fields
         if (empty($_POST['journal_no']) || empty($_FILES['newspaper_pdf']) || empty($_POST['start_date']) || empty($_POST['end_date'])) {
-            wp_send_json_error(['message' => 'Missing required fields. Journal N°, PDF, and date range are required.']);
+            wp_send_json_error(['message' => 'Champs requis manquants. Le N° du Journal, le PDF et la plage de dates sont obligatoires.']);
         }
         
         require_once(ABSPATH . 'wp-admin/includes/file.php');
@@ -1545,7 +1543,7 @@ class LMB_Ajax_Handlers {
         require_once(ABSPATH . 'wp-admin/includes/media.php');
 
         $pdf_id = media_handle_upload('newspaper_pdf', 0);
-        if (is_wp_error($pdf_id)) wp_send_json_error(['message' => 'PDF Upload Error: ' . $pdf_id->get_error_message()]);
+        if (is_wp_error($pdf_id)) wp_send_json_error(['message' => 'Erreur de téléchargement du PDF : ' . $pdf_id->get_error_message()]);
 
         // Automatically generate post title from journal number
         $journal_no = sanitize_text_field($_POST['journal_no']);
@@ -1554,7 +1552,7 @@ class LMB_Ajax_Handlers {
         
         if (is_wp_error($post_id)) { 
             wp_delete_attachment($pdf_id, true); 
-            wp_send_json_error(['message' => $post_id->get_error_message()]); 
+            wp_send_json_error(['message' => 'Erreur lors de la création du post Journal Final : ' . $post_id->get_error_message()]); 
         }
         
         update_post_meta($post_id, 'newspaper_pdf', $pdf_id);
@@ -1609,7 +1607,7 @@ class LMB_Ajax_Handlers {
         $updated_count = $ads_query->post_count;
         wp_reset_postdata();
         
-        wp_send_json_success(['message' => 'Newspaper uploaded. Associated with ' . $updated_count . ' ads. Old temporary files have been deleted.']);
+        wp_send_json_success(['message' => 'Journal téléchargé. Associé à ' . $updated_count . ' annonces. Les anciens fichiers temporaires ont été supprimés.']);
     }
 
     // --- REVISED FUNCTION for Public Ads Directory ---
@@ -1740,7 +1738,7 @@ class LMB_Ajax_Handlers {
 
                 switch ($status) {
                     case 'published':
-                        $approved_by = get_user_by('id', get_post_meta($post_id, 'approved_by', true));
+                        //$approved_by = get_user_by('id', get_post_meta($post_id, 'approved_by', true));
                         $accuse_url = get_post_meta($post_id, 'lmb_accuse_pdf_url', true);
                         
                         $journal_display = '<span class="cell-placeholder">-</span>';
@@ -1757,7 +1755,7 @@ class LMB_Ajax_Handlers {
                         echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
                         echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
                         echo '<td>' . esc_html(get_the_date()) . '</td>';
-                        echo '<td>' . ($approved_by ? esc_html($approved_by->display_name) : 'N/A') . '</td>';
+                        //echo '<td>' . ($approved_by ? esc_html($approved_by->display_name) : 'N/A') . '</td>';
                         echo '<td>' . ($accuse_url ? '<a href="'.esc_url($accuse_url).'" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-text-link">Accusé</a>' : '<span class="cell-placeholder">-</span>') . '</td>';
                         echo '<td>' . $journal_display . '</td>';
                         break;
@@ -1772,7 +1770,7 @@ class LMB_Ajax_Handlers {
                         echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
                         echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
                         echo '<td>' . esc_html(get_the_date()) . '</td>';
-                        echo '<td class="lmb-actions-cell no-hover"><button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-submit-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-paper-plane"></i> Submit</button><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-trash"></i> Delete</button></td>';
+                        echo '<td class="lmb-actions-cell no-hover"><button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-submit-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-paper-plane"></i> Soumettre</button><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-trash"></i> Supprimer</button></td>';
                         break;
                     case 'denied':
                         echo '<td>' . $post_id . '</td>';
@@ -1780,13 +1778,13 @@ class LMB_Ajax_Handlers {
                         echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
                         echo '<td>' . esc_html(get_the_modified_date()) . '</td>';
                         echo '<td class="denial-reason">' . esc_html(get_post_meta($post_id, 'denial_reason', true)) . '</td>';
-                        echo '<td class="lmb-actions-cell no-hover"><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-trash"></i> Delete</button></td>';
+                        echo '<td class="lmb-actions-cell no-hover"><button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-delete-ad-btn" data-ad-id="'.$post_id.'"><i class="fas fa-trash"></i> Supprimer</button></td>';
                         break;
                 }
                 echo '</tr>';
             }
         } else {
-            echo '<tr><td colspan="7" style="text-align:center;">No ads found for this status.</td></tr>';
+            echo '<tr><td colspan="7" style="text-align:center;">Aucune annonce trouvée pour ce statut.</td></tr>';
         }
         $html = ob_get_clean();
         
@@ -1855,7 +1853,7 @@ class LMB_Ajax_Handlers {
                 $html .= '</tr>';
             }
         } else {
-            $html = '<tr><td colspan="3" style="text-align:center;">No newspapers found matching your search.</td></tr>';
+            $html = '<tr><td colspan="3" style="text-align:center;">Aucun journal trouvé correspondant à votre recherche.</td></tr>';
         }
 
         $pagination_html = paginate_links([
@@ -1875,7 +1873,7 @@ class LMB_Ajax_Handlers {
     // --- NEW FUNCTION: fetch payments for admin to handle ---
     private static function lmb_fetch_payments() {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Access Denied.'], 403);
+            wp_send_json_error(['message' => 'Accès refusé.'], 403);
         }
 
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
@@ -1930,10 +1928,10 @@ class LMB_Ajax_Handlers {
                 echo '<td class="lmb-actions-cell">';
                 if ($status === 'pending') {
                     if ($proof_id) {
-                        echo '<a href="' . esc_url(wp_get_attachment_url($proof_id)) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-paperclip"></i> View Proof</a>';
+                        echo '<a href="' . esc_url(wp_get_attachment_url($proof_id)) . '" target="_blank" class="lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-paperclip"></i> Voir Justificatif</a>';
                     }
-                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-payment-action-btn" data-action="approve" data-id="' . $payment_id . '"><i class="fas fa-check"></i> Approve</button>';
-                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-payment-action-btn" data-action="deny" data-id="' . $payment_id . '"><i class="fas fa-times"></i> Deny</button>';
+                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-success lmb-payment-action-btn" data-action="approve" data-id="' . $payment_id . '"><i class="fas fa-check"></i> Approuver</button>';
+                    echo '<button class="lmb-btn lmb-btn-sm lmb-btn-danger lmb-payment-action-btn" data-action="deny" data-id="' . $payment_id . '"><i class="fas fa-times"></i> Rejeter</button>';
                 } else {
                     echo '—';
                 }
@@ -1941,7 +1939,7 @@ class LMB_Ajax_Handlers {
                 echo '</tr>';
             }
         } else {
-            echo '<tr><td colspan="7" style="text-align:center;">No payments found for this status.</td></tr>';
+            echo '<tr><td colspan="7" style="text-align:center;">Aucun paiement trouvé pour ce statut.</td></tr>';
         }
         
         $html = ob_get_clean();
@@ -1959,17 +1957,17 @@ class LMB_Ajax_Handlers {
     // --- NEW FUNCTION: fetch package data for admin ---
     private static function lmb_get_package_data() {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Access denied']);
+            wp_send_json_error(['message' => 'Accès refusé']);
         }
         
         $package_id = isset($_POST['package_id']) ? intval($_POST['package_id']) : 0;
         if (!$package_id) {
-            wp_send_json_error(['message' => 'Invalid package ID']);
+            wp_send_json_error(['message' => 'ID de forfait non valide']);
         }
         
         $package_post = get_post($package_id);
         if (!$package_post || $package_post->post_type !== 'lmb_package') {
-            wp_send_json_error(['message' => 'Package not found']);
+            wp_send_json_error(['message' => 'Forfait non trouvé']);
         }
         
         $package_data = [
@@ -1986,7 +1984,7 @@ class LMB_Ajax_Handlers {
 
     // --- REVISED FUNCTION: fetch eligible ads for newspaper creation ---
     private static function lmb_fetch_eligible_ads() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access Denied.'], 403);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé.'], 403);
         
         parse_str($_POST['filters'] ?? '', $filters);
 
@@ -2046,7 +2044,7 @@ class LMB_Ajax_Handlers {
 
     // --- FUNCTION FOR GENERATING NEWSPAPER PREVIEW ---
     private static function lmb_generate_newspaper_preview() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access Denied.'], 403);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé.'], 403);
         
         $ad_ids = array_map('intval', $_POST['ad_ids'] ?? []);
         $journal_no = sanitize_text_field($_POST['journal_no'] ?? 'N/A');
@@ -2129,7 +2127,7 @@ class LMB_Ajax_Handlers {
         ]);
         
         if (is_wp_error($temp_post_id)) {
-            wp_send_json_error(['message' => 'Erreur lors de la création du brouillon de journal: ' . $temp_post_id->get_error_message()]);
+            wp_send_json_error(['message' => 'Erreur lors de la création du brouillon de journal : ' . $temp_post_id->get_error_message()]);
         }
         
         // 6. Return the secure PDF preview URL
@@ -2146,7 +2144,7 @@ class LMB_Ajax_Handlers {
 
     // --- FUNCTION: Final Approval and Publishing (FIXED for Inter-Widget Sync) ---
     private static function lmb_approve_and_publish_newspaper() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access Denied.'], 403);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé.'], 403);
         
         $ad_ids = array_map('intval', $_POST['ad_ids'] ?? []);
         $journal_no = sanitize_text_field($_POST['journal_no'] ?? '');
@@ -2176,7 +2174,7 @@ class LMB_Ajax_Handlers {
         $draft_posts = get_posts($draft_args);
         
         if (empty($draft_posts)) {
-             wp_send_json_error(['message' => 'Erreur: Le brouillon de prévisualisation n\'a pas pu être retrouvé. Veuillez visualiser à nouveau.']);
+             wp_send_json_error(['message' => 'Erreur : Le brouillon de prévisualisation n\'a pas pu être retrouvé. Veuillez visualiser à nouveau.']);
         }
         
         $draft_post_id = $draft_posts[0]->ID;
@@ -2184,7 +2182,7 @@ class LMB_Ajax_Handlers {
         $final_html_content = get_post_meta($draft_post_id, 'lmb_temp_newspaper_html', true);
 
         if (empty($final_html_content)) {
-            wp_send_json_error(['message' => 'Erreur: Le contenu HTML du brouillon est vide.']);
+            wp_send_json_error(['message' => 'Erreur : Le contenu HTML du brouillon est vide.']);
         }
 
         // --- 2. CREATE THE FINAL lmb_newspaper post ---
@@ -2196,7 +2194,7 @@ class LMB_Ajax_Handlers {
         ]);
         
         if (is_wp_error($newspaper_id)) { 
-            wp_send_json_error(['message' => 'Erreur lors de la création du post Journal Final: ' . $newspaper_id->get_error_message()]);
+            wp_send_json_error(['message' => 'Erreur lors de la création du post Journal Final : ' . $newspaper_id->get_error_message()]);
         }
         
         // --- 3. SIMULATE FINAL PDF LINK (CRITICAL for directory to work) ---
@@ -2239,19 +2237,19 @@ class LMB_Ajax_Handlers {
     
     // --- NEW FUNCTION: Discard Draft Action ---
     private static function lmb_discard_newspaper_draft() {
-        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Access Denied.'], 403);
+        if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé.'], 403);
         
         $temp_post_id = isset($_POST['temp_post_id']) ? intval($_POST['temp_post_id']) : 0;
         $draft_post = get_post($temp_post_id);
 
         if (!$draft_post || $draft_post->post_type !== 'lmb_newspaper' || $draft_post->post_status !== 'draft') {
-            wp_send_json_error(['message' => 'Invalid or already deleted draft post ID.'], 400);
+            wp_send_json_error(['message' => 'ID de brouillon non valide ou déjà supprimé.'], 400);
         }
 
         if (wp_delete_post($temp_post_id, true)) {
-            wp_send_json_success(['message' => 'Draft deleted successfully.']);
+            wp_send_json_success(['message' => 'Brouillon supprimé avec succès.']);
         } else {
-            wp_send_json_error(['message' => 'Failed to delete the draft post.']);
+            wp_send_json_error(['message' => 'Échec de la suppression du brouillon.']);
         }
     }
 

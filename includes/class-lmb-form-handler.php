@@ -63,7 +63,7 @@ class LMB_Form_Handler {
 
         self::generate_and_save_formatted_text($post_id);
         
-        self::log_activity('New legal ad #%d created as draft by %s', $post_id, wp_get_current_user()->display_name);
+        self::log_activity('Nouvelle annonce légale %d créée en tant que brouillon par %s', $post_id, wp_get_current_user()->display_name);
         return $post_id;
     }
     

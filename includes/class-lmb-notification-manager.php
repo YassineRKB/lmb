@@ -52,8 +52,8 @@ class LMB_Notification_Manager {
         $ad = get_post($ad_id);
         if (!$ad || $ad->post_type !== 'lmb_legal_ad') return;
         $author = get_userdata($ad->post_author);
-        $title = sprintf(__('Legal ad "%s" submitted for review', 'lmb-core'), get_the_title($ad_id));
-        $msg   = sprintf(__('User %s has submitted a legal ad for review.', 'lmb-core'), esc_html($author ? $author->display_name : ('#'.$ad->post_author)));
+        $title = sprintf(__('Annonce "%s" en attente de révision', 'lmb-core'), get_the_title($ad_id));
+        $msg   = sprintf(__('Client %s en attente de révision de son annonce.', 'lmb-core'), esc_html($author ? $author->display_name : ('#'.$ad->post_author)));
 
         foreach (self::get_admin_user_ids() as $admin_id) {
             self::add($admin_id, 'ad_pending', $title, $msg, [ 'ad_id' => $ad_id, 'actor_id' => $ad->post_author ]);
@@ -63,23 +63,23 @@ class LMB_Notification_Manager {
     public static function notify_user_ad_approved($ad_id) {
         $ad = get_post($ad_id);
         if (!$ad || $ad->post_type !== 'lmb_legal_ad') return;
-        $title = sprintf(__('Your legal ad "%s" was approved', 'lmb-core'), get_the_title($ad_id));
-        $msg   = __('Your legal ad has been approved and will be published.', 'lmb-core');
+        $title = sprintf(__('Votre annonce legale "%s" a ete approuvée', 'lmb-core'), get_the_title($ad_id));
+        $msg   = __('Votre annonce légale a été approuvée et sera publiée.', 'lmb-core');
         self::add($ad->post_author, 'ad_approved', $title, $msg, [ 'ad_id' => $ad_id ]);
     }
 
     public static function notify_user_ad_denied($ad_id, $reason = '') {
         $ad = get_post($ad_id);
         if (!$ad || $ad->post_type !== 'lmb_legal_ad') return;
-        $title = sprintf(__('Your legal ad "%s" was denied', 'lmb-core'), get_the_title($ad_id));
-        $msg   = $reason ? sprintf(__('Your legal ad was denied. Reason: %s', 'lmb-core'), esc_html($reason)) : __('Your legal ad was denied.', 'lmb-core');
+        $title = sprintf(__('Votre annonce legale "%s" est refusee', 'lmb-core'), get_the_title($ad_id));
+        $msg   = $reason ? sprintf(__('Votre annonce légale a été refusée. Motif : %s', 'lmb-core'), esc_html($reason)) : __('Your legal ad was denied.', 'lmb-core');
         self::add($ad->post_author, 'ad_denied', $title, $msg, [ 'ad_id' => $ad_id ]);
     }
 
     // Example used elsewhere in plugin
     public static function notify_payment_verified($user_id, $package_id, $points) {
-        $title = __('Payment approved', 'lmb-core');
-        $msg = sprintf(__('Your payment for package %s was approved. %s points added.', 'lmb-core'), get_the_title((int)$package_id), esc_html($points));
+        $title = __('Paiement approuvé', 'lmb-core');
+        $msg = sprintf(__('Votre paiement pour le forfait %s a été approuvé. %s points ajoutés.', 'lmb-core'), get_the_title((int)$package_id), esc_html($points));
         self::add((int)$user_id, 'payment_approved', $title, $msg);
     }
 

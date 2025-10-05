@@ -29,7 +29,7 @@ class LMB_Ad_Manager {
         }
 
         update_post_meta($ad_id, 'lmb_status', 'pending_review');
-        self::log_activity(sprintf('Ad #%d submitted for review by %s via AJAX.', $ad_id, wp_get_current_user()->display_name));
+        self::log_activity(sprintf('Annonce #%d en attente de révision par %s .', $ad_id, wp_get_current_user()->display_name));
         
         wp_send_json_success();
     }
@@ -85,7 +85,7 @@ class LMB_Ad_Manager {
         }
 
         update_post_meta($ad_id, 'lmb_status', 'pending_review');
-        self::log_activity(sprintf('Ad #%d submitted for review by %s.', $ad_id, wp_get_current_user()->display_name));
+        self::log_activity(sprintf('Annonce #%d en attente de révision par %s.', $ad_id, wp_get_current_user()->display_name));
         
         wp_safe_redirect(add_query_arg('status', 'pending', home_url('/dashboard')));
         exit;
@@ -96,19 +96,19 @@ class LMB_Ad_Manager {
     public static function approve_ad($ad_id) {
         $client_id = (int) get_post_meta($ad_id, 'lmb_client_id', true);
         if (!$client_id) {
-            return ['success' => false, 'message' => 'Client ID not found for this ad.'];
+            return ['success' => false, 'message' => 'ID client non trouvé pour cette annonce.'];
         }
         
         $cost = class_exists('LMB_Points') ? LMB_Points::get_cost_per_ad($client_id) : 1;
         
         if (class_exists('LMB_Points') && LMB_Points::get_balance($client_id) < $cost) {
             self::deny_ad($ad_id, 'Insufficient points balance.');
-            return ['success' => false, 'message' => 'Client has insufficient points. Ad has been automatically denied.'];
+            return ['success' => false, 'message' => "Le solde du client est insuffisant. L'annonce a été automatiquement refusée."];
         }
         
         $new_balance = class_exists('LMB_Points') ? LMB_Points::deduct($client_id, $cost, sprintf('Publication of legal ad #%d', $ad_id)) : true;
         if ($new_balance === false) {
-            return ['success' => false, 'message' => 'Failed to deduct points. Ad not approved.'];
+            return ['success' => false, 'message' => "Échec de la déduction des points. Annonce non approuvée."];
         }
         
         wp_update_post(['ID' => $ad_id, 'post_status' => 'publish']);
@@ -126,21 +126,21 @@ class LMB_Ad_Manager {
                 
                 // Notify the user that their receipt is ready
                 if (class_exists('LMB_Notification_Manager')) {
-                    $title = sprintf(__('Receipt for ad "%s" is ready', 'lmb-core'), get_the_title($ad_id));
-                    $msg = __('The official receipt (accuse) for your legal ad is now available for download from your dashboard.', 'lmb-core');
+                    $title = sprintf(__('reçu pour annonce "%s" is pret', 'lmb-core'), get_the_title($ad_id));
+                    $msg = __("Le reçu officiel (accusé) de votre annonce légale est désormais disponible en téléchargement depuis votre tableau de bord.", 'lmb-core');
                     LMB_Notification_Manager::add($client_id, 'receipt_ready', $title, $msg, ['ad_id' => $ad_id]);
                 }
             }
         }
         // --- MODIFICATION END ---
         
-        self::log_activity(sprintf('Ad #%d approved by %s. Cost: %d points.', $ad_id, wp_get_current_user()->display_name, $cost));
+        self::log_activity(sprintf('Annonce #%d approuvé par %s. Coût : %d points.', $ad_id, wp_get_current_user()->display_name, $cost));
         
         if (class_exists('LMB_Notification_Manager')) {
             LMB_Notification_Manager::notify_user_ad_approved($ad_id);
         }
 
-        return ['success' => true, 'message' => 'Ad approved and published successfully.'];
+        return ['success' => true, 'message' => 'Annonce approuvée et publiée avec succès.'];
     }
     
     public static function deny_ad($ad_id, $reason) {
@@ -154,7 +154,7 @@ class LMB_Ad_Manager {
                 LMB_Notification_Manager::notify_user_ad_denied($ad_id, $reason);
             }
         }
-        self::log_activity(sprintf('Ad #%d denied by %s. Reason: %s', $ad_id, wp_get_current_user()->display_name, $reason));
+        self::log_activity(sprintf('Annonce n° %d refusée par %s. Motif : %s', $ad_id, wp_get_current_user()->display_name, $reason));
     }
 
     public static function log_activity($msg) {

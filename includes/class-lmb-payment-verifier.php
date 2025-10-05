@@ -81,9 +81,9 @@ class LMB_Payment_Verifier {
         } elseif ($action === 'reject') {
             update_post_meta($payment_id, 'payment_status', 'rejected');
             update_post_meta($payment_id, 'rejection_reason', $reason);
-            LMB_Ad_Manager::log_activity(sprintf('Payment #%d rejected by %s.', $payment_id, wp_get_current_user()->display_name));
+            LMB_Ad_Manager::log_activity(sprintf('Paiement #%d refusee par %s.', $payment_id, wp_get_current_user()->display_name));
             
-            wp_send_json_success(['message' => 'Le paiement a été rejeté.']);
+            wp_send_json_success(['message' => 'Le paiement a été refusee.']);
         }
     }
 }

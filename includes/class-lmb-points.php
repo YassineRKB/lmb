@@ -41,9 +41,17 @@ class LMB_Points {
         update_user_meta($user_id, self::COST_META_KEY, (int)$cost);
     }
     
+    // MODIFIED get_cost_per_ad function
     public static function get_cost_per_ad($user_id) {
         $cost = get_user_meta($user_id, self::COST_META_KEY, true);
-        return $cost !== '' ? (int)$cost : (int)get_option('lmb_default_cost_per_ad', 1);
+        
+        // Step 1: Determine cost based on user meta or global option
+        $final_cost = $cost !== '' 
+            ? (int)$cost 
+            : (int)get_option('lmb_default_cost_per_ad', 10); // Changed default fallback from 1 to 10
+            
+        // Step 2: Ensure cost is never less than 1 to prevent configuration errors in the AJAX handler
+        return max(10, $final_cost);
     }
     
     private static function log_transaction($user_id, $amount, $balance_after, $reason) {
