@@ -126,6 +126,92 @@ class LMB_Form_Handler {
         
         // --- Template Engine (with Unicode support and safe replacements) ---
 
+        // 1. GERANCE PARAGRAPH HELPER (Constitution SARL): {{GERANCE_PARAGRAPH}}
+        $template = preg_replace_callback('/{{GERANCE_PARAGRAPH}}/isu', function($matches) use ($data_for_template) {
+            $repeater_key = 'gerants';
+            $gerants = isset($data_for_template[$repeater_key]) && is_array($data_for_template[$repeater_key]) ? $data_for_template[$repeater_key] : [];
+            $count = count($gerants);
+            $output = '';
+
+            if ($count === 1) {
+                $g = $gerants[0];
+                // Cas Singulier: "M/Mme. X, demeurant à Y, est désigné(e) gérant(e) pour une durée indéterminée. La société est engagée par la signature unique de son gérant."
+                $output = "<strong>{$g['namegerant']}</strong>, demeurant à {$g['addrgerant']}, est désigné(e) gérant(e) pour une durée indéterminée. La société est engagée par la signature unique de son gérant.";
+            } elseif ($count > 1) {
+                $list = [];
+                foreach ($gerants as $g) {
+                    // Collecte des gérants pour la liste
+                    $list[] = "<strong>{$g['namegerant']}</strong>, demeurant à {$g['addrgerant']}";
+                }
+                
+                // Formater la liste avec des virgules et 'et' pour le dernier élément
+                $last_item = array_pop($list);
+                $list_string = implode(', ', $list) . ' et ' . $last_item;
+                
+                // Cas Pluriel
+                $output = $list_string . ", sont désigné(e) co-gérant(es) pour une durée indéterminée. La société est engagée par la signature séparée de chacun des co-gérants.";
+            }
+            // IMPORTANT: Ajouter un <br> après le paragraphe pour la mise en page
+            return $output . '<br>';
+        }, $template);
+        
+        // 2. Custom Logic for Departing Gerants: {{ANCIENS_GERANTS_PARAGRAPH}}
+        $template = preg_replace_callback('/{{ANCIENS_GERANTS_PARAGRAPH}}/isu', function($matches) use ($data_for_template) {
+            $repeater_key = 'ancient_gerants';
+            $gerants = isset($data_for_template[$repeater_key]) && is_array($data_for_template[$repeater_key]) ? $data_for_template[$repeater_key] : [];
+            $count = count($gerants);
+            $output = '';
+            
+            $text_singular = 'Suite à la démission du gérant unique suivant : ';
+            $text_plural = 'Suite à la démission des co-gérants suivants : ';
+
+            if ($count >= 1) {
+                $list = [];
+                foreach ($gerants as $g) {
+                    $list[] = "M/Mme. <strong>{$g['namegerant']}</strong>, demeurant à {$g['addrgerant']}";
+                }
+                
+                if ($count === 1) {
+                    $output = $text_singular . $list[0] . '.';
+                } else {
+                    $last_item = array_pop($list);
+                    $list_string = implode(', ', $list) . ' et ' . $last_item;
+                    $output = $text_plural . $list_string . '.';
+                }
+            }
+            return $output . '<br><br>';
+        }, $template);
+
+
+        // 3. Custom Logic for New Gerants and Signature Rule: {{NOUVEAUX_GERANTS_PARAGRAPH}}
+        $template = preg_replace_callback('/{{NOUVEAUX_GERANTS_PARAGRAPH}}/isu', function($matches) use ($data_for_template) {
+            $repeater_key = 'new_gerants';
+            $gerants = isset($data_for_template[$repeater_key]) && is_array($data_for_template[$repeater_key]) ? $data_for_template[$repeater_key] : [];
+            $count = count($gerants);
+            $output = '';
+
+            if ($count >= 1) {
+                $list = [];
+                foreach ($gerants as $g) {
+                    $list[] = "M/Mme. <strong>{$g['namegerant']}</strong>, demeurant à {$g['addrgerant']}";
+                }
+                
+                // Formater la liste
+                $last_item = array_pop($list);
+                $list_string = implode(', ', $list) . ' et ' . $last_item;
+                
+                if ($count === 1) {
+                    // Singular Nomination + Singular Signature Rule
+                    $output = "La nomination de nouveau gérant(e) unique: {$list_string}. La société sera désormais engagée par la signature unique du gérant.";
+                } else {
+                    // Plural Nomination + Plural Signature Rule
+                    $output = "La nomination des nouveaux co-gérants: {$list_string}. La société sera désormais engagée par la signature séparée de chacun des co-gérants.";
+                }
+            }
+            return $output . '<br><br>';
+        }, $template);
+        
+        // 4. SUMMATION LOGIC: {{sum:repeater_key:field_key}}
         $template = preg_replace_callback('/{{sum:(.*?):(.*?)}}/iu', function($matches) use ($data_for_template) {
             $repeater_key = strtolower(trim($matches[1]));
             $field_key = strtolower(trim($matches[2]));
@@ -138,12 +224,14 @@ class LMB_Form_Handler {
             return $total;
         }, $template);
 
+        // 5. CONDITIONAL COUNT LOGIC: {{#ifcount repeater_key > N}}...{{else}}...{{\/ifcount}}
         $template = preg_replace_callback('/{{#ifcount (.*?) > (\d+)}}(.*?){{else}}(.*?){{\/ifcount}}/isu', function($matches) use ($data_for_template) {
             $repeater_key = strtolower(trim($matches[1]));
             $item_count = isset($data_for_template[$repeater_key]) && is_array($data_for_template[$repeater_key]) ? count($data_for_template[$repeater_key]) : 0;
             return ($item_count > (int)$matches[2]) ? $matches[3] : $matches[4];
         }, $template);
 
+        // 6. REPEATER LOOP LOGIC: {{#each repeater_key}}...{{\/each}}
         $template = preg_replace_callback('/{{#each (.*?)}}(.*?){{\/each}}/isu', function($matches) use ($data_for_template) {
             $repeater_key = strtolower(trim($matches[1]));
             $inner_template = trim($matches[2]);
@@ -161,6 +249,7 @@ class LMB_Form_Handler {
             return $output;
         }, $template);
 
+        // 7. SIMPLE PLACEHOLDERS: {{field_key}}
         $template = preg_replace_callback('/{{(.*?)}}/u', function($matches) use ($data_for_template) {
             $key = strtolower(trim($matches[1]));
             return isset($data_for_template[$key]) ? $data_for_template[$key] : '';
