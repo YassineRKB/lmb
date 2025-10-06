@@ -86,6 +86,24 @@ class LMB_Form_Handler {
     }
 
     /**
+     * Recursively converts all string values in an array to uppercase.
+     * Uses mb_strtoupper for better handling of French characters (UTF-8).
+     */
+    private static function array_values_to_upper($array) {
+        $result = [];
+        foreach ($array as $key => $value) {
+            if (is_string($value)) {
+                // Use mb_strtoupper if available for robust UTF-8 and French accent support
+                $value = function_exists('mb_strtoupper') ? mb_strtoupper($value, 'UTF-8') : strtoupper($value); 
+            } elseif (is_array($value)) {
+                $value = self::array_values_to_upper($value);
+            }
+            $result[$key] = $value;
+        }
+        return $result;
+    }
+
+    /**
      * FINAL FIX: This function now safely cleans the data.
      */
     private static function clean_form_data_values($data) {
@@ -119,7 +137,11 @@ class LMB_Form_Handler {
 
         // Always run the cleaning function to repair old ads and ensure new ones are perfect.
         $cleaned_form_data = self::clean_form_data_values($form_data);
-        $data_for_template = self::array_keys_to_lower($cleaned_form_data);
+        
+        // --- MODIFIED: Convert values to uppercase BEFORE lowering keys ---
+        $uppercased_form_data = self::array_values_to_upper($cleaned_form_data);
+        $data_for_template = self::array_keys_to_lower($uppercased_form_data);
+        // -----------------------------------------------------------------
 
         $all_templates = get_option('lmb_legal_ad_templates', []);
         $template = isset($all_templates[sanitize_key($ad_type)]) ? $all_templates[sanitize_key($ad_type)] : 'Template not found.';
