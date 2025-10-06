@@ -110,7 +110,7 @@ class LMB_Accuse_PDF extends PDF_UTF8 {
         $this->DrawSignatureAndQR();
     }
 
-    // --- MODIFIED FUNCTION ---
+    // --- MODIFIED FUNCTION: Uses MultiCell for the link ---
     // Draws the main block of text with bold values.
     function DrawMainContent() {
         $this->SetY(65);
@@ -118,6 +118,7 @@ class LMB_Accuse_PDF extends PDF_UTF8 {
         $this->SetTextColor(50, 50, 50);
         $lineHeight = 7;
         $labelWidth = 45; // Fixed width for the labels
+        $contentWidth = 175; // 210mm (A4) - 20mm (left) - 15mm (right) approx.
 
         // Client Info
         //
@@ -154,15 +155,21 @@ class LMB_Accuse_PDF extends PDF_UTF8 {
 
         $this->Ln(5);
 
-        // Link
+        // Link Label
         $this->SetX(20);
         $this->SetFont('Arial', '', 11);
-        $this->SetTextColor(50, 50, 50); // Reset text color
+        $this->SetTextColor(50, 50, 50);
         $this->Cell(0, $lineHeight, "Consulter Votre Annonce:", 0, 1);
+        
+        // Link Text (FIXED using MultiCell)
         $this->SetX(20);
         $this->SetFont('Arial', 'B', 11);
         $this->SetTextColor(45, 85, 155); // Blue color for link
-        $this->Cell(0, $lineHeight, $this->data['legal_ad_link'], 0, 1, 'L', false, $this->data['legal_ad_link']);
+        
+        // Use MultiCell to force text wrapping within 175mm width (A4 width - 35mm total margin)
+        $this->MultiCell($contentWidth, $lineHeight, $this->data['legal_ad_link'], 0, 'L');
+        
+        $this->SetTextColor(50, 50, 50); // Reset text color
     }
     
     // --- MODIFIED FUNCTION ---
@@ -186,4 +193,3 @@ class LMB_Accuse_PDF extends PDF_UTF8 {
         }
     }
 }
-
