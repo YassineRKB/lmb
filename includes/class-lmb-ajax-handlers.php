@@ -781,7 +781,7 @@ class LMB_Ajax_Handlers {
                 echo '<td>' . esc_html($post_id) . '</td>';
                 echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
                 echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
-                echo '<td>' . get_the_date('Y-m-d') . '</td>';
+                echo '<td>' . get_the_date('d-m-Y') . '</td>';
                 echo '<td>' . esc_html($client_name_to_display) . '</td>';
                 echo '<td><span class="lamv2-status-badge lamv2-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td>';
                 

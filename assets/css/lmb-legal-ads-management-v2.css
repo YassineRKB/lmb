@@ -270,3 +270,29 @@
     border-bottom: none;
 }
 
+/* FILE: assets/css/lmb-legal-ads-management-v2.css */
+
+/* --- FIX: Column Width and Text Wrapping --- */
+
+/* 1. Override nowrap and set column widths using nth-child selectors (since table-layout is fixed) */
+.lamv2-widget .lamv2-data-table th,
+.lamv2-widget .lamv2-data-table td {
+    /* Allow wrapping for all cells by default, overriding the global 'white-space: nowrap' */
+    white-space: normal;
+}
+
+/* 2. Set specific widths for the first two columns (Réf and Société) */
+.lamv2-widget .lamv2-data-table th:nth-child(1),
+.lamv2-widget .lamv2-data-table td:nth-child(1) {
+    /* Réf column (ID) */
+    width: 60px;
+    white-space: nowrap; /* Keep Réf tight */
+}
+
+.lamv2-widget .lamv2-data-table th:nth-child(2),
+.lamv2-widget .lamv2-data-table td:nth-child(2) {
+    /* Société column */
+    width: 180px; /* Give enough space for wrapping */
+    white-space: normal; /* Ensure wrapping is enabled */
+}
+/* Note: You may need to adjust the width of column 2 (180px) based on your needs. */

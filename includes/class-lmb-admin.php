@@ -127,7 +127,7 @@ class LMB_Admin {
         // Points Metrics
         $stats['total_points_system'] = (int) $wpdb->get_var("SELECT SUM(amount) FROM {$wpdb->prefix}lmb_points_transactions WHERE amount > 0");
         $stats['total_unspent_points'] = (int) $wpdb->get_var("SELECT SUM(meta_value) FROM {$wpdb->usermeta} WHERE meta_key = 'lmb_points_balance'");
-        $stats['total_spent_points'] = $stats['total_points_system'] - $stats['total_unspent_points'];
+        $stats['total_spent_points'] = abs($stats['total_points_system'] - $stats['total_unspent_points']);
 
         return $stats;
     }
