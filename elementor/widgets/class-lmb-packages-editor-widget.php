@@ -8,7 +8,6 @@ if (!defined('ABSPATH')) exit;
 if (!class_exists('LMB_Packages_Editor_Widget')) {
     class LMB_Packages_Editor_Widget extends Widget_Base {
         public function get_name() { return 'lmb_packages_editor'; }
-        //public function get_title() { return __('LMB Packages Editor', 'lmb-core'); }
         public function get_title() { return __('Éditeur de Packages LMB', 'lmb-core'); }
         public function get_icon() { return 'eicon-price-list'; }
         public function get_categories() { return ['lmb-admin-widgets-v2']; }
@@ -45,6 +44,12 @@ if (!class_exists('LMB_Packages_Editor_Widget')) {
                             <label for="package_desc">Description</label>
                             <textarea id="package_desc" name="description" class="lmb-textarea"></textarea>
                         </div>
+                        <div class="lmb-form-group">
+                            <label for="package_client_visible">
+                                <input type="checkbox" id="package_client_visible" name="client_visible" value="1" checked>
+                                Visible pour les clients
+                            </label>
+                        </div>
                         <button type="submit" class="lmb-btn lmb-btn-primary"><i class="fas fa-save"></i> Enregistrer Package</button>
                         <button type="button" id="lmb-clear-form-btn" class="lmb-btn lmb-btn-secondary" style="margin-top:10px;"><i class="fas fa-undo"></i> Nouveau Package</button>
                     </form>
@@ -80,12 +85,20 @@ if (!class_exists('LMB_Packages_Editor_Widget')) {
             $price = get_post_meta($package_id, 'price', true);
             $points = get_post_meta($package_id, 'points', true);
             $cost_per_ad = get_post_meta($package_id, 'cost_per_ad', true);
+            $client_visible = get_post_meta($package_id, 'client_visible', true);
             $desc = wp_trim_words($package->post_content, 20);
             ?>
             <div class="lmb-package-card" data-package-id="<?php echo $package_id; ?>">
                 <div class="lmb-package-card-header">
                     <div>
                         <h4 class="lmb-package-card-title"><?php echo esc_html($package->post_title); ?></h4>
+                        <span class="lmb-package-card-visibility">
+                            <?php if ($client_visible) : ?>
+                                <i class="fas fa-eye"></i> Visible
+                            <?php else : ?>
+                                <i class="fas fa-eye-slash"></i> Caché
+                            <?php endif; ?>
+                        </span>
                     </div>
                     <div class="lmb-package-card-actions">
                         <button class="lmb-edit-package-btn lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-pencil-alt"></i></button>

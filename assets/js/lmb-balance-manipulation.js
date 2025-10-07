@@ -1,3 +1,4 @@
+// FILE: assets/js/lmb-balance-manipulation.js
 jQuery(document).ready(function($) {
     const widget = $('.lmb-balance-manipulation-widget');
     if (!widget.length) return;
@@ -85,8 +86,6 @@ jQuery(document).ready(function($) {
                     alert(response.data.message);
                 }
                 currentBalanceEl.text(response.data.new_balance);
-                // --- THIS IS THE FIX ---
-                // Changed from loadBalanceHistory to loadBalanceAndHistory
                 loadBalanceAndHistory(userId);
             } else {
                  if (typeof showLMBModal === 'function') {
@@ -117,7 +116,7 @@ jQuery(document).ready(function($) {
         }).done(function(response) {
             if (response.success) {
                 const history = response.data.history;
-                currentBalanceEl.text(response.data.current_balance); // Always use the direct balance
+                currentBalanceEl.text(response.data.current_balance);
                 
                 if (history && history.length > 0) {
                     let historyHtml = history.map(item => `
@@ -138,4 +137,15 @@ jQuery(document).ready(function($) {
             }
         });
     }
+
+    // --- NEW: Listen for the custom event from the subscribe widget ---
+    $(document).on('lmb:balanceUpdated', function(event, data) {
+        // Check if a user is currently selected in this widget
+        const currentUserId = $('#lmb-user-id').val();
+        
+        // If the updated user is the one we are currently viewing, refresh the history
+        if (currentUserId && parseInt(currentUserId) === parseInt(data.user_id)) {
+            loadBalanceAndHistory(currentUserId);
+        }
+    });
 });

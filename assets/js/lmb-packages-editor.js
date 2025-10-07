@@ -14,11 +14,16 @@ jQuery(document).ready(function($) {
      */
     function renderPackageCard(pkg) {
         const description = pkg.description ? `<p>${pkg.trimmed_description}</p>` : '';
+        const visibility = pkg.client_visible ?
+            '<span class="lmb-package-card-visibility"><i class="fas fa-eye"></i> Visible</span>' :
+            '<span class="lmb-package-card-visibility"><i class="fas fa-eye-slash"></i> Caché</span>';
+
         return `
             <div class="lmb-package-card" data-package-id="${pkg.id}">
                 <div class="lmb-package-card-header">
                     <div>
                         <h4 class="lmb-package-card-title">${pkg.name}</h4>
+                        ${visibility}
                     </div>
                     <div class="lmb-package-card-actions">
                         <button class="lmb-edit-package-btn lmb-btn lmb-btn-sm lmb-btn-secondary"><i class="fas fa-pencil-alt"></i></button>
@@ -40,7 +45,7 @@ jQuery(document).ready(function($) {
     // Handle Form Submission (Create/Update)
     form.on('submit', function(e) {
         e.preventDefault();
-        
+
         const submitBtn = form.find('button[type="submit"]');
         submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
 
@@ -53,6 +58,7 @@ jQuery(document).ready(function($) {
             points: $('#package_points').val(),
             cost_per_ad: $('#package_cost').val(),
             description: $('#package_desc').val(),
+            client_visible: $('#package_client_visible').is(':checked') ? '1' : '0',
         };
 
         $.post(lmb_ajax_params.ajaxurl, data)
@@ -62,10 +68,15 @@ jQuery(document).ready(function($) {
                     const packageId = response.data.package.id;
                     const existingCard = packageList.find(`.lmb-package-card[data-package-id="${packageId}"]`);
                     const newCardHtml = renderPackageCard(response.data.package);
-                    
+
                     if (existingCard.length) {
                         existingCard.replaceWith(newCardHtml);
                     } else {
+                        // To handle the case where the list might be empty initially
+                        const noPackagesMessage = packageList.find('p');
+                        if (noPackagesMessage.length) {
+                            noPackagesMessage.remove();
+                        }
                         packageList.append(newCardHtml);
                     }
                     clearForm();
@@ -100,7 +111,8 @@ jQuery(document).ready(function($) {
                 $('#package_points').val(pkg.points);
                 $('#package_cost').val(pkg.cost_per_ad);
                 $('#package_desc').val(pkg.description);
-                
+                $('#package_client_visible').prop('checked', pkg.client_visible);
+
                 $('html, body').animate({ scrollTop: form.offset().top - 50 }, 300);
             } else {
                 showLMBModal('error', response.data.message || 'Could not fetch package data.');
@@ -135,12 +147,13 @@ jQuery(document).ready(function($) {
             card.css('opacity', 1);
         });
     });
-    
+
     // Clear Form Button
     clearBtn.on('click', clearForm);
 
     function clearForm() {
         form[0].reset();
         $('#package_id').val('');
+        $('#package_client_visible').prop('checked', true); // Ensure checkbox resets to checked
     }
 });

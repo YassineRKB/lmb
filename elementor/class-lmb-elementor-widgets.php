@@ -71,6 +71,7 @@ add_action('elementor/widgets/register', function($widgets_manager) {
         'LMB_Public_Ads_Dir_Widget' => __DIR__ . '/widgets/class-lmb-public-ads-dir-widget.php',
         'LMB_Generate_Newspaper_Widget' => __DIR__ . '/widgets/class-lmb-generate-newspaper-widget.php',
         'LMB_Balance_Manipulation_Widget' => __DIR__ . '/widgets/class-lmb-balance-manipulation-widget.php',
+        'LMB_Admin_Subscribe_User_Widget' => __DIR__ . '/widgets/class-lmb-admin-subscribe-user-widget.php', // <-- NEW WIDGET ADDED
     ];
 
     foreach ($widgets as $class_name => $file_path) {

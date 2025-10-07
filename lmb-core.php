@@ -11,7 +11,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('LMB_CORE_VERSION', '5.3.0');
+define('LMB_CORE_VERSION', '5.5.0'); // Updated version
 define('LMB_CORE_FILE', __FILE__);
 define('LMB_CORE_PATH', plugin_dir_path(__FILE__));
 define('LMB_CORE_URL', plugin_dir_url(__FILE__));
@@ -112,7 +112,8 @@ function lmb_register_all_assets() {
         'lmb-ads-directory-v2'          => 'assets/js/lmb-ads-directory-v2.js',
         'lmb-newspaper-directory-v2'    => 'assets/js/lmb-newspaper-directory-v2.js',
         'lmb-payments-management'       => 'assets/js/lmb-payments-management.js',
-        'lmb-generate-newspaper'        => 'assets/js/lmb-generate-newspaper.js', // Target script
+        'lmb-generate-newspaper'        => 'assets/js/lmb-generate-newspaper.js',
+        'lmb-admin-subscribe-user'      => 'assets/js/lmb-admin-subscribe-user.js',
     ];
 
     foreach ($scripts as $handle => $path) {
@@ -177,9 +178,16 @@ function lmb_register_all_assets() {
         // Also ensure admin styles/scripts needed in wp-admin are available
         wp_enqueue_style('lmb-admin-widgets-v2');
     }
+    
+    // --- NEW: Conditionally enqueue script for the user editor page ---
+    // This check is safe for both frontend and admin context.
+    if (is_page('user-editor')) {
+        wp_enqueue_script('lmb-admin-subscribe-user');
+    }
 }
 add_action('wp_enqueue_scripts', 'lmb_register_all_assets');
 add_action('admin_enqueue_scripts', 'lmb_register_all_assets');
+
 
 /**
  * Adds a rewrite rule to handle profile URLs like /profile/{userid}.
@@ -190,20 +198,26 @@ function lmb_add_profile_rewrite_rule() {
         'index.php?pagename=profile&userid=$matches[1]',
         'top'
     );
+    // Correct rewrite for user editor
+    add_rewrite_rule(
+        '^user-editor/(\d+)/?$',
+        'index.php?pagename=user-editor&user_id=$matches[1]',
+        'top'
+    );
 }
 add_action('init', 'lmb_add_profile_rewrite_rule');
 
+
 /**
- * Registers 'userid' as a public query variable so WordPress recognizes it.
- *
- * @param array $vars The array of existing public query variables.
- * @return array The modified array of query variables.
+ * Registers 'userid' and 'user_id' as a public query variable so WordPress recognizes it.
  */
 function lmb_register_query_vars($vars) {
     $vars[] = 'userid';
+    $vars[] = 'user_id'; // Add user_id as well
     return $vars;
 }
 add_filter('query_vars', 'lmb_register_query_vars');
+
 
 /**
  * PDF Preview Handler (Simulates PDF display by showing raw HTML)

@@ -34,6 +34,7 @@ class LMB_Ajax_Handlers {
             'lmb_generate_newspaper_preview',
             'lmb_approve_and_publish_newspaper',
             'lmb_discard_newspaper_draft', 'lmb_manipulate_balance',
+            'lmb_admin_subscribe_user_to_package',
             
         ];
         // --- MODIFICATION: Make auth actions public ---
@@ -62,7 +63,8 @@ class LMB_Ajax_Handlers {
         $admin_only_actions = [
             'lmb_fetch_inactive_clients_v2',
             'lmb_manage_inactive_client_v2',
-            'lmb_fetch_active_clients_v2', 'lmb_lock_active_client_v2'
+            'lmb_fetch_active_clients_v2', 'lmb_lock_active_client_v2',
+            'lmb_admin_subscribe_user_to_package',
         ];
         if (in_array($action, $admin_only_actions) && !current_user_can('manage_options')) {
              wp_send_json_error(['message' => 'Vous n\'avez pas la permission d\'effectuer cette action.'], 403);
@@ -289,36 +291,48 @@ class LMB_Ajax_Handlers {
 
     private static function lmb_save_package() {
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Accès refusé']);
-        
+
         $package_id = isset($_POST['package_id']) && !empty($_POST['package_id']) ? intval($_POST['package_id']) : 0;
         $name = sanitize_text_field($_POST['name']);
         $price = floatval($_POST['price']);
         $points = intval($_POST['points']);
         $cost = intval($_POST['cost_per_ad']);
         $desc = wp_kses_post($_POST['description']);
+        $client_visible = isset($_POST['client_visible']) && $_POST['client_visible'] === '1'; // <-- GET NEW VALUE
 
         if (!$name || !$price || !$points || !$cost) {
             wp_send_json_error(['message' => 'Tous les champs sauf la description sont obligatoires.']);
         }
 
         $post_data = ['post_title' => $name, 'post_content' => $desc, 'post_type' => 'lmb_package', 'post_status' => 'publish'];
-        
+
         $result = $package_id ? wp_update_post(array_merge(['ID' => $package_id], $post_data), true) : wp_insert_post($post_data, true);
-        
+
         if (is_wp_error($result)) {
             wp_send_json_error(['message' => $result->get_error_message()]);
         }
-        
+
         $new_pkg_id = $package_id ?: $result;
         update_post_meta($new_pkg_id, 'price', $price);
         update_post_meta($new_pkg_id, 'points', $points);
         update_post_meta($new_pkg_id, 'cost_per_ad', $cost);
-        
+        update_post_meta($new_pkg_id, 'client_visible', $client_visible); // <-- SAVE NEW VALUE
+
         LMB_Ad_Manager::log_activity(sprintf('Forfait "%s" %s', $name, $package_id ? 'mis à jour' : 'créé'));
-        
+
+        // <-- MODIFIED RESPONSE TO INCLUDE NEW DATA
         wp_send_json_success([
             'message' => 'Forfait enregistré avec succès.',
-            'package' => ['id' => $new_pkg_id, 'name' => $name, 'price' => $price, 'points' => $points, 'cost_per_ad' => $cost, 'description' => $desc, 'trimmed_description' => wp_trim_words($desc, 20)]
+            'package' => [
+                'id' => $new_pkg_id,
+                'name' => $name,
+                'price' => $price,
+                'points' => $points,
+                'cost_per_ad' => $cost,
+                'description' => $desc,
+                'trimmed_description' => wp_trim_words($desc, 20),
+                'client_visible' => $client_visible
+            ]
         ]);
     }
     
@@ -1977,32 +1991,81 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['html' => $html, 'pagination' => $pagination_html]);
     }
 
-    // --- NEW FUNCTION: fetch package data for admin ---
+    // --- REVISED FUNCTION: fetch package data for admin ---
     private static function lmb_get_package_data() {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Accès refusé']);
         }
-        
         $package_id = isset($_POST['package_id']) ? intval($_POST['package_id']) : 0;
         if (!$package_id) {
             wp_send_json_error(['message' => 'ID de forfait non valide']);
         }
-        
         $package_post = get_post($package_id);
         if (!$package_post || $package_post->post_type !== 'lmb_package') {
             wp_send_json_error(['message' => 'Forfait non trouvé']);
         }
-        
+
+        // <-- MODIFIED RESPONSE TO INCLUDE NEW DATA
         $package_data = [
-            'id'          => $package_post->ID,
-            'name'        => $package_post->post_title,
-            'description' => $package_post->post_content,
-            'price'       => get_post_meta($package_id, 'price', true),
-            'points'      => get_post_meta($package_id, 'points', true),
-            'cost_per_ad' => get_post_meta($package_id, 'cost_per_ad', true),
+            'id'             => $package_post->ID,
+            'name'           => $package_post->post_title,
+            'description'    => $package_post->post_content,
+            'price'          => get_post_meta($package_id, 'price', true),
+            'points'         => get_post_meta($package_id, 'points', true),
+            'cost_per_ad'    => get_post_meta($package_id, 'cost_per_ad', true),
+            'client_visible' => (bool) get_post_meta($package_id, 'client_visible', true), // <-- GET NEW VALUE
         ];
 
         wp_send_json_success(['package' => $package_data]);
+    }
+
+    // --- NEW FUNCTION: Admin subscribes user to package directly ---
+    private static function lmb_admin_subscribe_user_to_package() {
+        // Security is already checked in handle_request()
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $package_id = isset($_POST['package_id']) ? intval($_POST['package_id']) : 0;
+
+        if (!$user_id || !$package_id) {
+            wp_send_json_error(['message' => 'ID utilisateur ou ID de package manquant.'], 400);
+        }
+
+        $package = get_post($package_id);
+        $user = get_user_by('ID', $user_id);
+
+        if (!$package || $package->post_type !== 'lmb_package' || !$user) {
+            wp_send_json_error(['message' => 'Utilisateur ou package non valide.'], 404);
+        }
+
+        $price = get_post_meta($package_id, 'price', true);
+        $points = get_post_meta($package_id, 'points', true);
+
+        // Create a payment post to track revenue
+        $payment_id = wp_insert_post([
+            'post_title'   => 'Admin Grant: ' . $package->post_title . ' for ' . $user->user_login,
+            'post_type'    => 'lmb_payment',
+            'post_status'  => 'publish',
+            'post_author'  => $user_id,
+        ]);
+
+        if (is_wp_error($payment_id)) {
+            wp_send_json_error(['message' => 'Erreur lors de la création de l\'enregistrement de paiement.']);
+        }
+
+        // Add metadata to the payment post for record-keeping
+        update_post_meta($payment_id, 'package_id', $package_id);
+        update_post_meta($payment_id, 'payment_status', 'completed'); // Marked as complete since it's an admin action
+        update_post_meta($payment_id, 'package_price', $price);
+        update_post_meta($payment_id, 'payment_method', 'admin_grant');
+
+        // Add the points to the user's account
+        $reason = sprintf(
+            'Package "%s" accordé par l\'administrateur %s.',
+            $package->post_title,
+            wp_get_current_user()->user_login
+        );
+        LMB_Points::add($user_id, $points, $reason);
+
+        wp_send_json_success(['message' => 'L\'utilisateur a été souscrit avec succès et les points ont été ajoutés.']);
     }
 
     // --- REVISED FUNCTION: fetch eligible ads for newspaper creation ---

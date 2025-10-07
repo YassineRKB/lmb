@@ -5,17 +5,16 @@ if (!defined('ABSPATH')) exit;
 
 class LMB_Subscribe_Package_Widget extends Widget_Base {
     public function get_name() { return 'lmb_subscribe_package'; }
-    //public function get_title() { return __('LMB Packages Pricing Table','lmb-core'); }
     public function get_title() { return __('Tableau de Prix des Packages LMB','lmb-core'); }
     public function get_icon() { return 'eicon-price-table'; }
-    public function get_categories(){ return ['lmb-user-widgets-v2']; } // Changed category
+    public function get_categories(){ return ['lmb-user-widgets-v2']; }
 
     public function get_script_depends() {
         return ['lmb-core'];
     }
     
     public function get_style_depends() {
-        return ['lmb-user-widgets-v2']; // Changed to V2 styles
+        return ['lmb-user-widgets-v2'];
     }
 
     protected function render() {
@@ -24,7 +23,23 @@ class LMB_Subscribe_Package_Widget extends Widget_Base {
             return;
         }
 
-        $packages = get_posts(['post_type'=>'lmb_package','post_status'=>'publish','numberposts'=>-1, 'orderby' => 'meta_value_num', 'meta_key' => 'price', 'order' => 'ASC']);
+        // --- MODIFIED QUERY ---
+        $args = [
+            'post_type' => 'lmb_package',
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'orderby' => 'meta_value_num',
+            'meta_key' => 'price',
+            'order' => 'ASC',
+            'meta_query' => [
+                [
+                    'key' => 'client_visible',
+                    'value' => '1',
+                    'compare' => '=',
+                ]
+            ]
+        ];
+        $packages = get_posts($args);
         
         if (!$packages) {
             echo '<div class="lmb-notice"><p>Aucun package d\'abonnement n\'est disponible pour le moment.</p></div>';
