@@ -7,7 +7,7 @@ jQuery(document).ready(function($) {
         const loginResponse = loginForm.find('.lmb-form-response');
         const signupResponse = signupForm.find('.lmb-form-response');
         
-        // Containers
+        // Containers for type-specific fields
         const professionalFields = $('#lmb-signup-professional-fields');
         const regularFields = $('#lmb-signup-regular-fields');
         const commonFields = signupForm.find('.lmb-common-fields');
