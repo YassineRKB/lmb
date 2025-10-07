@@ -1635,7 +1635,30 @@ class LMB_Ajax_Handlers {
         ];
         
         // Apply filters
-        // ... (filter logic remains the same)
+        if (!empty($filters['filter_ref']) && is_numeric($filters['filter_ref'])) {
+            $args['p'] = intval($filters['filter_ref']);
+        }
+        if (!empty($filters['filter_company'])) {
+            $args['meta_query'][] = [
+                'key' => 'company_name',
+                'value' => sanitize_text_field($filters['filter_company']),
+                'compare' => 'LIKE'
+            ];
+        }
+        if (!empty($filters['filter_type'])) {
+            $args['meta_query'][] = [   
+                'key' => 'ad_type',
+                'value' => sanitize_text_field($filters['filter_type']),
+                'compare' => 'LIKE'
+            ];
+        }
+        if (!empty($filters['filter_date'])) {
+            $args['date_query'] = [[
+                'year' => date('Y', strtotime($filters['filter_date'])),
+                'month' => date('m', strtotime($filters['filter_date'])),
+                'day' => date('d', strtotime($filters['filter_date'])),
+            ]];
+        }
 
         $ads_query = new WP_Query($args);
         $html = '';
