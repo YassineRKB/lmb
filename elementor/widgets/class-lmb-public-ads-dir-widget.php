@@ -39,18 +39,27 @@ class LMB_Public_Ads_Dir_Widget extends Widget_Base {
 
         // This widget ONLY shows published ads to any visitor.
         if ($ad && $ad->post_type == 'lmb_legal_ad' && $lmb_status === 'published') {
-            $publication_date = get_post_meta($ad_id, 'approved_date', true);
-            if(empty($publication_date)) {
-                $publication_date = get_the_date('d F Y', $ad_id);
+            
+            // --- UPDATED LOGIC: Rely solely on approved_date meta, which is updated by Quick Edit ---
+            $publication_date_meta = get_post_meta($ad_id, 'approved_date', true);
+            
+            if(empty($publication_date_meta)) {
+                // Secondary Fallback: Use the core post_date, but format it consistently
+                $date_to_format = get_the_date('Y-m-d', $ad_id);
             } else {
-                $publication_date = date_i18n('d F Y', strtotime($publication_date));
+                $date_to_format = $publication_date_meta;
             }
+
+            // Convert the date string (Y-m-d) to the desired display format (d F Y)
+            $publication_date_display = date_i18n('d F Y', strtotime($date_to_format));
+            // --- END UPDATED LOGIC ---
+            
             ?>
             <div class="lmb-ads-directory-v2 lmb-single-ad-container">
                 <div class="lmb-single-ad-header">
                     <div>
                         <h1><?php echo esc_html($ad->post_title); ?></h1>
-                        <p class="lmb-ad-publication-date">Annonce Publiée le <?php echo esc_html($publication_date); ?></p>
+                        <p class="lmb-ad-publication-date">Annonce Publiée le <?php echo esc_html($publication_date_display); ?></p>
                     </div>
                     <div class="lmb-single-ad-actions">
                         <a href="<?php echo esc_url(home_url('/les-annonces/')); ?>" class="lmb-btn lmb-btn-view">

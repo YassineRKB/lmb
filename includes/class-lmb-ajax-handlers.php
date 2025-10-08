@@ -662,8 +662,12 @@ class LMB_Ajax_Handlers {
         if (!current_user_can('edit_posts')) wp_send_json_error(['message' => 'Permission refusée.']);
         
         $post_id = intval($_POST['post_id']);
+        
+        // This function explicitly calls the handler to regenerate the text.
+        // This is the action that applies the date change to the 'full_text' field.
         LMB_Form_Handler::generate_and_save_formatted_text($post_id);
         
+        // Return the new content, which should include the new date.
         wp_send_json_success(['new_content' => get_post($post_id)->post_content]);
     }
 
@@ -2103,7 +2107,7 @@ class LMB_Ajax_Handlers {
         // Calculate GMT time
         $gmt_time = get_gmt_from_date($datetime_mysql);
 
-        // Update the post date fields
+        // 1. Update the core post date fields
         $result = wp_update_post([
             'ID' => $post_id,
             'post_date' => $datetime_mysql,
@@ -2112,6 +2116,17 @@ class LMB_Ajax_Handlers {
 
         if (is_wp_error($result) || $result === 0) {
             wp_send_json_error(['message' => 'Échec de la mise à jour de la date : ' . (is_wp_error($result) ? $result->get_error_message() : 'Unknown error')], 500);
+        }
+        
+        // 2. CRITICAL FIX: Update the custom 'approved_date' meta field.
+        // This is the date field used by list table column sorting and public directory filtering.
+        $date_only_mysql = date('Y-m-d', $timestamp);
+        update_post_meta($post_id, 'approved_date', $date_only_mysql);
+        
+        // 3. RESTORING AD CONTENT REGENERATION STEP:
+        // This ensures the internal ad text is updated with the new date, resolving the user's issue.
+        if (class_exists('LMB_Form_Handler') && method_exists('LMB_Form_Handler', 'generate_and_save_formatted_text')) {
+            LMB_Form_Handler::generate_and_save_formatted_text($post_id);
         }
 
         // The date format required by the JS for subsequent quick edits (YYYY-MM-DDTHH:MM:SS)
