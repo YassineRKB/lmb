@@ -747,7 +747,7 @@ class LMB_Ajax_Handlers {
                 
                 // Client Name Logic
                 $client_author_id = get_post_field('post_author', $post_id);
-                $client = get_userdata($client_author_id);
+                $client_name_to_display = LMB_User::get_client_display_name($client_author_id);
                 $client_name_to_display = 'N/A'; 
 
                 if ($client) {
@@ -1084,25 +1084,39 @@ class LMB_Ajax_Handlers {
         $user->set_role('client');
         update_user_meta($user_id, 'lmb_user_status', 'inactive');
         update_user_meta($user_id, 'lmb_client_type', $type);
-
+        
+        // --- START: NEW DISPLAY NAME LOGIC ---
+        $update_args = ['ID' => $user_id];
         if ($type === 'regular') {
-            update_user_meta($user_id, 'first_name', sanitize_text_field($data['first_name']));
-            update_user_meta($user_id, 'last_name', sanitize_text_field($data['last_name']));
+            $first_name = sanitize_text_field($data['first_name']);
+            $last_name = sanitize_text_field($data['last_name']);
+            $update_args['first_name'] = $first_name;
+            $update_args['last_name'] = $last_name;
+            $update_args['display_name'] = trim($first_name . ' ' . $last_name);
+            
             update_user_meta($user_id, 'phone_number', sanitize_text_field($data['phone_regular']));
             update_user_meta($user_id, 'city', sanitize_text_field($data['city_regular']));
         } else { // Professional
-            update_user_meta($user_id, 'company_name', sanitize_text_field($data['company_name']));
+            $company_name = sanitize_text_field($data['company_name']);
+            $update_args['display_name'] = $company_name;
+            
+            update_user_meta($user_id, 'company_name', $company_name);
             update_user_meta($user_id, 'company_hq', sanitize_text_field($data['company_hq']));
             update_user_meta($user_id, 'city', sanitize_text_field($data['city_professional']));
             update_user_meta($user_id, 'company_rc', sanitize_text_field($data['company_rc']));
             update_user_meta($user_id, 'phone_number', sanitize_text_field($data['phone_professional']));
         }
+        
+        // Set the core display name
+        wp_update_user($update_args);
+        // --- END: NEW DISPLAY NAME LOGIC ---
 
         // Notify admins of new registration
         LMB_Notification_Manager::add(1, 'new_user', 'Nouvelle Inscription Utilisateur', "Un nouvel utilisateur ($email) s'est inscrit et nécessite une approbation.");
         
         wp_send_json_success();
     }
+
     // --- REVISED FUNCTION: v2 fetch inactive clients with search, pagination, and approve/deny actions ---
     private static function lmb_fetch_inactive_clients_v2() {
         if (!current_user_can('manage_options')) {
@@ -1346,21 +1360,29 @@ class LMB_Ajax_Handlers {
         $current_user_id = get_current_user_id();
         $is_admin = current_user_can('manage_options');
 
-        // Security check: Either you are an admin, or you are editing your own profile.
         if (!$is_admin && $current_user_id !== $user_id_to_update) {
             wp_send_json_error(['message' => 'Vous n\'avez pas la permission de modifier ce profil.'], 403);
             return;
         }
         
-        $user_data = [];
-        // Only admins can edit these restricted fields
+        $user_data = ['ID' => $user_id_to_update];
+
         if ($is_admin) {
+            // --- START: MODIFIED ADMIN LOGIC ---
             if (isset($data['first_name'])) $user_data['first_name'] = sanitize_text_field($data['first_name']);
             if (isset($data['last_name'])) $user_data['last_name'] = sanitize_text_field($data['last_name']);
-            if (isset($data['company_name'])) update_user_meta($user_id_to_update, 'company_name', sanitize_text_field($data['company_name']));
-            if (isset($data['company_rc'])) update_user_meta($user_id_to_update, 'company_rc', sanitize_text_field($data['company_rc']));
             
-            // --- NEW: Handle role and client type updates ---
+            // Handle display name based on client type
+            $client_type = get_user_meta($user_id_to_update, 'lmb_client_type', true);
+            if ($client_type === 'professional' && isset($data['company_name'])) {
+                $company_name = sanitize_text_field($data['company_name']);
+                update_user_meta($user_id_to_update, 'company_name', $company_name);
+                $user_data['display_name'] = $company_name; // Set display name to company name
+            } else {
+                 $user_data['display_name'] = trim($user_data['first_name'] . ' ' . $user_data['last_name']);
+            }
+            
+            if (isset($data['company_rc'])) update_user_meta($user_id_to_update, 'company_rc', sanitize_text_field($data['company_rc']));
             if (isset($data['lmb_user_role'])) {
                 $user = new WP_User($user_id_to_update);
                 $user->set_role(sanitize_key($data['lmb_user_role']));
@@ -1368,22 +1390,14 @@ class LMB_Ajax_Handlers {
             if (isset($data['lmb_client_type'])) {
                 update_user_meta($user_id_to_update, 'lmb_client_type', sanitize_key($data['lmb_client_type']));
             }
+            // --- END: MODIFIED ADMIN LOGIC ---
         }
         
-        // Fields all users can edit
         if (isset($data['company_hq'])) update_user_meta($user_id_to_update, 'company_hq', sanitize_text_field($data['company_hq']));
         if (isset($data['city'])) update_user_meta($user_id_to_update, 'city', sanitize_text_field($data['city']));
         if (isset($data['phone_number'])) update_user_meta($user_id_to_update, 'phone_number', sanitize_text_field($data['phone_number']));
 
-        // Update the user display name if it has been changed (for regular users)
-        if (isset($data['first_name']) && isset($data['last_name'])) {
-            $user_data['display_name'] = sanitize_text_field($data['first_name']) . ' ' . sanitize_text_field($data['last_name']);
-        }
-
-        if(!empty($user_data)){
-            $user_data['ID'] = $user_id_to_update;
-            wp_update_user($user_data);
-        }
+        wp_update_user($user_data);
 
         wp_send_json_success();
     }
