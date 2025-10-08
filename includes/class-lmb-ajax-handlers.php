@@ -694,6 +694,7 @@ class LMB_Ajax_Handlers {
         $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
         parse_str($_POST['filters'] ?? '', $filters);
 
+        // --- (The WP_Query arguments are unchanged) ---
         $args = [
             'post_type' => 'lmb_legal_ad',
             'post_status' => ['publish', 'draft', 'pending'],
@@ -745,44 +746,31 @@ class LMB_Ajax_Handlers {
                 $post_id = get_the_ID();
                 $status = get_post_meta($post_id, 'lmb_status', true) ?: 'draft';
                 
-                // Client Name Logic
+                // =========================================================================
+                // --- START: FINAL CORRECTED CLIENT NAME LOGIC ---
+                // =========================================================================
                 $client_author_id = get_post_field('post_author', $post_id);
-                $client_name_to_display = LMB_User::get_client_display_name($client_author_id);
-                $client_name_to_display = 'N/A'; 
-
-                if ($client) {
-                    $client_type = get_user_meta($client_author_id, 'lmb_client_type', true);
-                    $company_name = get_user_meta($client_author_id, 'company_name', true);
-                    if ($client_type === 'professional' && !empty($company_name)) {
-                        $client_name_to_display = $company_name;
-                    } else {
-                        $client_name_to_display = $client->display_name;
-                    }
-                    if (empty(trim($client_name_to_display))) {
-                        $client_name_to_display = $client->user_login;
-                    }
-                }
+                $client = get_userdata($client_author_id); // Get the user object
                 
+                // Check if the client exists before getting the name
+                if ($client) {
+                    $client_name_to_display = LMB_User::get_client_display_name($client);
+                } else {
+                    $client_name_to_display = 'N/A'; // Fallback for ads with no author
+                }
                 // =========================================================================
-                // START: CORRECTED "APPROVED BY" LOGIC
+                // --- END: FINAL CORRECTED CLIENT NAME LOGIC ---
                 // =========================================================================
+                
                 $approved_by_id = get_post_meta($post_id, 'approved_by', true);
                 $approved_by = $approved_by_id ? get_userdata($approved_by_id) : null;
 
-                // If 'approved_by' meta is not set, check if the ad was published by an admin.
                 if (!$approved_by && $status === 'published') {
-                    $author_data = get_userdata($client_author_id); // We already have the author object in $client
-                    
-                    // Check if the author is an administrator
                     if ($client && in_array('administrator', (array)$client->roles)) {
-                        // If so, the author is considered the approver.
                         $approved_by = $client;
                     }
                 }
-                // =========================================================================
-                // END: CORRECTED "APPROVED BY" LOGIC
-                // =========================================================================
-
+                
                 $accuse_url = get_post_meta($post_id, 'lmb_accuse_pdf_url', true);
                 $journal_display = '<span class="lamv2-cell-placeholder">-</span>';
                 $final_journal_id = get_post_meta($post_id, 'lmb_final_journal_id', true);
@@ -807,12 +795,9 @@ class LMB_Ajax_Handlers {
                 echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
                 echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
                 echo '<td>' . get_the_date('d-m-Y') . '</td>';
-                echo '<td>' . esc_html($client_name_to_display) . '</td>';
+                echo '<td>' . $client_name_to_display . '</td>'; // This is now fixed
                 echo '<td><span class="lamv2-status-badge lamv2-status-' . esc_attr($status) . '">' . esc_html(ucwords(str_replace('_', ' ', $status))) . '</span></td>';
-                
-                // This column is now fixed
                 echo '<td>' . ($approved_by ? esc_html($approved_by->display_name) : '<span class="lamv2-cell-placeholder">N/A</span>') . '</td>';
-                
                 echo '<td>';
                 if ($accuse_url) {
                     echo '<a href="' . esc_url($accuse_url) . '" target="_blank" class="lamv2-btn lamv2-btn-sm lamv2-btn-text-link">Voir</a>';
@@ -820,9 +805,7 @@ class LMB_Ajax_Handlers {
                     echo '<span class="lamv2-cell-placeholder">-</span>';
                 }
                 echo '</td>';
-                
                 echo '<td>' . $journal_display . '</td>';
-
                 echo '<td class="lamv2-actions-cell">';
                 if ($status === 'published' && !empty($accuse_url) && !empty($final_journal_id)) {
                     echo '<span class="lamv2-cell-placeholder">Terminé</span>';
@@ -837,7 +820,6 @@ class LMB_Ajax_Handlers {
                     }
                 }
                 echo '</td>';
-
                 echo '</tr>';
             }
         } else {
@@ -847,12 +829,9 @@ class LMB_Ajax_Handlers {
         wp_reset_postdata();
 
         $pagination_html = paginate_links([
-            'base' => add_query_arg('paged', '%#%'),
-            'format' => '',
-            'current' => $paged,
-            'total' => $query->max_num_pages,
-            'prev_text' => '&laquo;',
-            'next_text' => '&raquo;',
+            'base' => add_query_arg('paged', '%#%'), 'format' => '',
+            'current' => $paged, 'total' => $query->max_num_pages,
+            'prev_text' => '&laquo;', 'next_text' => '&raquo;',
             'add_args' => false
         ]);
         
