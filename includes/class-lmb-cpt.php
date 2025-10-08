@@ -13,6 +13,13 @@ class LMB_CPT {
         add_filter('post_row_actions', [__CLASS__, 'add_regenerate_row_action'], 10, 2);
         add_action('admin_init', [__CLASS__, 'handle_regenerate_action']);
         add_action('admin_notices', [__CLASS__, 'show_regenerated_notice']);
+
+        // --- New Hooks for Legal Ad Date Quick Edit ---
+        add_filter('manage_lmb_legal_ad_posts_columns', [__CLASS__, 'add_date_column']);
+        add_action('manage_lmb_legal_ad_posts_custom_column', [__CLASS__, 'render_date_column'], 10, 2);
+        add_action('quick_edit_custom_box', [__CLASS__, 'quick_edit_date_field'], 10, 2);
+        add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_assets']);
+        // --- End New Hooks ---
     }
 
     public static function register_post_types() {
@@ -223,5 +230,113 @@ class LMB_CPT {
         if (isset($_GET['lmb_regenerated']) && $_GET['lmb_regenerated'] == '1') {
             echo '<div class="notice notice-success is-dismissible"><p>' . __('Annonce régénérée avec succès.', 'lmb-core') . '</p></div>';
         }
+    }
+
+    /**
+     * Adds the Date column to the lmb_legal_ad list table for Quick Edit access.
+     */
+    public static function add_date_column($columns) {
+        // Only run for the lmb_legal_ad post type list table
+        global $post_type;
+        if ($post_type !== 'lmb_legal_ad') {
+            return $columns;
+        }
+
+        $new_columns = [];
+        foreach ($columns as $key => $title) {
+            $new_columns[$key] = $title;
+            // Insert our custom column right after the 'Title' column for better visibility
+            if ($key === 'title') {
+                $new_columns['lmb_date'] = __('Date Pub.', 'lmb-core');
+            }
+        }
+        
+        // This handles cases where 'title' might not be the right insertion point, 
+        // ensuring the new column is still added (e.g., before the default 'date' column).
+        if (!isset($new_columns['lmb_date']) && isset($new_columns['date'])) {
+            $date_column = $new_columns['date'];
+            unset($new_columns['date']);
+            $new_columns['lmb_date'] = __('Date Pub.', 'lmb-core');
+            $new_columns['date'] = $date_column;
+        }
+
+        return $new_columns;
+    }
+
+    /**
+     * Renders the content for the custom 'lmb_date' column.
+     * It displays the current post date and the data required for Quick Edit.
+     */
+    public static function render_date_column($column, $post_id) {
+        if ($column === 'lmb_date') {
+            $post = get_post($post_id);
+            
+            // Format the date for the HTML datetime-local input (YYYY-MM-DDTHH:MM)
+            $datetime_input_format = get_the_date('Y-m-d\TH:i:s', $post_id);
+            // Get the display format (Date and Time)
+            $display_format = get_option('date_format') . ' ' . get_option('time_format');
+
+            // The link acts as the Quick Edit launcher when clicked (handled by JS)
+            echo '<a href="#" class="lmb-date-quick-edit" data-post-id="' . $post_id . '" data-post-date="' . esc_attr($datetime_input_format) . '">' . date_i18n($display_format, strtotime($post->post_date)) . '</a>';
+
+            // Hidden element for the JS to easily identify the row if needed, though data-post-id on the link is primary
+            echo '<div class="hidden" id="lmb_ad_post_id_' . $post_id . '"></div>';
+        }
+    }
+
+    /**
+     * Outputs the custom date field in the Quick Edit section for lmb_legal_ad posts.
+     */
+    public static function quick_edit_date_field($column_name, $post_type) {
+        if ($post_type !== 'lmb_legal_ad' || $column_name !== 'lmb_date') {
+            return;
+        }
+
+        // We use WordPress's inline-edit-col-right and inline-edit-date classes for native look and feel
+        ?>
+        <fieldset class="inline-edit-col-right inline-edit-date">
+            <div class="inline-edit-col inline-edit-lmb-date">
+                <label class="alignleft">
+                    <span class="title"><?php _e('Date & Heure de Publication', 'lmb-core'); ?></span>
+                    <input type="datetime-local" name="lmb_post_date" value="" class="lmb_post_date_input" />
+                    <span class="lmb-date-notice notice-alt notice-error" style="display:none; margin-top:5px;"></span>
+                </label>
+            </div>
+        </fieldset>
+        <?php
+    }
+
+    /**
+     * Enqueues the necessary admin scripts for Quick Edit functionality.
+     */
+    public static function enqueue_admin_assets($hook) {
+        global $post_type;
+        // Only load on the legal ads list page
+        if ($hook !== 'edit.php' || $post_type !== 'lmb_legal_ad') {
+            return;
+        }
+        
+        // The script that handles the quick edit interaction and AJAX
+        $plugin_url = plugin_dir_url(__FILE__);
+        
+        wp_enqueue_script(
+            'lmb-quick-edit',
+            $plugin_url . '../assets/js/lmb-quick-edit.js',
+            ['jquery', 'inline-edit-post'], // Depend on jQuery and WordPress's inline-edit script
+            false, // Placeholder for version
+            true
+        );
+        
+        // Localize script for AJAX parameters
+        wp_localize_script(
+            'lmb-quick-edit',
+            'lmb_quick_edit_vars',
+            [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce'    => wp_create_nonce('lmb_quick_edit_date_nonce'),
+                'error_message' => __('Erreur lors de la mise à jour de la date.', 'lmb-core'),
+                'date_error_message' => __('Veuillez saisir une date et heure valides.', 'lmb-core'),
+            ]
+        );
     }
 }

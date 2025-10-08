@@ -35,6 +35,7 @@ class LMB_Ajax_Handlers {
             'lmb_approve_and_publish_newspaper',
             'lmb_discard_newspaper_draft', 'lmb_manipulate_balance',
             'lmb_admin_subscribe_user_to_package',
+            'lmb_update_ad_date',
             
         ];
         // --- MODIFICATION: Make auth actions public ---
@@ -49,10 +50,16 @@ class LMB_Ajax_Handlers {
     }
 
     public static function handle_request() {
-        check_ajax_referer('lmb_nonce', 'nonce');
-        
-        $public_actions = ['lmb_login_v2', 'lmb_signup_v2', 'lmb_fetch_public_ads', 'lmb_fetch_newspapers_v2'];
         $action = isset($_POST['action']) ? sanitize_key($_POST['action']) : '';
+
+        // Actions that use custom nonces or are public bypass the default nonce check
+        $custom_nonce_actions = ['lmb_update_ad_date'];
+        $public_actions = ['lmb_login_v2', 'lmb_signup_v2', 'lmb_fetch_public_ads', 'lmb_fetch_newspapers_v2'];
+        
+        if (!in_array($action, array_merge($custom_nonce_actions, $public_actions))) {
+            // This is the default nonce check from the original file
+            check_ajax_referer('lmb_nonce', 'nonce');
+        }
 
         if (!in_array($action, $public_actions) && !is_user_logged_in()) {
             wp_send_json_error(['message' => 'Vous devez être connecté.'], 403);
@@ -2066,6 +2073,62 @@ class LMB_Ajax_Handlers {
         LMB_Points::add($user_id, $points, $reason);
 
         wp_send_json_success(['message' => 'L\'utilisateur a été souscrit avec succès et les points ont été ajoutés.']);
+    }
+
+    // --- NEW FUNCTION: Quick Edit Ad Date ---
+    private static function lmb_update_ad_date() {
+        // Use the specific nonce defined in LMB_CPT::enqueue_admin_assets (passed as 'security')
+        check_ajax_referer('lmb_quick_edit_date_nonce', 'security');
+
+        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+        $new_date_str = isset($_POST['new_date']) ? sanitize_text_field($_POST['new_date']) : '';
+
+        if (!$post_id || empty($new_date_str)) {
+            wp_send_json_error(['message' => 'ID d\'annonce ou nouvelle date manquant.'], 400);
+        }
+
+        // Check if the current user has permission to edit this specific post
+        if (!current_user_can('edit_post', $post_id)) {
+            wp_send_json_error(['message' => 'Vous n\'avez pas la permission de modifier la date de cette annonce.'], 403);
+        }
+
+        // Convert the HTML datetime-local format (YYYY-MM-DDTHH:MM) to a MySQL datetime string
+        $datetime_mysql = str_replace('T', ' ', $new_date_str) . ':00'; // Append seconds
+        $timestamp = strtotime($datetime_mysql);
+        
+        if ($timestamp === false) {
+             wp_send_json_error(['message' => 'Format de date/heure non valide.'], 400);
+        }
+
+        // Calculate GMT time
+        $gmt_time = get_gmt_from_date($datetime_mysql);
+
+        // Update the post date fields
+        $result = wp_update_post([
+            'ID' => $post_id,
+            'post_date' => $datetime_mysql,
+            'post_date_gmt' => $gmt_time,
+        ], true);
+
+        if (is_wp_error($result) || $result === 0) {
+            wp_send_json_error(['message' => 'Échec de la mise à jour de la date : ' . (is_wp_error($result) ? $result->get_error_message() : 'Unknown error')], 500);
+        }
+
+        // The date format required by the JS for subsequent quick edits (YYYY-MM-DDTHH:MM:SS)
+        $new_date_for_input = date('Y-m-d\TH:i:s', $timestamp);
+        
+        // The display format shown in the list table (e.g., "Oct 08, 2025 20:20")
+        $new_display_date = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $timestamp);
+        
+        // Log the change
+        $user = wp_get_current_user();
+        LMB_Ad_Manager::log_activity(sprintf('Date de publication de l\'annonce #%d mise à jour manuellement par %s à %s.', $post_id, $user->user_login, $new_display_date));
+
+        wp_send_json_success([
+            'message' => 'Date mise à jour avec succès.',
+            'new_display_date' => $new_display_date,
+            'new_date_for_input' => $new_date_for_input,
+        ]);
     }
 
     // --- REVISED FUNCTION: fetch eligible ads for newspaper creation ---
