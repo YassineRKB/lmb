@@ -2081,69 +2081,52 @@ class LMB_Ajax_Handlers {
 
     // --- NEW FUNCTION: Quick Edit Ad Date ---
     private static function lmb_update_ad_date() {
-        // Use the specific nonce defined in LMB_CPT::enqueue_admin_assets (passed as 'security')
-        check_ajax_referer('lmb_quick_edit_date_nonce', 'security');
-
+        // 1. Sanitize and retrieve POST data
         $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
         $new_date_str = isset($_POST['new_date']) ? sanitize_text_field($_POST['new_date']) : '';
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field($_POST['nonce']) : '';
 
-        if (!$post_id || empty($new_date_str)) {
-            wp_send_json_error(['message' => 'ID d\'annonce ou nouvelle date manquant.'], 400);
+        // 2. Security: Verify the nonce and user permissions
+        if (!wp_verify_nonce($nonce, 'lmb_update_ad_date_' . $post_id)) {
+            wp_send_json_error(['message' => 'Security check failed.'], 403);
         }
-
-        // Check if the current user has permission to edit this specific post
         if (!current_user_can('edit_post', $post_id)) {
-            wp_send_json_error(['message' => 'Vous n\'avez pas la permission de modifier la date de cette annonce.'], 403);
+            wp_send_json_error(['message' => 'Permission denied.'], 403);
+        }
+        if (!$post_id || empty($new_date_str)) {
+            wp_send_json_error(['message' => 'Missing required data.'], 400);
         }
 
-        // Convert the HTML datetime-local format (YYYY-MM-DDTHH:MM) to a MySQL datetime string
-        $datetime_mysql = str_replace('T', ' ', $new_date_str) . ':00'; // Append seconds
-        $timestamp = strtotime($datetime_mysql);
-        
-        if ($timestamp === false) {
-             wp_send_json_error(['message' => 'Format de date/heure non valide.'], 400);
+        // 3. Date Processing: Preserve original time and update the post
+        $original_post = get_post($post_id);
+        if (!$original_post) {
+            wp_send_json_error(['message' => 'Post not found.'], 404);
         }
+        $original_time = date('H:i:s', strtotime($original_post->post_date));
+        $full_new_date = $new_date_str . ' ' . $original_time;
 
-        // Calculate GMT time
-        $gmt_time = get_gmt_from_date($datetime_mysql);
-
-        // 1. Update the core post date fields
         $result = wp_update_post([
-            'ID' => $post_id,
-            'post_date' => $datetime_mysql,
-            'post_date_gmt' => $gmt_time,
+            'ID'            => $post_id,
+            'post_date'     => $full_new_date,
+            'post_date_gmt' => get_gmt_from_date($full_new_date),
+            'edit_date'     => true,
         ], true);
 
-        if (is_wp_error($result) || $result === 0) {
-            wp_send_json_error(['message' => 'Échec de la mise à jour de la date : ' . (is_wp_error($result) ? $result->get_error_message() : 'Unknown error')], 500);
+        if (is_wp_error($result)) {
+            wp_send_json_error(['message' => 'Failed to update post date: ' . $result->get_error_message()]);
         }
-        
-        // 2. CRITICAL FIX: Update the custom 'approved_date' meta field.
-        // This is the date field used by list table column sorting and public directory filtering.
-        $date_only_mysql = date('Y-m-d', $timestamp);
-        update_post_meta($post_id, 'approved_date', $date_only_mysql);
-        
-        // 3. RESTORING AD CONTENT REGENERATION STEP:
-        // This ensures the internal ad text is updated with the new date, resolving the user's issue.
-        if (class_exists('LMB_Form_Handler') && method_exists('LMB_Form_Handler', 'generate_and_save_formatted_text')) {
+
+        // 4. CRITICAL FIX: Regenerate the ad's display text.
+        // This updates the 'full_text' meta field that the public widget displays.
+        if (class_exists('LMB_Form_Handler')) {
             LMB_Form_Handler::generate_and_save_formatted_text($post_id);
         }
 
-        // The date format required by the JS for subsequent quick edits (YYYY-MM-DDTHH:MM:SS)
-        $new_date_for_input = date('Y-m-d\TH:i:s', $timestamp);
-        
-        // The display format shown in the list table (e.g., "Oct 08, 2025 20:20")
-        $new_display_date = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $timestamp);
-        
-        // Log the change
-        $user = wp_get_current_user();
-        LMB_Ad_Manager::log_activity(sprintf('Date de publication de l\'annonce #%d mise à jour manuellement par %s à %s.', $post_id, $user->user_login, $new_display_date));
+        // 5. Update the 'approved_date' meta field for consistency with directory sorting.
+        update_post_meta($post_id, 'approved_date', date('Y-m-d', strtotime($full_new_date)));
 
-        wp_send_json_success([
-            'message' => 'Date mise à jour avec succès.',
-            'new_display_date' => $new_display_date,
-            'new_date_for_input' => $new_date_for_input,
-        ]);
+        // 6. Success: Send back confirmation.
+        wp_send_json_success(['message' => 'Date updated and ad content regenerated successfully.']);
     }
 
     // --- REVISED FUNCTION: fetch eligible ads for newspaper creation ---
