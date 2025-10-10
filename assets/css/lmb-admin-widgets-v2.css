@@ -462,3 +462,176 @@
     text-align: right;
     margin-top: 25px;
 }
+/* --- FINAL Styling for the Upload Newspaper Widget --- */
+
+/* Main widget container */
+.lmb-upload-newspaper-widget .lmb-un-step {
+    background-color: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 25px;
+    margin-top: 20px;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.lmb-upload-newspaper-widget .lmb-un-step h4 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #1d2327;
+    border-bottom: 1px solid #ccd0d4;
+    padding-bottom: 15px;
+}
+
+/* --- STEP 1: Form Inputs Styling --- */
+
+/* Grid layout for the form */
+.lmb-upload-newspaper-widget .lmb-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    align-items: stretch;
+}
+
+.lmb-upload-newspaper-widget .lmb-form-group label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+/* General styling for all input fields in this widget */
+.lmb-upload-newspaper-widget input[type="text"],
+.lmb-upload-newspaper-widget input[type="date"],
+.lmb-upload-newspaper-widget input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 14px;
+    box-shadow: 0 0 0 transparent;
+    transition: box-shadow .1s,border-color .1s;
+}
+
+.lmb-upload-newspaper-widget input[type="file"] {
+    padding: 8px;
+}
+
+.lmb-upload-newspaper-widget input[type="text"]:focus,
+.lmb-upload-newspaper-widget input[type="date"]:focus,
+.lmb-upload-newspaper-widget input[type="file"]:focus {
+    outline: none;
+    border-color: #007cba;
+    box-shadow: 0 0 0 1px #007cba;
+}
+
+
+/* --- STEP 2: Table Styling --- */
+
+.lmb-upload-newspaper-widget .lmb-ads-selection-container {
+    margin-bottom: 25px;
+}
+
+.lmb-upload-newspaper-widget .lmb-ads-selection-container p {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #444;
+}
+
+/* Make the table look like a standard WordPress list table */
+.lmb-upload-newspaper-widget .lmb-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #e5e5e5;
+}
+
+.lmb-upload-newspaper-widget .lmb-data-table th {
+    background-color: #f9f9f9;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.lmb-upload-newspaper-widget .lmb-data-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.lmb-upload-newspaper-widget .lmb-data-table tbody tr:nth-child(even) {
+    background-color: #fcfcfc;
+}
+
+.lmb-upload-newspaper-widget .lmb-data-table tbody tr:hover {
+    background-color: #f0f6fc;
+}
+
+.lmb-upload-newspaper-widget .lmb-data-table th:first-child,
+.lmb-upload-newspaper-widget .lmb-data-table td:first-child {
+    text-align: center;
+}
+
+.lmb-upload-newspaper-widget #lmb-select-all-ads,
+.lmb-upload-newspaper-widget .lmb-ad-checkbox {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+}
+
+
+/* --- Progress Bar and Actions --- */
+
+.lmb-upload-newspaper-widget .lmb-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f1;
+}
+
+#lmb-un-progress-container {
+    background-color: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 25px;
+    margin-top: 20px;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+#lmb-un-progress-container h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.lmb-progress-bar {
+    width: 100%;
+    background-color: #f0f0f1;
+    border-radius: 20px;
+    overflow: hidden;
+    height: 18px;
+    margin-bottom: 10px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+}
+
+.lmb-progress-bar-inner {
+    height: 100%;
+    width: 0%;
+    background-color: #007cba;
+    transition: width 0.4s ease;
+}
+
+.lmb-progress-bar-inner.bg-success { background-color: #00a32a; }
+.lmb-progress-bar-inner.bg-danger { background-color: #d63638; }
+
+#lmb-progress-text {
+    text-align: center;
+    font-weight: 500;
+    color: #1d2327;
+    margin-top: 10px;
+}

@@ -152,6 +152,38 @@
             uploadModal.removeClass('hidden');
         });
 
+        // --- NEW: Handle Clean Ad Association Action ---
+        tableBody.on('click', '.lmb-clean-ad-btn', function(e) {
+            e.stopPropagation();
+            const button = $(this);
+            const adId = button.data('id');
+            
+            if (!confirm('ATTENTION: Voulez-vous vraiment nettoyer l\'association du journal pour cette annonce ? Cela supprimera les liens (temporel ou final) et l\'Accusé PDF')) {
+                return;
+            }
+
+            button.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
+
+            $.post(lmb_ajax_params.ajaxurl, {
+                action: 'lmb_clean_ad_association',
+                nonce: lmb_ajax_params.nonce,
+                ad_id: adId,
+            }).done(function(response) {
+                if (response.success) {
+                    showLMBModal('success', response.data.message);
+                    // Refresh the current page of ads
+                    const currentPage = paginationContainer.find('.current').text() || 1;
+                    fetchAds(currentPage); 
+                } else {
+                    showLMBModal('error', response.data.message || 'Une erreur s\'est produite lors du nettoyage.');
+                    button.html('<i class="fas fa-broom"></i>').prop('disabled', false);
+                }
+            }).fail(function() {
+                showLMBModal('error', 'Une erreur serveur s\'est produite lors du nettoyage.');
+                button.html('<i class="fas fa-broom"></i>').prop('disabled', false);
+            });
+        });
+
         uploadModal.on('click', '.lamv2-modal-close', function() {
             uploadModal.addClass('hidden');
             uploadForm[0].reset();

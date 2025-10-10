@@ -1,0 +1,63 @@
+/* Styling for the Data Management Utility Page */
+.lmb-data-manager-page .card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    padding: 20px;
+}
+
+.lmb-data-manager-page .lmb-dm-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    align-items: center;
+}
+
+.lmb-data-manager-page .lmb-dm-bulk-actions {
+    margin: 15px 0;
+}
+
+.lmb-data-manager-page .lmb-dm-actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lmb-data-manager-page .lmb-dm-new-journal-no {
+    width: 150px;
+}
+/* Styling for the new date range filter */
+.lmb-data-manager-page .lmb-dm-date-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lmb-data-manager-page .lmb-dm-date-range input[type="date"] {
+    max-width: 160px; /* Prevent date fields from becoming too wide */
+}
+
+/* Group the action buttons together */
+.lmb-data-manager-page .lmb-dm-filter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Style for the pagination container */
+.lmb-data-manager-page .lmb-dm-pagination {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+.lmb-data-manager-page .lmb-dm-pagination .page-numbers {
+    padding: 5px 10px;
+    text-decoration: none;
+    border: 1px solid #ccc;
+    margin: 0 2px;
+}
+
+.lmb-data-manager-page .lmb-dm-pagination .page-numbers.current {
+    background-color: #f0f0f1;
+    font-weight: bold;
+}
