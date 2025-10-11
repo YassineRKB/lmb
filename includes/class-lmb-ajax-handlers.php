@@ -36,7 +36,7 @@ class LMB_Ajax_Handlers {
             'lmb_discard_newspaper_draft', 'lmb_manipulate_balance',
             'lmb_admin_subscribe_user_to_package',
             'lmb_update_ad_date', 'lmb_associate_final_newspaper', 'lmb_fetch_eligible_ads_for_newspaper',
-            'lmb_clean_ad_association',
+            'lmb_clean_ad_association', 'lmb_trigger_manual_cleanup',
             
         ];
         // --- MODIFICATION: Make auth actions public ---
@@ -72,7 +72,7 @@ class LMB_Ajax_Handlers {
             'lmb_fetch_inactive_clients_v2',
             'lmb_manage_inactive_client_v2',
             'lmb_fetch_active_clients_v2', 'lmb_lock_active_client_v2',
-            'lmb_admin_subscribe_user_to_package',
+            'lmb_admin_subscribe_user_to_package', 'lmb_trigger_manual_cleanup',
         ];
         if (in_array($action, $admin_only_actions) && !current_user_can('manage_options')) {
              wp_send_json_error(['message' => 'Vous n\'avez pas la permission d\'effectuer cette action.'], 403);
@@ -2339,6 +2339,32 @@ class LMB_Ajax_Handlers {
         LMB_Ad_Manager::log_activity(sprintf('Association Journal-Annonce nettoyée pour l\'annonce #%d par %s.', $ad_id, wp_get_current_user()->display_name));
         
         wp_send_json_success(['message' => 'Association de journal nettoyée. L\'annonce est maintenant pret pour une nouvelle journal association.']);
+    }
+
+    // --- NEW METHOD: AJAX Trigger for Cleanup ---
+    private static function lmb_trigger_manual_cleanup() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Permission refusée.'], 403);
+        }
+        
+        if (!class_exists('LMB_Maintenance_Utilities')) {
+            // Include file if not loaded (safety fallback)
+            require_once LMB_CORE_PATH . 'includes/class-lmb-maintenance-utilities.php';
+        }
+
+        // --- EXECUTE THE CLEANUP ---
+        LMB_Maintenance_Utilities::run_cleanup();
+        
+        // Fetch log for immediate feedback (LMB_Ad_Manager::log_activity is used in run_cleanup)
+        $log = get_option('lmb_activity_log', []);
+        $latest_log = array_slice($log, 0, 1);
+        
+        // The cleanup utility writes its own detailed message to the log, which we retrieve here.
+        $message = !empty($latest_log) 
+            ? 'Nettoyage terminé. Résultat : ' . $latest_log[0]['msg'] 
+            : 'Nettoyage déclenché avec succès. Vérifiez le journal d\'activité pour les détails.';
+
+        wp_send_json_success(['message' => $message]);
     }
 
     // --- FUNCTION FOR GENERATING NEWSPAPER PREVIEW ---

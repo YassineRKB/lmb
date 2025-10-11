@@ -1,112 +1,162 @@
 <?php
 // FILE: includes/class-lmb-maintenance-utilities.php
+
 if (!defined('ABSPATH')) exit;
 
+/**
+ * Handles scheduled cleanup of orphaned PDF files (Journals and Accusé).
+ */
 class LMB_Maintenance_Utilities {
 
+    const CLEANUP_CRON_HOOK = 'lmb_monthly_file_cleanup';
+
     public static function init() {
-        // Add a new submenu page under "LMB Core"
-        add_action('admin_menu', [__CLASS__, 'add_admin_menu']);
+        // Schedule the event
+        add_action('init', [__CLASS__, 'schedule_cleanup']);
+        add_action(self::CLEANUP_CRON_HOOK, [__CLASS__, 'run_cleanup']);
     }
 
-    public static function add_admin_menu() {
-        add_submenu_page(
-            'lmb-core',                             // Parent slug
-            __('LMB Utilities', 'lmb-core'),        // Page title
-            __('Utilities', 'lmb-core'),            // Menu title
-            'manage_options',                       // Capability
-            'lmb-utilities',                        // Menu slug
-            [__CLASS__, 'render_utilities_page']    // Callback function
-        );
-    }
-
-    public static function render_utilities_page() {
-        ?>
-        <div class="wrap">
-            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-            <p>Utilisez ces outils pour corriger les problèmes de données courants dans le système.</p>
-
-            <div class="card">
-                <h2><span class="dashicons dashicons-editor-spellcheck" style="vertical-align: middle;"></span> Nettoyer les Numéros de Journal</h2>
-                <p>
-                    Cet outil recherche les annonces légales où le "Numéro de Journal" a été saisi avec du texte supplémentaire (par exemple, "Journal-148" au lieu de "148").<br>
-                    Il supprimera tous les caractères non numériques pour ne laisser que le numéro, corrigeant ainsi les problèmes de recherche.
-                </p>
-                
-                <?php
-                // Handle the form submission to run the fix
-                if (isset($_POST['lmb_run_journal_fix']) && check_admin_referer('lmb_journal_fix_nonce')) {
-                    self::run_journal_number_fix();
-                }
-                
-                // Find problematic ads to show the user
-                $problematic_ads = self::find_problematic_journal_numbers();
-                
-                if (!empty($problematic_ads)) {
-                    echo '<h3><strong style="color: #d63638;">' . count($problematic_ads) . ' annonce(s) affectée(s) trouvée(s) :</strong></h3>';
-                    echo '<ul style="list-style-type: disc; padding-left: 20px;">';
-                    foreach ($problematic_ads as $ad) {
-                        echo '<li>Annonce ID: <strong>' . esc_html($ad->ID) . '</strong> | Numéro de Journal Actuel: <strong style="color: #d63638;">"' . esc_html($ad->journal_no) . '"</strong></li>';
-                    }
-                    echo '</ul>';
-                    ?>
-                    <form method="post">
-                        <?php wp_nonce_field('lmb_journal_fix_nonce'); ?>
-                        <input type="hidden" name="lmb_run_journal_fix" value="1">
-                        <?php submit_button('Corriger tous les numéros de journal ci-dessus'); ?>
-                    </form>
-                    <?php
-                } else {
-                    echo '<h3><strong style="color: #00a32a;">Aucune annonce avec des numéros de journal mal formatés n\'a été trouvée. Tout est en ordre !</strong></h3>';
-                }
-                ?>
-            </div>
-        </div>
-        <?php
+    public static function schedule_cleanup() {
+        if (!wp_next_scheduled(self::CLEANUP_CRON_HOOK)) {
+            // Schedule to run once a month starting tomorrow
+            if (!defined('DAY_IN_SECONDS')) {
+                define('DAY_IN_SECONDS', 86400); // Fallback definition
+            }
+            wp_schedule_event(time() + DAY_IN_SECONDS, 'monthly', self::CLEANUP_CRON_HOOK);
+        }
     }
 
     /**
-     * Finds ads where the 'lmb_journal_no' meta value contains non-numeric characters.
-     * @return array
+     * Executes the main cleanup logic.
      */
-    private static function find_problematic_journal_numbers() {
-        global $wpdb;
-        $results = $wpdb->get_results("
-            SELECT p.ID, pm.meta_value as journal_no
-            FROM {$wpdb->posts} p
-            JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-            WHERE p.post_type = 'lmb_legal_ad'
-            AND pm.meta_key = 'lmb_journal_no'
-            AND pm.meta_value REGEXP '[^0-9]'
-        ");
-        return $results;
+    public static function run_cleanup() {
+        // Ensure WordPress environment is loaded for file operations
+        if (!function_exists('wp_delete_attachment') || !function_exists('get_posts')) {
+            require_once(ABSPATH . 'wp-admin/includes/post.php');
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+        }
+        
+        // Ensure LMB_Ad_Manager exists for logging
+        if (!class_exists('LMB_Ad_Manager')) {
+            // Assuming the path is correct
+            require_once(LMB_CORE_PATH . 'includes/class-lmb-ad-manager.php');
+        }
+        
+        $deleted_attachments_count = self::cleanup_orphaned_attachments();
+        $deleted_accuse_files_count = self::cleanup_orphaned_accuse_pdfs();
+        
+        // Log the result of the cleanup cycle
+        LMB_Ad_Manager::log_activity(sprintf(
+            'Cycle de nettoyage mensuel terminé. Attachments supprimés : %d. Fichiers Accusé orphelins supprimés : %d.',
+            $deleted_attachments_count,
+            $deleted_accuse_files_count
+        ));
     }
 
     /**
-     * Runs the process to sanitize all problematic journal numbers.
+     * Cleans up orphaned Temporary/Final Journal PDFs (which are WP attachments).
      */
-    private static function run_journal_number_fix() {
-        $problematic_ads = self::find_problematic_journal_numbers();
-        $fixed_count = 0;
+    private static function cleanup_orphaned_attachments() {
+        $allowed_ids = [];
+        $deleted_count = 0;
 
-        if (!empty($problematic_ads)) {
-            foreach ($problematic_ads as $ad) {
-                // Sanitize by removing all non-digit characters
-                $sanitized_number = preg_replace('/[^0-9]/', '', $ad->journal_no);
-                
-                // Update the post meta with the clean number
-                if ($sanitized_number !== $ad->journal_no) {
-                    update_post_meta($ad->ID, 'lmb_journal_no', $sanitized_number);
-                    $fixed_count++;
+        // --- 1. Collect ALL associated attachment IDs (Allowed IDs) ---
+        
+        // a) Collect Temporary Journal IDs from Legal Ads (lmb_legal_ad)
+        $temp_ids = get_posts([
+            'post_type' => 'lmb_legal_ad', 'post_status' => 'any', 'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => [
+                ['key' => 'lmb_temporary_journal_id', 'compare' => 'EXISTS']
+            ],
+        ]);
+        foreach ($temp_ids as $ad_id) {
+            $allowed_ids[] = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
+        }
+
+        // b) Collect Final Journal PDF IDs from Newspaper Posts (lmb_newspaper)
+        $final_journal_pdfs = get_posts([
+            'post_type' => 'lmb_newspaper', 'post_status' => 'publish', 'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => [
+                ['key' => 'newspaper_pdf', 'compare' => 'EXISTS']
+            ],
+        ]);
+        foreach ($final_journal_pdfs as $newspaper_id) {
+            $allowed_ids[] = get_post_meta($newspaper_id, 'newspaper_pdf', true);
+        }
+        
+        // Filter out duplicates and invalid IDs
+        $allowed_ids = array_filter(array_unique(array_map('intval', $allowed_ids)));
+
+
+        // --- 2. Collect ALL PDF attachments in the Media Library ---
+        $all_pdf_attachments = get_posts([
+            'post_type' => 'attachment', 'post_status' => 'any', 'posts_per_page' => -1,
+            'post_mime_type' => 'application/pdf',
+            'fields' => 'ids',
+        ]);
+
+        // --- 3. Identify and Delete Orphaned Attachments ---
+        foreach ($all_pdf_attachments as $attachment_id) {
+            if (!in_array($attachment_id, $allowed_ids)) {
+                // Orphaned file found. Delete the attachment and the file.
+                if (wp_delete_attachment($attachment_id, true)) {
+                    $deleted_count++;
                 }
             }
         }
 
-        if ($fixed_count > 0) {
-            add_settings_error('lmb_utilities_notices', 'journal_fix_success', $fixed_count . ' numéro(s) de journal ont été corrigés avec succès.', 'success');
-        } else {
-            add_settings_error('lmb_utilities_notices', 'journal_fix_none', 'Aucun numéro de journal n\'a nécessité de correction.', 'info');
+        return $deleted_count;
+    }
+    
+    /**
+     * Cleans up orphaned Accusé PDFs (files linked by URL, not WP attachments).
+     */
+    private static function cleanup_orphaned_accuse_pdfs() {
+        $upload_dir = wp_upload_dir();
+        // Assuming the Accusé path is hardcoded here (this should be verified in LMB_PDF_Generator)
+        $accuse_dir_path = trailingslashit($upload_dir['basedir']) . 'lmb-accuse/'; 
+        $deleted_count = 0;
+        
+        if (!is_dir($accuse_dir_path)) {
+            return 0; // Directory does not exist
         }
-        settings_errors('lmb_utilities_notices');
+
+        // 1. Collect ALL currently associated Accusé URLs
+        $associated_urls = get_posts([
+            'post_type' => 'lmb_legal_ad', 'post_status' => 'any', 'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_key' => 'lmb_accuse_pdf_url',
+            'meta_compare' => 'EXISTS',
+        ]);
+        
+        $allowed_urls = [];
+        foreach ($associated_urls as $ad_id) {
+            $allowed_urls[] = get_post_meta($ad_id, 'lmb_accuse_pdf_url', true);
+        }
+        $allowed_urls = array_filter(array_unique($allowed_urls));
+
+        // 2. Scan the Accusé generation directory for all PDF files
+        $all_accuse_files = glob(trailingslashit($accuse_dir_path) . '*.pdf');
+
+        // 3. Identify and Delete Orphaned Files
+        foreach ($all_accuse_files as $file_path) {
+            // Construct the URL from the file path for comparison
+            $file_url = str_replace(
+                trailingslashit($upload_dir['basedir']), 
+                trailingslashit($upload_dir['baseurl']), 
+                $file_path
+            );
+            
+            if (!in_array($file_url, $allowed_urls)) {
+                // Orphaned file found. Delete the file using PHP's unlink.
+                if (unlink($file_path)) {
+                    $deleted_count++;
+                }
+            }
+        }
+        
+        return $deleted_count;
     }
 }

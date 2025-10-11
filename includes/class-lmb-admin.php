@@ -54,6 +54,17 @@ class LMB_Admin {
             'lmb-core-settings',
             [__CLASS__, 'render_settings_page']
         );
+        
+        // --- NEW: Add Maintenance Submenu ---
+        add_submenu_page(
+            'lmb-core',
+            __('Maintenance Utilitaires', 'lmb-core'),
+            __('Maintenance', 'lmb-core'),
+            'manage_options',
+            'lmb-maintenance-utils',
+            [__CLASS__, 'render_maintenance_page']
+        );
+        // --- END NEW ---
 
         add_submenu_page(
             'lmb-core',
@@ -81,13 +92,10 @@ class LMB_Admin {
 
     // Enqueue admin scripts conditionally
     public static function enqueue_scripts($hook) {
-        // First, check if we are on a post edit screen.
-        if ('post.php' !== $hook && 'post-new.php' !== $hook) {
-            return;
-        }
-
-        // Only load the script if we are editing a 'lmb_legal_ad'.
-        if ('lmb_legal_ad' === get_post_type()) {
+        $screen = get_current_screen();
+        
+        // Only load the editor script if we are editing a 'lmb_legal_ad'.
+        if (('post.php' === $hook || 'post-new.php' === $hook) && 'lmb_legal_ad' === get_post_type()) {
             wp_enqueue_script(
                 'lmb-admin-editor', // A unique name for our script
                 LMB_CORE_URL . 'assets/js/lmb-admin-editor.js', // The path to the file
@@ -96,9 +104,63 @@ class LMB_Admin {
                 true        // Load it in the footer for better performance
             );
         }
+        
+        // --- NEW: Enqueue maintenance script on the maintenance page ---
+        if ($screen && $screen->id === 'lmb-core_page_lmb-maintenance-utils') {
+            wp_enqueue_script(
+                'lmb-maintenance-js', 
+                LMB_CORE_URL . 'assets/js/lmb-maintenance.js', 
+                ['jquery'], 
+                LMB_CORE_VERSION, 
+                true
+            );
+            // Assuming lmb_ajax_params is localized globally in lmb-core.php or a similar central file
+        }
+        // --- END NEW ---
     }
+    
+    // --- NEW METHOD: Render the Maintenance Page ---
+    public static function render_maintenance_page() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Vous n\'avez pas les permissions suffisantes pour accéder à cette page.', 'lmb-core'));
+        }
+        
+        // Ensure the utility class is loaded for constant access
+        if (!class_exists('LMB_Maintenance_Utilities')) {
+            require_once LMB_CORE_PATH . 'includes/class-lmb-maintenance-utilities.php';
+        }
+        
+        ?>
+        <div class="wrap">
+            <h1>Maintenance du Système LMB-Core</h1>
+            <p>Cette section permet de gérer les tâches de nettoyage et de maintenance du système.</p>
 
-    // REVISED FUNCTION for collecting stats
+            <hr>
+
+            <h2>Nettoyage des Fichiers Orphelins (Manuelle)</h2>
+            <p>Cette action supprime immédiatement tous les PDFs Accusé et Journal (temporaires/finaux) qui ne sont plus associés à une annonce légale.</p>
+            <button id="lmb-manual-cleanup-btn" class="button button-primary button-large">
+                <i class="fas fa-broom"></i> Exécuter le Nettoyage Immédiat
+            </button>
+            <p id="lmb-cleanup-status" style="margin-top: 15px; font-weight: bold;"></p>
+
+            <hr>
+            
+            <h2>Statut de la Tâche Planifiée (WP-Cron)</h2>
+            <?php 
+            $next_run = wp_next_scheduled(LMB_Maintenance_Utilities::CLEANUP_CRON_HOOK);
+            $message = $next_run 
+                ? 'Prochaine exécution planifiée: ' . date_i18n('d F Y H:i:s', $next_run) . ' (' . human_time_diff(time(), $next_run) . ')'
+                : 'La tâche de nettoyage mensuelle n\'est pas planifiée.';
+            ?>
+            <p><?php echo esc_html($message); ?></p>
+        </div>
+        <?php
+    }
+    // --- END NEW METHOD ---
+
+
+    // REVISED FUNCTION for collecting stats (Existing function)
     public static function collect_stats() {
         global $wpdb;
         $stats = [];
@@ -304,14 +366,14 @@ class LMB_Admin {
 
         <h3>Modèle HTML de Journal Final</h3>
         <p class="description">
-            Ce modèle définit la structure et le style des pages du journal final (A4, 3 colonnes). Utilisez <code><!-- %%ADS_CONTENT%% --></code> comme espace réservé pour les annonces légales.
+            Ce modèle définit la structure et le style des pages du journal final (A4, 3 colonnes). Utilisez <code></code> comme espace réservé pour les annonces légales.
         </p>
         <textarea name="lmb_newspaper_template_html" rows="20" style="width:100%; font-family: monospace;"><?php echo esc_textarea(get_option('lmb_newspaper_template_html', self::get_default_newspaper_template())); ?></textarea>
         
         <h4>Espaces Réservés Disponibles pour Journal:</h4>
         <ul style="list-style: inside; margin-left: 20px;">
             <li><code>[NUMÉRO DU JOURNAL]</code>, <code>[DATE DE PARUTION]</code>, <code>[DATE DÉBUT]</code>, <code>[DATE FIN]</code></li>
-            <li><code><!-- %%ADS_CONTENT%% --></code> (où les annonces sélectionnées seront injectées)</li>
+            <li><code></code> (où les annonces sélectionnées seront injectées)</li>
         </ul>
 
         <?php
@@ -450,7 +512,6 @@ class LMB_Admin {
     </head>
     <body>
         <div class="container">
-            <!-- Header -->
             <header class="header">
                 <div class="header-left">
                     <img src="{{lmb_logo_url}}" alt="Logo" width="150">
@@ -461,10 +522,8 @@ class LMB_Admin {
                 </div>
             </header>
 
-            <!-- Main Content -->
             <main class="main-content">
                 <div class="details-grid">
-                    <!-- Left Column: Ad Details -->
                     <div class="details-left">
                         {{client_specific_info}}
                         <div class="detail-item">
@@ -489,7 +548,6 @@ class LMB_Admin {
                         </div>
                     </div>
 
-                    <!-- Right Column: QR Code -->
                     <div class="details-right">
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{legal_ad_link}}" alt="QR Code">
                         <p style="font-size: 10px; font-weight: bold;">SCAN ME TO READ</p>
@@ -497,7 +555,6 @@ class LMB_Admin {
                 </div>
             </main>
 
-            <!-- Footer -->
             <footer class="footer">
                 <img src="{{signature_url}}" alt="Signature" width="200" class="signature-img">
                 <br><br><br>
