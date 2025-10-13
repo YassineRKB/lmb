@@ -1,4 +1,4 @@
-// FILE: assets/js/lmb-auth-v2.js (FIXED: Phone Validation)
+// FILE: assets/js/lmb-auth-v2.js (FIXED: Phone Validation & ADDED: Password Toggle)
 jQuery(document).ready(function($) {
     $('.lmb-auth-v2-widget').each(function() {
         const widget = $(this);
@@ -12,6 +12,17 @@ jQuery(document).ready(function($) {
         const regularFields = $('#lmb-signup-regular-fields');
         const commonFields = signupForm.find('.lmb-common-fields');
         const submitBtn = signupForm.find('button[type="submit"]');
+
+        // --- PASSWORD VISIBILITY TOGGLE ---
+        widget.on('click', '.toggle-password', function() {
+            const icon = $(this);
+            const input = icon.prev('input');
+            const type = input.attr('type') === 'password' ? 'text' : 'password';
+            input.attr('type', type);
+
+            // Toggle eye icon
+            icon.toggleClass('fa-eye fa-eye-slash');
+        });
 
         // --- INITIAL SETUP (Disable All Type-Specific Fields) ---
         // We ensure all type-specific fields start as disabled to prevent serialization conflict.

@@ -55,6 +55,7 @@ function lmb_core_init() {
     require_once LMB_CORE_PATH . 'elementor/class-lmb-elementor-widgets.php';
     require_once LMB_CORE_PATH . 'includes/class-lmb-maintenance-utilities.php';
     require_once LMB_CORE_PATH . 'includes/class-lmb-data-manager.php';
+    require_once LMB_CORE_PATH . 'includes/class-lmb-ad-type-manager.php';
 
     // Now, initialize the classes
     LMB_Error_Handler::init();
@@ -72,6 +73,7 @@ function lmb_core_init() {
     new LMB_User();
     LMB_Maintenance_Utilities::init();
     LMB_Data_Manager::init();
+    LMB_Ad_Type_Manager::init();
 }
 add_action('plugins_loaded', 'lmb_core_init');
 
@@ -289,3 +291,16 @@ function lmb_load_data_manager_assets($hook) {
     ]);
 }
 add_action('admin_enqueue_scripts', 'lmb_load_data_manager_assets');
+function lmb_load_ad_type_manager_assets($hook) {
+    if ($hook != 'lmb-core_page_lmb-ad-type-manager') {
+        return;
+    }
+    wp_enqueue_script('lmb-ad-type-manager', LMB_CORE_URL . 'assets/js/lmb-ad-type-manager.js', ['jquery'], LMB_CORE_VERSION, true);
+    wp_enqueue_style('lmb-ad-type-manager', LMB_CORE_URL . 'assets/css/lmb-ad-type-manager.css', [], LMB_CORE_VERSION);
+
+    wp_localize_script('lmb-ad-type-manager', 'lmb_ajax_params', [
+        'ajaxurl'  => admin_url('admin-ajax.php'),
+        'nonce'    => wp_create_nonce('lmb_nonce'),
+    ]);
+}
+add_action('admin_enqueue_scripts', 'lmb_load_ad_type_manager_assets');

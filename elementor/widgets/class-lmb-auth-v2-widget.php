@@ -30,7 +30,7 @@ if (!class_exists('LMB_Auth_V2_Widget')) {
         }
 
         public function get_style_depends() {
-            return ['lmb-auth-v2'];
+            return ['lmb-auth-v2', 'font-awesome-v5-shims'];
         }
 
         protected function render() {
@@ -75,7 +75,10 @@ if (!class_exists('LMB_Auth_V2_Widget')) {
                             </div>
                             <div class="lmb-form-group">
                                 <label for="login-password">Mot de passe</label>
-                                <input type="password" id="login-password" name="password" class="lmb-input" required>
+                                <div class="lmb-password-wrapper">
+                                    <input type="password" id="login-password" name="password" class="lmb-input" required>
+                                    <i class="fas fa-eye-slash toggle-password"></i>
+                                </div>
                             </div>
                             <button type="submit" class="lmb-btn">Se connecter</button>
                         </form>
@@ -104,7 +107,13 @@ if (!class_exists('LMB_Auth_V2_Widget')) {
                             </div>
                             
                             <div class="lmb-form-group"><label for="signup-email">Email</label><input type="email" name="email" id="signup-email" class="lmb-input" required></div>
-                            <div class="lmb-form-group"><label for="signup-password">Mot de passe</label><input type="password" name="password" id="signup-password" class="lmb-input" required></div>
+                            <div class="lmb-form-group">
+                                <label for="signup-password">Mot de passe</label>
+                                <div class="lmb-password-wrapper">
+                                    <input type="password" name="password" id="signup-password" class="lmb-input" required>
+                                    <i class="fas fa-eye-slash toggle-password"></i>
+                                </div>
+                            </div>
                             
                             <button type="submit" class="lmb-btn">Créer un Compte</button>
                         </form>

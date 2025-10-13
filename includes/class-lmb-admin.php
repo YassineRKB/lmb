@@ -474,13 +474,25 @@ class LMB_Admin {
         <?php
     }
 
-    private static function get_all_ad_types() {
+    /* private static function get_all_ad_types() {
         // In a real-world scenario, you might get this from another source.
         return [
             'Constitution - SARL', 'Constitution - SARL AU', 'Liquidation - anticipee',
             'Liquidation - definitive', 'Modification - Capital', 'Modification - denomination',
             'Modification - gerant', 'Modification - objects', 'Modification - parts', 'Modification - seige', 'Redaction Libre',
         ];
+    } */
+    
+    private static function get_all_ad_types() {
+        $ad_types_options = get_option('lmb_ad_types', []);
+        $ad_types = [];
+        foreach ($ad_types_options as $type) {
+            if (isset($type['name'])) {
+                $ad_types[] = $type['name'];
+            }
+        }
+        // If no ad types are in the options, you might want to return a default or an empty array
+        return $ad_types;
     }
 
     public static function get_default_accuse_template() {
