@@ -1,5 +1,5 @@
 <?php
-// FILE: includes/class-lmb-form-handler.php (FINAL VERSION: Uppercase conversion is removed)
+// FILE: includes/class-lmb-form-handler.php (DEFINITIVE FIX: Universal Base64 Encoding)
 if (!defined('ABSPATH')) exit;
 
 class LMB_Form_Handler {
@@ -29,20 +29,53 @@ class LMB_Form_Handler {
         }
     }
 
+    /**
+     * A recursive function to Base64 encode all string values in the form data.
+     * This makes the data 100% safe for JSON encoding.
+     */
+    private static function deep_base64_encode($data) {
+        if (is_string($data)) {
+            return base64_encode($data);
+        }
+        if (is_array($data)) {
+            foreach ($data as $key => &$value) {
+                $value = self::deep_base64_encode($value);
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * A recursive function to decode all the Base64 encoded strings.
+     */
+    private static function deep_base64_decode($data) {
+        if (is_string($data)) {
+            // Check if the string is potentially Base64 encoded before decoding.
+            if (base64_encode(base64_decode($data, true)) === $data) {
+                 return base64_decode($data);
+            }
+            return $data;
+        }
+        if (is_array($data)) {
+            foreach ($data as $key => &$value) {
+                $value = self::deep_base64_decode($value);
+            }
+        }
+        return $data;
+    }
+
     public static function create_legal_ad($form_data) {
         $user_id = get_current_user_id();
         if (!$user_id) {
             throw new Exception('User not logged in.');
         }
 
-        // --- THE BASE64 FIX ---
-        if (isset($form_data['ad_content'])) {
-            $form_data['ad_content'] = base64_encode($form_data['ad_content']);
-        }
-        if (isset($form_data['full_text'])) {
-            $form_data['full_text'] = base64_encode($form_data['full_text']);
-        }
-        $form_data['is_base64_encoded'] = true;
+        // --- DEFINITIVE FIX: UNIVERSAL BASE64 ENCODING ---
+        // First, remove any slashes WordPress might have added.
+        $form_data = stripslashes_deep($form_data);
+        // Now, encode EVERY string field to make it safe.
+        $encoded_form_data = self::deep_base64_encode($form_data);
+        $encoded_form_data['is_globally_base64_encoded'] = true; // Flag for decoding later
         // --- END OF FIX ---
 
         $ad_type = isset($form_data['ad_type']) ? sanitize_text_field($form_data['ad_type']) : 'Untitled Ad';
@@ -61,11 +94,11 @@ class LMB_Form_Handler {
             throw new Exception($post_id->get_error_message());
         }
 
-        $json_data = wp_json_encode($form_data);
+        $json_data = wp_json_encode($encoded_form_data);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            LMB_Error_Handler::log_error('JSON Encode Failed', ['post_id' => $post_id, 'error' => json_last_error_msg()]);
-            $error_content = "<strong>TECHNICAL ERROR:</strong> Form data encoding failed unexpectedly. Administrator notified.";
+            LMB_Error_Handler::log_error('JSON Encode Failed After Base64', ['post_id' => $post_id, 'error' => json_last_error_msg()]);
+            $error_content = "<strong>TECHNICAL ERROR:</strong> Form data encoding failed. Administrator notified.";
             wp_update_post(['ID' => $post_id, 'post_content' => $error_content]);
             return $post_id;
         }
@@ -83,9 +116,7 @@ class LMB_Form_Handler {
     }
     
     private static function log_activity($msg, ...$args) { if (class_exists('LMB_Ad_Manager')) { LMB_Ad_Manager::log_activity(vsprintf($msg, $args)); } }
-    
     private static function array_keys_to_lower($array) { $result = []; foreach ($array as $key => $value) { $key = strtolower($key); if (is_array($value)) { $value = self::array_keys_to_lower($value); } $result[$key] = $value; } return $result; }
-    
 
     public static function generate_and_save_formatted_text($post_id) {
         $ad_type = get_post_meta($post_id, 'ad_type', true);
@@ -95,31 +126,23 @@ class LMB_Form_Handler {
             return;
         }
 
-        $form_data = json_decode(stripslashes($json_data), true);
+        $encoded_form_data = json_decode(stripslashes($json_data), true);
 
-        if (!is_array($form_data)) {
+        if (!is_array($encoded_form_data)) {
             LMB_Error_Handler::log_error('JSON Decode Failed for Ad', ['post_id' => $post_id, 'json_data' => $json_data]);
             $error_content = "<strong>ERROR:</strong> Automatic content generation failed due to invalid form data.";
             wp_update_post(['ID' => $post_id, 'post_content' => $error_content]);
             return;
         }
 
-        // --- THE BASE64 FIX ---
-        if (isset($form_data['is_base64_encoded']) && $form_data['is_base64_encoded']) {
-            if (isset($form_data['ad_content'])) {
-                $form_data['ad_content'] = base64_decode($form_data['ad_content']);
-            }
-            if (isset($form_data['full_text'])) {
-                $form_data['full_text'] = base64_decode($form_data['full_text']);
-            }
+        // --- DEFINITIVE FIX: DECODE THE DATA ---
+        $form_data = $encoded_form_data;
+        if (isset($form_data['is_globally_base64_encoded']) && $form_data['is_globally_base64_encoded']) {
+            $form_data = self::deep_base64_decode($form_data);
         }
         // --- END OF FIX ---
         
-        // --- FIX: REMOVED UPPERCASE CONVERSION ---
-        // The function that forced all text to uppercase has been removed.
-        // We now use the form data with its original casing.
         $data_for_template = self::array_keys_to_lower($form_data);
-        // --- END OF FIX ---
 
         $all_templates = get_option('lmb_legal_ad_templates', []);
         $template = isset($all_templates[sanitize_key($ad_type)]) ? $all_templates[sanitize_key($ad_type)] : '';
