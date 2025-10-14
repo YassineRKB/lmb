@@ -1,4 +1,4 @@
-// FILE: assets/js/lmb-auth-v2.js (FIXED: Phone Validation & ADDED: Password Toggle)
+// FILE: assets/js/lmb-auth-v2.js (ADDED: Password Confirmation)
 jQuery(document).ready(function($) {
     $('.lmb-auth-v2-widget').each(function() {
         const widget = $(this);
@@ -39,9 +39,6 @@ jQuery(document).ready(function($) {
                 regularFields.hide().find(':input').prop('disabled', true).prop('required', false);
                 professionalFields.show().find(':input').prop('disabled', false).prop('required', true);
             }
-            // Ensure common fields remain enabled/required
-            // Note: Common fields (email/password) are assumed to not have a shared container class here, 
-            // but the inputs are still checked and set to enabled if they are not part of the type-specific containers.
             
             // Update UI toggle buttons
             signupForm.find('.lmb-signup-toggle-btn').removeClass('active');
@@ -98,35 +95,38 @@ jQuery(document).ready(function($) {
             });
         });
 
-        // --- AJAX for Signup Form (Phone Validation FIX) ---
+        // --- AJAX for Signup Form (Password Confirmation & Phone Validation) ---
         signupForm.on('submit', function(e) {
             e.preventDefault();
             const submitBtn = $(this).find('button[type="submit"]');
             signupResponse.removeClass('error success').hide();
             
+            // --- NEW: Password confirmation check ---
+            const password = $('#signup-password').val();
+            const passwordConfirm = $('#signup-password-confirm').val();
+
+            if (password !== passwordConfirm) {
+                signupResponse.addClass('error').text('Les mots de passe ne correspondent pas.').show();
+                return; // Stop the submission
+            }
+            // --- End of new check ---
+
             // Phone validation FIX
             const phoneInput = signupForm.find('input[type="tel"]:visible');
             const rawPhoneNumber = phoneInput.val() || '';
             
-            // CLEANING: Remove all non-digit characters and trim whitespace
             const cleanedPhoneNumber = rawPhoneNumber.replace(/\D/g, '').trim(); 
             const phoneRegex = /^[0-9]{10}$/; 
             
-            // Test the cleaned value
             if (!phoneRegex.test(cleanedPhoneNumber)) {
                 signupResponse.addClass('error').text('Le numéro de téléphone doit contenir 10 chiffres (sans espaces ni caractères spéciaux).').show();
                 return;
             }
-            // End Phone validation FIX
 
             submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Création du compte...').prop('disabled', true);
             
-            // FIX: The current active field set is guaranteed to be enabled. 
-            // Since the *inactive* field set is disabled by updateSignupStep, 
-            // the serialization is now clean and includes only the intended fields.
             const formData = $(this).serialize();
             
-            // Re-enable ALL fields immediately after serialization (crucial for user experience)
             signupForm.find(':input').prop('disabled', false); 
 
             $.post(lmb_ajax_params.ajaxurl, {
@@ -144,7 +144,6 @@ jQuery(document).ready(function($) {
                  signupResponse.addClass('error').text('Demande échouée. Veuillez vérifier votre connexion.').show();
             }).always(function() {
                 submitBtn.html('Créer un Compte').prop('disabled', false);
-                // Re-initialize state to 'regular' after submission completion
                 updateSignupStep('regular'); 
             });
         });

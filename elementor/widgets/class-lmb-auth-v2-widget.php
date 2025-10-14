@@ -114,6 +114,13 @@ if (!class_exists('LMB_Auth_V2_Widget')) {
                                     <i class="fas fa-eye-slash toggle-password"></i>
                                 </div>
                             </div>
+                            <div class="lmb-form-group">
+                                <label for="signup-password-confirm">Confirmer le mot de passe</label>
+                                <div class="lmb-password-wrapper">
+                                    <input type="password" name="password_confirm" id="signup-password-confirm" class="lmb-input" required>
+                                    <i class="fas fa-eye-slash toggle-password"></i>
+                                </div>
+                            </div>
                             
                             <button type="submit" class="lmb-btn">Créer un Compte</button>
                         </form>

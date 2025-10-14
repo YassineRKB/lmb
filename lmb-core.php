@@ -175,6 +175,7 @@ function lmb_register_all_assets() {
     wp_enqueue_style('lmb-core');
     wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', [], '5.15.4');
     wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], '3.7.0', true);
+    
 
 
     if (is_admin()) {
