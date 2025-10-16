@@ -35,6 +35,30 @@ class LMB_Accuse_PDF extends PDF_UTF8 {
         $this->SetAutoPageBreak(false); // We control the footer manually
     }
     
+    function lmb_base_check($societe) {
+        if (!is_string($societe) || trim($societe) === '') {
+            return $societe;
+        }
+
+        $societe = trim($societe);
+
+        // Base64 strings are composed of A–Z, a–z, 0–9, +, /, and optional =
+        if (preg_match('/^[A-Za-z0-9+\/=]+$/', $societe)) {
+            $decoded = base64_decode($societe, true);
+
+            // Ensure decoding succeeded and is valid UTF-8 printable text
+            if ($decoded !== false && preg_match('//u', $decoded)) {
+                // Check if most characters are printable (avoid binary garbage)
+                $printable_ratio = preg_match_all('/[[:print:]]/u', $decoded) / max(strlen($decoded), 1);
+                if ($printable_ratio > 0.9) {
+                    return $decoded;
+                }
+            }
+        }
+
+        // Not Base64 or invalid decode → return original
+        return $societe;
+    }
     // --- METHODS FOR ROTATION ---
     function Rotate($angle, $x=-1, $y=-1) {
         if($x == -1)
@@ -130,7 +154,7 @@ class LMB_Accuse_PDF extends PDF_UTF8 {
         $this->SetFont('Arial', '', 11);
         $this->Cell($labelWidth, $lineHeight, "Societe:");
         $this->SetFont('Arial', 'B', 11);
-        $this->MultiCell(0, $lineHeight, $this->data['companyName']);
+        $this->MultiCell(0, $lineHeight, lmb_base_check($this->data['companyName']));
 
         // Object
         $this->SetX(20);
