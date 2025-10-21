@@ -57,10 +57,20 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                     </form>
                 </div>
 
+                <div class="lamv2-bulk-actions hidden">
+                    <select id="lamv2-bulk-action-select" class="lamv2-filter-select">
+                        <option value="">Actions groupées</option>
+                        <option value="bulk_clean">Nettoyer l'association de Journal/Accusé</option>
+                        <option value="bulk_upload_journal">Télécharger Journal Temporaire (Bulk)</option>
+                    </select>
+                    <button id="lamv2-bulk-action-apply" class="lamv2-btn lamv2-btn-primary">Appliquer</button>
+                    <span id="lamv2-bulk-selected-count"> (0 sélectionné)</span>
+                </div>
                 <div class="lamv2-table-container">
                     <table class="lamv2-data-table">
                         <thead>
                             <tr>
+                                <th class="lamv2-checkbox-col"><input type="checkbox" class="lamv2-check-all" title="Tout sélectionner"></th>
                                 <th>Réf</th>
                                 <th>Société</th>
                                 <th>Type</th>
@@ -88,7 +98,7 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                          <button class="lamv2-modal-close">&times;</button>
                     </div>
                      <form id="lamv2-upload-journal-form" class="lamv2-upload-journal-form">
-                        <input type="hidden" name="ad_id" id="lamv2-journal-ad-id">
+                        <input type="hidden" name="ad_ids" id="lamv2-journal-ad-ids">
                          <div class="lamv2-form-grid">
                             <div class="lamv2-form-group">
                                 <label for="lamv2-journal-no">Journal N°</label>
@@ -101,12 +111,13 @@ class LMB_Legal_Ads_Management_V2_Widget extends Widget_Base {
                          </div>
                          <div class="lamv2-form-actions">
                              <button type="button" class="lamv2-btn lamv2-btn-view lamv2-modal-close">Annuler</button>
-                             <button type="submit" class="lamv2-btn lamv2-btn-primary">Télécharger</button>
+                             <button type="submit" class="lamv2-btn lamv2-btn-primary">Télécharger et Appliquer</button>
                          </div>
+                         <p id="lamv2-upload-target-info" style="margin-top: 15px; font-weight: bold;"></p>
                      </form>
                 </div>
             </div>
-        </div>
+            </div>
         <?php
     }
 }

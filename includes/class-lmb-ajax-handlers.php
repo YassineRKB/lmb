@@ -792,6 +792,11 @@ class LMB_Ajax_Handlers {
                 }
 
                 echo '<tr class="lamv2-clickable-row" data-href="' . esc_url(get_edit_post_link($post_id)) . '">';
+                
+                // --- Checkbox Column ---
+                echo '<td class="lamv2-checkbox-col"><input type="checkbox" class="lamv2-ad-checkbox" data-id="' . esc_attr($post_id) . '"></td>';
+                // --- End Checkbox Column ---
+
                 echo '<td>' . esc_html($post_id) . '</td>';
                 echo '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
                 echo '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
@@ -825,7 +830,8 @@ class LMB_Ajax_Handlers {
                 echo '</tr>';
             }
         } else {
-            echo '<tr><td colspan="10" style="text-align:center;">Aucune annonce trouvée correspondant à vos critères.</td></tr>';
+            // FIX: Colspan changed to 11 to match the new table structure.
+            echo '<tr><td colspan="11" style="text-align:center;">Aucune annonce trouvée correspondant à vos critères.</td></tr>';
         }
         $html = ob_get_clean();
         wp_reset_postdata();
@@ -1509,42 +1515,104 @@ class LMB_Ajax_Handlers {
         }
     }
 
-    // --- NEW FUNCTION: Upload Temporary Journal ---
+    // --- REVISED FUNCTION: Upload Temporary Journal (Includes resource management) ---
     private static function lmb_admin_upload_temporary_journal() {
+        // FIX: Temporarily increase resource limits for this resource-intensive task (PDF generation)
+        @ini_set('memory_limit', '256M'); 
+        @ini_set('max_execution_time', '180'); // Set max execution time to 3 minutes (180 seconds)
+
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => 'Permission refusée.'], 403);
+            wp_send_json_error(['message' => 'Permission denied.'], 403);
         }
-        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
+        
+        // --- Input Processing (unchanged) ---
+        $ad_ids_raw = isset($_POST['ad_ids']) ? explode(',', sanitize_text_field($_POST['ad_ids'])) : [];
+        $ad_ids = array_filter(array_map('intval', $ad_ids_raw));
         $journal_no = isset($_POST['journal_no']) ? sanitize_text_field($_POST['journal_no']) : '';
 
-        if (!$ad_id || empty($_FILES['journal_file']) || empty($journal_no)) {
-            wp_send_json_error(['message' => 'ID d\'annonce, fichier ou numéro de journal manquant.'], 400);
+        if (empty($ad_ids) || empty($_FILES['journal_file']) || empty($journal_no)) {
+            wp_send_json_error(['message' => 'Missing required fields: Ad IDs, file, or journal number.'], 400);
         }
-        // Clean up old journal associations to ensure a clean slate.
-        $old_temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
-        if ($old_temp_journal_id) {
-            wp_delete_attachment($old_temp_journal_id, true);
+        
+        // --- CRITICAL SAFETY INCLUDES (Ensure all dependencies are available) ---
+        if (!function_exists('media_handle_upload')) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
         }
-        delete_post_meta($ad_id, 'lmb_temporary_journal_id');
-        delete_post_meta($ad_id, 'lmb_final_journal_id');
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        $attachment_id = media_handle_upload('journal_file', $ad_id);
+        if (!function_exists('wp_delete_attachment')) {
+            require_once(ABSPATH . 'wp-admin/includes/post.php');
+        }
+        if (!class_exists('LMB_PDF_Generator')) {
+             require_once(LMB_CORE_PATH . 'includes/class-lmb-pdf-generator.php');
+        }
+        if (!class_exists('LMB_Invoice_Handler')) {
+             require_once(LMB_CORE_PATH . 'includes/class-lmb-invoice-handler.php');
+        }
+        // --- END CRITICAL SAFETY INCLUDES ---
+
+        // --- 1. Upload the file once ---
+        $attachment_id = media_handle_upload('journal_file', 0);
 
         if (is_wp_error($attachment_id)) {
             wp_send_json_error(['message' => $attachment_id->get_error_message()]);
         }
         
         update_post_meta($attachment_id, 'journal_no', $journal_no);
-        update_post_meta($ad_id, 'lmb_temporary_journal_id', $attachment_id);
-        update_post_meta($ad_id, 'lmb_journal_no', $journal_no);
 
-        // --- NEW: Automatically generate accuse after temp journal upload ---
-        $accuse_url = LMB_Invoice_Handler::generate_accuse_pdf($ad_id);
-        if ($accuse_url) {
-            update_post_meta($ad_id, 'lmb_accuse_pdf_url', $accuse_url);
-            $message = 'Journal temporaire téléchargé et PDF d\'Accusé généré avec succès.';
-        } else {
-            $message = 'Journal temporaire téléchargé, mais échec de la génération du PDF d\'Accusé. Un numéro de journal pourrait être manquant ou une autre erreur s\'est produite.';
+        $updated_count = 0;
+        $accuse_generated_count = 0;
+        $error_count = 0; // Tracks PDF generation failures
+        
+        // --- 2. Loop through all selected ads and update their meta ---
+        foreach ($ad_ids as $ad_id) {
+            $ad = get_post($ad_id);
+            if (!$ad || $ad->post_type !== 'lmb_legal_ad') {
+                continue;
+            }
+            
+            // a) Cleanup old journal associations 
+            $old_temp_journal_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
+            if ($old_temp_journal_id && (int)$old_temp_journal_id !== (int)$attachment_id) {
+                wp_delete_attachment($old_temp_journal_id, true);
+            }
+            delete_post_meta($ad_id, 'lmb_final_journal_id');
+
+            // b) Set new temporary association (This ensures meta is updated even if PDF fails)
+            update_post_meta($ad_id, 'lmb_temporary_journal_id', $attachment_id);
+            update_post_meta($ad_id, 'lmb_journal_no', $journal_no);
+            
+            // c) Automatically generate accuse (Resource intensive part)
+            if (class_exists('LMB_Invoice_Handler')) {
+                // FIX: Use try/catch to ensure memory exhaustion in PDF generation doesn't crash the loop.
+                try {
+                     $accuse_url = LMB_Invoice_Handler::generate_accuse_pdf($ad_id);
+                     if ($accuse_url) {
+                        update_post_meta($ad_id, 'lmb_accuse_pdf_url', $accuse_url);
+                        $accuse_generated_count++;
+                     } else {
+                        $error_count++;
+                     }
+                } catch (\Exception $e) {
+                    // Log the error and continue to the next ad
+                    error_log('LMB Bulk Upload PDF Error for Ad #' . $ad_id . ': ' . $e->getMessage());
+                    $error_count++;
+                }
+            }
+            $updated_count++;
+        }
+        
+        // If no ads were updated but a file was uploaded, delete the orphaned attachment
+        if ($updated_count === 0) {
+            wp_delete_attachment($attachment_id, true);
+            wp_send_json_error(['message' => 'No valid ads were found to update. The file was ignored.'], 400);
+        }
+
+        $message = sprintf('Temporary journal uploaded and applied to %d ads.', $updated_count);
+        
+        // Provide feedback on PDF generation failure
+        if ($error_count > 0) {
+            $message .= sprintf(' (ATTENTION: PDF Accusé generation failed for %d ads due to a system error.)', $error_count);
         }
 
         wp_send_json_success(['message' => $message]);
@@ -2309,36 +2377,78 @@ class LMB_Ajax_Handlers {
         wp_send_json_success(['ads' => $ads]);
     }
 
-    // --- NEW FUNCTION: Clean Ad Association ---
+    // --- NEW FUNCTION: Clean Ad Association (Supports Bulk) ---
     private static function lmb_clean_ad_association() {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Permission refusée.'], 403);
         }
-        $ad_id = isset($_POST['ad_id']) ? intval($_POST['ad_id']) : 0;
-        if (!$ad_id) {
-            wp_send_json_error(['message' => 'ID d\'annonce non valide.'], 400);
+        
+        // --- INPUT NORMALIZATION FIX ---
+        $ad_ids_input = isset($_POST['ad_ids']) ? $_POST['ad_ids'] : [];
+        
+        // Handle both comma-separated string (bulk form) and array (single button) inputs
+        if (is_string($ad_ids_input)) {
+             $ad_ids_raw = explode(',', sanitize_text_field($ad_ids_input));
+        } elseif (is_array($ad_ids_input)) {
+             $ad_ids_raw = $ad_ids_input;
+        } else {
+             $ad_ids_raw = [];
         }
         
-        $ad = get_post($ad_id);
-        if (!$ad || $ad->post_type !== 'lmb_legal_ad') {
-            wp_send_json_error(['message' => 'Annonce légale non trouvée.'], 404);
+        $ad_ids = array_filter(array_map('intval', $ad_ids_raw));
+        // --- END INPUT NORMALIZATION FIX ---
+        
+        if (empty($ad_ids)) {
+            wp_send_json_error(['message' => 'Aucun ID d\'annonce valide fourni.'], 400);
+        }
+        
+        // --- SAFETY INCLUDES ---
+        if (!function_exists('wp_delete_attachment')) {
+            require_once(ABSPATH . 'wp-admin/includes/post.php');
+        }
+        if (!class_exists('LMB_Ad_Manager')) {
+            require_once(LMB_CORE_PATH . 'includes/class-lmb-ad-manager.php');
+        }
+        if (!class_exists('LMB_Invoice_Handler')) {
+             require_once(LMB_CORE_PATH . 'includes/class-lmb-invoice-handler.php');
+        }
+        // --- END SAFETY INCLUDES ---
+
+        $cleaned_count = 0;
+        foreach ($ad_ids as $ad_id) {
+            $ad = get_post($ad_id);
+
+            if (!$ad || $ad->post_type !== 'lmb_legal_ad') {
+                continue; // Skip invalid or non-legal ad posts
+            }
+
+            // 1. Delete associated temporary journal file if it exists
+            $temp_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
+            if ($temp_id) {
+                wp_delete_attachment($temp_id, true);
+            }
+            
+            // 2. Delete the accuse file itself (via LMB_Invoice_Handler::delete_accuse_pdf_by_url)
+            $accuse_url = get_post_meta($ad_id, 'lmb_accuse_pdf_url', true);
+            if ($accuse_url && class_exists('LMB_Invoice_Handler')) {
+                LMB_Invoice_Handler::delete_accuse_pdf_by_url($accuse_url);
+            }
+
+            // 3. Delete all meta keys related to association and resulting PDFs
+            delete_post_meta($ad_id, 'lmb_temporary_journal_id');
+            delete_post_meta($ad_id, 'lmb_final_journal_id');
+            delete_post_meta($ad_id, 'lmb_final_journal_no');
+            delete_post_meta($ad_id, 'lmb_accuse_pdf_url');
+
+            $cleaned_count++;
+            LMB_Ad_Manager::log_activity(sprintf('Association Journal-Annonce nettoyée pour l\'annonce #%d par %s.', $ad_id, wp_get_current_user()->display_name));
         }
 
-        // 1. Delete associated temporary journal file if it exists
-        $temp_id = get_post_meta($ad_id, 'lmb_temporary_journal_id', true);
-        if ($temp_id) {
-            wp_delete_attachment($temp_id, true);
+        if ($cleaned_count > 0) {
+            wp_send_json_success(['message' => sprintf('Nettoyage terminé. %d annonces mises à jour.', $cleaned_count)]);
+        } else {
+             wp_send_json_error(['message' => 'Nettoyage échoué. Aucune annonce valide trouvée.']);
         }
-        
-        // 2. Delete all meta keys related to association and resulting PDFs
-        delete_post_meta($ad_id, 'lmb_temporary_journal_id');
-        delete_post_meta($ad_id, 'lmb_final_journal_id');
-        delete_post_meta($ad_id, 'lmb_final_journal_no');
-        delete_post_meta($ad_id, 'lmb_accuse_pdf_url');
-
-        LMB_Ad_Manager::log_activity(sprintf('Association Journal-Annonce nettoyée pour l\'annonce #%d par %s.', $ad_id, wp_get_current_user()->display_name));
-        
-        wp_send_json_success(['message' => 'Association de journal nettoyée. L\'annonce est maintenant pret pour une nouvelle journal association.']);
     }
 
     // --- NEW METHOD: AJAX Trigger for Cleanup ---

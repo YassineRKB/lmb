@@ -103,6 +103,7 @@ class LMB_Admin {
         // The Maintenance Utilitaires submenu is REMOVED from the menu to match the request
 
         // 7. Logs Page (Existing Slug: lmb-error-logs)
+         */
         add_submenu_page(
             'lmb-core',
             __('Journaux d\'Erreurs', 'lmb-core'),
@@ -111,7 +112,7 @@ class LMB_Admin {
             'lmb-error-logs', // Correct existing slug
             ['LMB_Error_Handler', 'render_logs_page'],
             70 // Position 70
-        ); */
+        );
         add_submenu_page(
             'lmb-core',
             __('Paramètres', 'lmb-core'),
@@ -120,6 +121,15 @@ class LMB_Admin {
             'lmb-core-settings', // Correct existing slug
             [__CLASS__, 'render_settings_page'],
             60 // Position 60
+        );
+        add_submenu_page(
+            'lmb-core',
+            __('Maintenance Utilitaires', 'lmb-core'),
+            __('Maintenance', 'lmb-core'),
+            'manage_options',
+            'lmb-maintenance-utils',
+            [__CLASS__, 'render_maintenance_page'],
+            999 // Position 999: Places it far down the menu, keeping it accessible via URL but hidden from the sidebar.
         );
         // Remove default CPT top-level menu pages to prevent duplication, as we have now manually added them as submenus
         remove_menu_page('edit.php?post_type=lmb_legal_ad');
