@@ -1,4 +1,6 @@
 <?php
+// FILE: includes/class-lmb-admin.php
+
 if (!defined('ABSPATH')) exit;
 
 class LMB_Admin {
@@ -27,6 +29,7 @@ class LMB_Admin {
     }
 
     public static function add_admin_menu() {
+        // 1. Create the main parent menu item (Top-Level: LMB Core)
         add_menu_page(
             __('LMB Core', 'lmb-core'),
             'LMB Core',
@@ -37,43 +40,92 @@ class LMB_Admin {
             25
         );
 
+        // 1. Dashboard (The first submenu, links to parent slug to be the landing page)
         add_submenu_page(
             'lmb-core',
             __('Tableau de Bord', 'lmb-core'),
-            __('Tableau de Bord', 'lmb-core'),
+            __('Dashboard', 'lmb-core'),
             'manage_options',
             'lmb-core',
-            [__CLASS__, 'render_dashboard_page']
+            [__CLASS__, 'render_dashboard_page'],
+            0 // Position 0
         );
 
+        /* // 2. Legal Ads (CPT Link - edit.php?post_type=lmb_legal_ad)
         add_submenu_page(
             'lmb-core',
-            __('Paramètres', 'lmb-core'),
-            __('Paramètres', 'lmb-core'),
+            __('Annonces Légales', 'lmb-core'),
+            __('Legal Ads', 'lmb-core'),
             'manage_options',
-            'lmb-core-settings',
-            [__CLASS__, 'render_settings_page']
+            'edit.php?post_type=lmb_legal_ad',
+            false,
+            10 // Position 10
+        );
+
+        // 3. Journaux (CPT Link - edit.php?post_type=lmb_newspaper)
+        add_submenu_page(
+            'lmb-core',
+            __('Journaux', 'lmb-core'),
+            __('Journaux', 'lmb-core'),
+            'manage_options',
+            'edit.php?post_type=lmb_newspaper',
+            false,
+            20 // Position 20
         );
         
-        // --- NEW: Add Maintenance Submenu ---
+        // --- Ad Types will be inserted at position 30 by LMB_Ad_Type_Manager ---
+        
+        // 4. Paiements (CPT Link - edit.php?post_type=lmb_payment)
         add_submenu_page(
             'lmb-core',
-            __('Maintenance Utilitaires', 'lmb-core'),
-            __('Maintenance', 'lmb-core'),
+            __('Paiements', 'lmb-core'),
+            __('Paiements', 'lmb-core'),
             'manage_options',
-            'lmb-maintenance-utils',
-            [__CLASS__, 'render_maintenance_page']
+            'edit.php?post_type=lmb_payment',
+            false,
+            40 // Position 40
         );
-        // --- END NEW ---
 
+        // 5. Packages (CPT Link - edit.php?post_type=lmb_package)
+        add_submenu_page(
+            'lmb-core',
+            __('Packages', 'lmb-core'),
+            __('Packages', 'lmb-core'),
+            'manage_options',
+            'edit.php?post_type=lmb_package',
+            false,
+            50 // Position 50
+        );
+
+        // 6. Settings Page (Existing Slug: lmb-core-settings)
+        
+        
+        // The Maintenance Utilitaires submenu is REMOVED from the menu to match the request
+
+        // 7. Logs Page (Existing Slug: lmb-error-logs)
         add_submenu_page(
             'lmb-core',
             __('Journaux d\'Erreurs', 'lmb-core'),
-            __('Journaux d\'Erreurs', 'lmb-core'),
+            __('Logs', 'lmb-core'),
             'manage_options',
-            'lmb-error-logs',
-            ['LMB_Error_Handler', 'render_logs_page']
+            'lmb-error-logs', // Correct existing slug
+            ['LMB_Error_Handler', 'render_logs_page'],
+            70 // Position 70
+        ); */
+        add_submenu_page(
+            'lmb-core',
+            __('Paramètres', 'lmb-core'),
+            __('Settings', 'lmb-core'),
+            'manage_options',
+            'lmb-core-settings', // Correct existing slug
+            [__CLASS__, 'render_settings_page'],
+            60 // Position 60
         );
+        // Remove default CPT top-level menu pages to prevent duplication, as we have now manually added them as submenus
+        remove_menu_page('edit.php?post_type=lmb_legal_ad');
+        remove_menu_page('edit.php?post_type=lmb_newspaper');
+        remove_menu_page('edit.php?post_type=lmb_payment');
+        remove_menu_page('edit.php?post_type=lmb_package');
     }
 
     public static function register_settings() {
@@ -157,7 +209,6 @@ class LMB_Admin {
         </div>
         <?php
     }
-    // --- END NEW METHOD ---
 
 
     // REVISED FUNCTION for collecting stats (Existing function)

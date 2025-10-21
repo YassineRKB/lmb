@@ -54,7 +54,7 @@ function lmb_core_init() {
     require_once LMB_CORE_PATH . 'includes/class-lmb-user.php';
     require_once LMB_CORE_PATH . 'elementor/class-lmb-elementor-widgets.php';
     require_once LMB_CORE_PATH . 'includes/class-lmb-maintenance-utilities.php';
-    require_once LMB_CORE_PATH . 'includes/class-lmb-data-manager.php';
+    #require_once LMB_CORE_PATH . 'includes/class-lmb-data-manager.php';
     require_once LMB_CORE_PATH . 'includes/class-lmb-ad-type-manager.php';
 
     // Now, initialize the classes
@@ -72,7 +72,7 @@ function lmb_core_init() {
     LMB_Notification_Manager::init();
     new LMB_User();
     LMB_Maintenance_Utilities::init();
-    LMB_Data_Manager::init();
+    #LMB_Data_Manager::init();
     LMB_Ad_Type_Manager::init();
 }
 add_action('plugins_loaded', 'lmb_core_init');
@@ -276,22 +276,7 @@ function lmb_show_current_user_name_shortcode() {
     return ''; // Return nothing if the user is not logged in.
 }
 add_shortcode('show_username', 'lmb_show_current_user_name_shortcode');
-// --- NEW FUNCTION TO LOAD ASSETS ON OUR ADMIN PAGE ---
-function lmb_load_data_manager_assets($hook) {
-    // 'lmb-core_page_lmb-data-manager' is the specific hook for our new page
-    if ($hook != 'lmb-core_page_lmb-data-manager') {
-        return;
-    }
-    wp_enqueue_script('lmb-data-manager', LMB_CORE_URL . 'assets/js/lmb-data-manager.js', ['jquery'], LMB_CORE_VERSION, true);
-    wp_enqueue_style('lmb-data-manager', LMB_CORE_URL . 'assets/css/lmb-data-manager.css', [], LMB_CORE_VERSION);
-    
-    // We need to localize the script here as well to pass the nonce
-    wp_localize_script('lmb-data-manager', 'lmb_ajax_params', [
-        'ajaxurl'  => admin_url('admin-ajax.php'),
-        'nonce'    => wp_create_nonce('lmb_dm_nonce'),
-    ]);
-}
-add_action('admin_enqueue_scripts', 'lmb_load_data_manager_assets');
+
 function lmb_load_ad_type_manager_assets($hook) {
     if ($hook != 'lmb-core_page_lmb-ad-type-manager') {
         return;

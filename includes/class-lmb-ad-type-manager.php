@@ -12,12 +12,13 @@ class LMB_Ad_Type_Manager {
 
     public static function add_admin_menu() {
         add_submenu_page(
-            'lmb-core-admin',
+            'lmb-core',
             __('Type d\'annonce', 'lmb-core'),
-            __('Type d\'annonce', 'lmb-core'),
+            __('Ad Types', 'lmb-core'),
             'manage_options',
             'lmb-ad-type-manager',
-            [__CLASS__, 'create_admin_page']
+            [__CLASS__, 'create_admin_page'],
+            30
         );
     }
 
