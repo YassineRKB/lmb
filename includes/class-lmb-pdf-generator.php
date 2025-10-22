@@ -154,7 +154,7 @@ class LMB_Accuse_PDF extends PDF_UTF8 {
         $this->SetFont('Arial', '', 11);
         $this->Cell($labelWidth, $lineHeight, "Societe:");
         $this->SetFont('Arial', 'B', 11);
-        $this->MultiCell(0, $lineHeight, lmb_base_check($this->data['companyName']));
+        $this->MultiCell(0, $lineHeight, $this->lmb_base_check($this->data['companyName']));
 
         // Object
         $this->SetX(20);

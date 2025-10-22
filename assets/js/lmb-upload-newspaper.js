@@ -28,13 +28,14 @@ jQuery(document).ready(function($) {
             action: 'lmb_fetch_eligible_ads_for_newspaper',
             nonce: lmb_ajax_params.nonce,
             filters: formData
-        }).done(function(response) {
+       }).done(function(response) {
             if (response.success) {
                 tableBody.html(response.data.html);
                 adsCount.text(response.data.count);
                 step1.hide();
                 step2.show();
-                selectAllCheckbox.prop('checked', true);
+                // FIX: Do not force select all. Let the server-side logic control which boxes are checked.
+                selectAllCheckbox.prop('checked', false); 
             } else {
                 alert('Erreur: ' + response.data.message);
             }

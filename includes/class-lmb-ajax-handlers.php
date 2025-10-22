@@ -1518,8 +1518,9 @@ class LMB_Ajax_Handlers {
     // --- REVISED FUNCTION: Upload Temporary Journal (Includes resource management) ---
     private static function lmb_admin_upload_temporary_journal() {
         // FIX: Temporarily increase resource limits for this resource-intensive task (PDF generation)
+        // If 256M is still too low, you may need to increase this to '512M' or '1G' manually.
         @ini_set('memory_limit', '256M'); 
-        @ini_set('max_execution_time', '180'); // Set max execution time to 3 minutes (180 seconds)
+        @ini_set('max_execution_time', '180'); 
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(['message' => 'Permission denied.'], 403);
@@ -1543,12 +1544,13 @@ class LMB_Ajax_Handlers {
         if (!function_exists('wp_delete_attachment')) {
             require_once(ABSPATH . 'wp-admin/includes/post.php');
         }
-        if (!class_exists('LMB_PDF_Generator')) {
+        // Assuming LMB_CORE_PATH is defined and files exist.
+        /* if (!class_exists('LMB_PDF_Generator')) {
              require_once(LMB_CORE_PATH . 'includes/class-lmb-pdf-generator.php');
         }
         if (!class_exists('LMB_Invoice_Handler')) {
              require_once(LMB_CORE_PATH . 'includes/class-lmb-invoice-handler.php');
-        }
+        } */
         // --- END CRITICAL SAFETY INCLUDES ---
 
         // --- 1. Upload the file once ---
@@ -1584,7 +1586,7 @@ class LMB_Ajax_Handlers {
             
             // c) Automatically generate accuse (Resource intensive part)
             if (class_exists('LMB_Invoice_Handler')) {
-                // FIX: Use try/catch to ensure memory exhaustion in PDF generation doesn't crash the loop.
+                // *** FIX: Catch \Throwable to handle PHP 7+ Fatal Errors (Memory Exhaustion) ***
                 try {
                      $accuse_url = LMB_Invoice_Handler::generate_accuse_pdf($ad_id);
                      if ($accuse_url) {
@@ -1593,9 +1595,15 @@ class LMB_Ajax_Handlers {
                      } else {
                         $error_count++;
                      }
-                } catch (\Exception $e) {
-                    // Log the error and continue to the next ad
-                    error_log('LMB Bulk Upload PDF Error for Ad #' . $ad_id . ': ' . $e->getMessage());
+                } catch (\Throwable $e) { // <-- CRITICAL FIX: Changed from \Exception to \Throwable
+                    // Log the detailed error message to the WordPress/PHP log
+                    error_log(sprintf(
+                        'LMB Bulk Upload PDF Accuse FAILED for Ad #%d. Error: %s in %s on line %d.',
+                        $ad_id,
+                        $e->getMessage(),
+                        $e->getFile(),
+                        $e->getLine()
+                    ));
                     $error_count++;
                 }
             }
@@ -1612,7 +1620,7 @@ class LMB_Ajax_Handlers {
         
         // Provide feedback on PDF generation failure
         if ($error_count > 0) {
-            $message .= sprintf(' (ATTENTION: PDF Accusé generation failed for %d ads due to a system error.)', $error_count);
+            $message .= sprintf(' (ATTENTION: PDF Accusé generation failed for %d ads. Check the error log for details.)', $error_count);
         }
 
         wp_send_json_success(['message' => $message]);
@@ -1707,7 +1715,7 @@ class LMB_Ajax_Handlers {
     } */
 
     
-    // --- REPLACEMENT FUNCTION: Fetch eligible ads for newspaper with replace mode support ---
+    // --- REVISED FUNCTION: Fetch eligible ads for newspaper with conditional checking ---
     private static function lmb_fetch_eligible_ads_for_newspaper() {
         check_ajax_referer('lmb_nonce', 'nonce');
         if (!current_user_can('manage_options')) wp_send_json_error(['message' => 'Permission refusée.'], 403);
@@ -1718,58 +1726,81 @@ class LMB_Ajax_Handlers {
         $journal_no = sanitize_text_field($filters['journal_no'] ?? '');
         $replace_mode = isset($filters['replace_journal']) && $filters['replace_journal'] === '1';
 
-        if (empty($start_date) || empty($end_date) || empty($journal_no)) {
-            wp_send_json_error(['message' => 'Plage de dates et numéro de journal requis.']);
+        if (empty($journal_no)) {
+            wp_send_json_error(['message' => 'Numéro de journal requis.'], 400);
         }
-
+        
+        // --- 1. Query only by journal_no to get ALL ads with that number ---
         $args = [
             'post_type'      => 'lmb_legal_ad',
             'post_status'    => 'publish',
-            'posts_per_page' => -1,
+            'posts_per_page' => -1, // Fetch all matching ads
             'suppress_filters' => true,
             'meta_query'     => [
                 'relation' => 'AND',
-                ['key' => 'approved_date', 'value' => [$start_date, $end_date], 'compare' => 'BETWEEN', 'type' => 'DATE'],
-                ['key' => 'lmb_journal_no', 'value' => $journal_no, 'compare' => '='],
+                // Filter 1: Must match the temporary journal number set by admin
+                ['key' => 'lmb_journal_no', 'value' => $journal_no, 'compare' => '='], 
             ],
         ];
 
-        // --- START: NEW CONDITIONAL LOGIC ---
-        // Only exclude already-associated ads if we are NOT in replace mode.
+        // Filter 2: Only exclude already-associated ads if NOT in replace mode.
         if (!$replace_mode) {
             $args['meta_query'][] = [
                 'key' => 'lmb_final_journal_id',
                 'compare' => 'NOT EXISTS'
             ];
         }
-        // --- END: NEW CONDITIONAL LOGIC ---
 
         $query = new WP_Query($args);
         $html = '';
+        
+        // Prepare dates for comparison (timestamps are reliable)
+        $start_timestamp = strtotime($start_date);
+        $end_timestamp = strtotime($end_date);
+            
         if ($query->have_posts()) {
+            
             while ($query->have_posts()) {
                 $query->the_post();
                 $post_id = get_the_ID();
+                $approved_date_str = get_post_meta($post_id, 'approved_date', true);
                 $final_journal_id = get_post_meta($post_id, 'lmb_final_journal_id', true);
+                
+                // --- 2. CONDITIONAL CHECKBOX LOGIC (inside the loop) ---
+                $checked_attr = '';
+                $ad_within_range = false;
+                
+                if (!empty($approved_date_str) && $start_timestamp && $end_timestamp) {
+                    $approved_timestamp = strtotime($approved_date_str);
+                    // Check if approved_timestamp is within the submitted date range (inclusive)
+                    if ($approved_timestamp >= $start_timestamp && $approved_timestamp <= $end_timestamp) {
+                         $ad_within_range = true;
+                         $checked_attr = 'checked'; // Auto-check if within date range
+                    }
+                }
+                // --- END CONDITIONAL CHECKBOX LOGIC ---
                 
                 $status_html = '';
                 if ($final_journal_id) {
                     $journal_title = get_the_title($final_journal_id);
                     $status_html = '<span class="lmb-status-badge lmb-status-published" style="background-color: #e74c3c;">Remplacement (Actuel: ' . esc_html($journal_title) . ')</span>';
+                } elseif ($ad_within_range) {
+                     $status_html = '<span class="lmb-status-badge lmb-status-pending_review" style="background-color: #2ecc71;">Nouveau (Dans Date)</span>';
                 } else {
-                     $status_html = '<span class="lmb-status-badge lmb-status-pending_review" style="background-color: #2ecc71;">Nouveau</span>';
+                     $status_html = '<span class="lmb-status-badge lmb-status-draft" style="background-color: #f39c12;">Nouveau (Hors Date)</span>';
                 }
 
-                $html .= '<tr data-status="' . ($final_journal_id ? 'replacement' : 'new') . '">'; // Add data attribute for JS
-                $html .= '<td><input type="checkbox" class="lmb-ad-checkbox" value="' . esc_attr($post_id) . '" checked></td>';
+                $html .= '<tr data-status="' . ($final_journal_id ? 'replacement' : 'new') . '">'; 
+                $html .= '<td><input type="checkbox" class="lmb-ad-checkbox" value="' . esc_attr($post_id) . '" ' . $checked_attr . '></td>'; // <-- Conditional checkbox state
                 $html .= '<td>' . esc_html($post_id) . '</td>';
                 $html .= '<td>' . esc_html(get_post_meta($post_id, 'company_name', true)) . '</td>';
-                $html .= '<td>' . esc_html(get_post_meta($post_id, 'approved_date', true)) . '</td>';
-                $html .= '<td>' . $status_html . '</td>'; // Add new status column
+                $html .= '<td>' . esc_html(get_post_meta($post_id, 'ad_type', true)) . '</td>';
+                $html .= '<td>' . esc_html($approved_date_str) . '</td>';
+                $html .= '<td>' . $status_html . '</td>';
                 $html .= '</tr>';
             }
         } else {
-            wp_send_json_error(['message' => 'Aucune annonce trouvée pour ces critères.']);
+            wp_send_json_error(['message' => 'Aucune annonce trouvée avec le numéro de journal ' . esc_html($journal_no) . '.'], 404);
         }
         wp_reset_postdata();
 
