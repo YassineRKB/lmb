@@ -77,25 +77,14 @@ class LMB_Public_Ads_Dir_Widget extends Widget_Base {
             <div class="lmb-widget-content">
                 <div class="lmb-filters-box">
                     <form class="lmb-filters-form">
-                        <div class="lmb-filter-grid">
-                            <input type="search" placeholder="Rechercher par Réf..." name="filter_ref" class="lmb-filter-input">
-                            <input type="search" placeholder="Rechercher par Société..." name="filter_company" class="lmb-filter-input">
-                             <select name="filter_type" class="lmb-filter-select">
-                                <option value="">Tous les Types d'Annonces</option>
-                                <?php
-                                global $wpdb;
-                                $ad_types = $wpdb->get_col("SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key = 'ad_type' AND meta_value != '' ORDER BY meta_value ASC");
-                                foreach ($ad_types as $type) {
-                                    echo '<option value="'.esc_attr($type).'">'.esc_html($type).'</option>';
-                                }
-                                ?>
-                            </select>
+                        <div class="lmb-filter-grid lmb-v2-filters">
+                            <input type="search" placeholder="Recherche: Réf, Société, RC, Type..." name="smart_search" class="lmb-filter-input">
                             <input type="date" name="filter_date" class="lmb-filter-input">
+                            <button type="submit" class="lmb-btn lmb-btn-primary"><i class="fas fa-search"></i> Filtrer</button>
                             <button type="reset" class="lmb-btn lmb-btn-view"><i class="fas fa-undo"></i> Réinitialiser</button>
                         </div>
                     </form>
                 </div>
-
                 <div class="lmb-table-container">
                     <table class="lmb-data-table">
                         <thead>

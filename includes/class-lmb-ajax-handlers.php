@@ -36,7 +36,7 @@ class LMB_Ajax_Handlers {
             'lmb_discard_newspaper_draft', 'lmb_manipulate_balance',
             'lmb_admin_subscribe_user_to_package',
             'lmb_update_ad_date', 'lmb_associate_final_newspaper', 'lmb_fetch_eligible_ads_for_newspaper',
-            'lmb_clean_ad_association', 'lmb_trigger_manual_cleanup',
+            'lmb_clean_ad_association', 'lmb_trigger_manual_cleanup', 'lmb_refresh_ad_types',
             
         ];
         // --- MODIFICATION: Make auth actions public ---
@@ -1879,31 +1879,46 @@ class LMB_Ajax_Handlers {
             'order' => 'DESC'
         ];
         
-        // Apply filters
-        if (!empty($filters['filter_ref']) && is_numeric($filters['filter_ref'])) {
-            $args['p'] = intval($filters['filter_ref']);
-        }
-        if (!empty($filters['filter_company'])) {
-            $args['meta_query'][] = [
-                'key' => 'company_name',
-                'value' => sanitize_text_field($filters['filter_company']),
-                'compare' => 'LIKE'
-            ];
-        }
-        if (!empty($filters['filter_type'])) {
-            $args['meta_query'][] = [   
-                'key' => 'ad_type',
-                'value' => sanitize_text_field($filters['filter_type']),
-                'compare' => 'LIKE'
-            ];
-        }
-        if (!empty($filters['filter_date'])) {
+        // --- START NEW FILTER LOGIC (TASK 2) ---
+        $date_filter = sanitize_text_field($filters['filter_date'] ?? '');
+        $smart_search_term = sanitize_text_field($filters['smart_search'] ?? '');
+        
+        // 1. Date Filter
+        if (!empty($date_filter)) {
             $args['date_query'] = [[
-                'year' => date('Y', strtotime($filters['filter_date'])),
-                'month' => date('m', strtotime($filters['filter_date'])),
-                'day' => date('d', strtotime($filters['filter_date'])),
+                'year' => date('Y', strtotime($date_filter)),
+                'month' => date('m', strtotime($date_filter)),
+                'day' => date('d', strtotime($date_filter)),
             ]];
         }
+        
+        // 2. Smart Search Filter (Multi-field Query)
+        if (!empty($smart_search_term)) {
+             // Use s parameter for post_title and post_content search
+             $args['s'] = $smart_search_term;
+             
+             // Build a complex meta query that checks multiple fields
+             $search_meta_query = [
+                 'relation' => 'OR',
+                 // Search by ID (if numeric)
+                 (is_numeric($smart_search_term) ? ['key' => 'ID', 'value' => $smart_search_term, 'compare' => '='] : []),
+                 // Search in meta fields (Company, RC, Ad Type/Title)
+                 ['key' => 'company_name', 'value' => $smart_search_term, 'compare' => 'LIKE' ],
+                 ['key' => 'company_rc', 'value' => $smart_search_term, 'compare' => 'LIKE' ],
+                 ['key' => 'ad_type', 'value' => $smart_search_term, 'compare' => 'LIKE' ],
+                 ['key' => 'adType', 'value' => $smart_search_term, 'compare' => 'LIKE' ], // NEW: Search the custom type
+                 ['key' => 'adTitle', 'value' => $smart_search_term, 'compare' => 'LIKE' ], // NEW: Search the custom title
+             ];
+             
+             // Merge the new search meta query with the status query
+             $args['meta_query'] = [
+                 'relation' => 'AND',
+                 $args['meta_query'][0], // lmb_status = published
+                 $search_meta_query
+             ];
+        }
+        // --- END NEW FILTER LOGIC ---
+
 
         $ads_query = new WP_Query($args);
         $html = '';
@@ -1916,6 +1931,21 @@ class LMB_Ajax_Handlers {
 
                 $company_name = get_post_meta($ad_id, 'company_name', true);
                 $ad_type = get_post_meta($ad_id, 'ad_type', true);
+                
+                // --- TASK 1: Conditional Display Name ---
+                $ad_type_display = $ad_type;
+                if (strtolower(trim($ad_type)) === 'redaction libre') {
+                    $ad_type_select_value = get_post_meta($ad_id, 'adType', true); // Fetch the new select field value
+                    if (!empty($ad_type_select_value)) {
+                        // Display the user-friendly value like 'Modification' or 'Autre'
+                        $ad_type_display = esc_html($ad_type_select_value); 
+                    } else {
+                        // Fallback if adType meta is missing
+                         $ad_type_display = 'Annonce Libre'; 
+                    }
+                }
+                // --- END TASK 1 ---
+
                 $approved_date = get_post_meta($ad_id, 'approved_date', true);
                 $newspaper_id = get_post_meta($ad_id, 'lmb_final_journal_id', true); // Use final journal ID
                 $newspaper_title = $newspaper_id ? get_post_meta($newspaper_id, 'journal_no', true) : 'N/A'; // Get Journal No
@@ -1931,16 +1961,13 @@ class LMB_Ajax_Handlers {
                     }
                 }
 
-                // --- MODIFICATION START ---
-                // Manually construct the URL for the public-facing page
                 $public_announces_url = home_url('/les-annonces/');
                 $ad_url = add_query_arg('legal-ad', $ad->ID . '-' . $ad->post_name, $public_announces_url);
-                // --- MODIFICATION END ---
                 
                 $html .= '<tr class="clickable-row" data-href="' . esc_url($ad_url) . '">';
                 $html .= '<td>' . esc_html($ad->ID) . '</td>';
                 $html .= '<td>' . esc_html($company_name) . '</td>';
-                $html .= '<td>' . esc_html($ad_type) . '</td>';
+                $html .= '<td>' . esc_html($ad_type_display) . '</td>'; // Use the new display name
                 $html .= '<td>' . esc_html(date_i18n('d/m/Y', strtotime($approved_date))) . '</td>';
                 $html .= '<td>' . $journal_html . '</td>';
                 $html .= '</tr>';
@@ -1949,14 +1976,16 @@ class LMB_Ajax_Handlers {
             $html = '<tr><td colspan="5">Aucune annonce trouvée.</td></tr>';
         }
 
+        // --- TASK 3: Clean Pagination Base (Ensures JS handles it reliably) ---
         $pagination = paginate_links([
-            'base' => '%_%',
-            'format' => '?paged=%#%',
+            'base' => '?paged=%#%', 
+            'format' => '',
             'current' => max(1, $paged),
             'total' => $ads_query->max_num_pages,
             'prev_text' => '<',
             'next_text' => '>',
-            'type' => 'plain'
+            'type' => 'plain',
+            'add_args' => false 
         ]);
 
         wp_reset_postdata();
@@ -2719,4 +2748,19 @@ class LMB_Ajax_Handlers {
         }
     }
 
+    // --- NEW FUNCTION: Refresh Ad Types from Existing Ads ---
+    private static function lmb_refresh_ad_types() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Permission refusée.'], 403);
+        }
+        
+        if (!class_exists('LMB_Ad_Type_Manager')) {
+            // Safety fallback, though it should be loaded by lmb-core.php
+            require_once LMB_CORE_PATH . 'includes/class-lmb-ad-type-manager.php';
+        }
+
+        $count = LMB_Ad_Type_Manager::refresh_ad_types_from_ads();
+
+        wp_send_json_success(['message' => sprintf(__('%d types d\'annonces uniques ont été trouvés et l\'option a été mise à jour.', 'lmb-core'), $count)]);
+    }
 }

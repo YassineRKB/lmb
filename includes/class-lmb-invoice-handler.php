@@ -145,6 +145,12 @@ class LMB_Invoice_Handler {
             'qr_code_path'     => $qr_code_path,
         ];
         
+        // Ensure LMB_Accuse_PDF class exists before instantiation
+        if (!class_exists('LMB_Accuse_PDF')) {
+            // Assuming this class is defined in another file loaded by the plugin
+            return false;
+        }
+
         // Generate and save the PDF
         $pdf = new LMB_Accuse_PDF($pdf_data);
         $pdf->BuildPDF();
@@ -156,5 +162,51 @@ class LMB_Invoice_Handler {
         $pdf->Output('F', $filepath);
 
         return $upload_dir['baseurl'] . '/lmb-pdfs/' . $filename;
+    }
+    
+    /**
+     * NEW METHOD: Deletes the physical Accusé PDF file given its public URL.
+     * Required by LMB_Ajax_Handlers::lmb_clean_ad_association().
+     * * @param string $url The public URL of the PDF file.
+     * @return bool True on successful deletion or if file doesn't exist, false on error.
+     */
+    public static function delete_accuse_pdf_by_url($url) {
+        if (empty($url)) {
+            return true;
+        }
+
+        $upload_dir = wp_upload_dir();
+        $base_url = $upload_dir['baseurl'];
+        $base_dir = $upload_dir['basedir'];
+        
+        // 1. Convert URL to absolute file path
+        if (strpos($url, $base_url) !== false) {
+            $relative_path = str_replace($base_url, '', $url);
+            $filepath = $base_dir . $relative_path;
+        } else {
+            // Log error if URL format is unexpected
+            error_log('LMB_Invoice_Handler: Cannot determine local path for URL: ' . $url);
+            return false;
+        }
+
+        // 2. Safety check: ensure the path is within the uploads directory
+        // This prevents deleting files outside the expected plugin/uploads directory structure.
+        if (strpos($filepath, $base_dir) === 0) {
+            if (file_exists($filepath)) {
+                // Attempt to delete the file
+                if (unlink($filepath)) {
+                    return true;
+                } else {
+                    error_log('LMB_Invoice_Handler: Failed to unlink file: ' . $filepath);
+                    return false;
+                }
+            }
+            // File doesn't exist, so we consider it successfully "cleaned"
+            return true;
+        }
+        
+        // Safety check failed (path outside uploads dir)
+        error_log('LMB_Invoice_Handler: Deletion path safety check failed for: ' . $filepath);
+        return false;
     }
 }
