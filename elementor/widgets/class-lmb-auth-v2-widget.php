@@ -95,7 +95,8 @@ if (!class_exists('LMB_Auth_V2_Widget')) {
                             <div id="lmb-signup-regular-fields">
                                 <div class="lmb-form-group"><label for="signup-firstname">Prénom</label><input type="text" name="first_name" id="signup-firstname" class="lmb-input" required></div>
                                 <div class="lmb-form-group"><label for="signup-lastname">Nom</label><input type="text" name="last_name" id="signup-lastname" class="lmb-input" required></div>
-                                <div class="lmb-form-group"><label for="signup-phone-regular">Téléphone</label><input type="tel" name="phone_regular" id="signup-phone-regular" class="lmb-input" required pattern="[0-9]{10}" maxlength="10"></div>
+                                <div class="lmb-form-group"><label for="signup-phone-regular">Téléphone</label><input type="tel" name="phone_regular" id="signup-phone-regular" class="lmb-input" required pattern="[0-9]{10}" maxlength="10" placeholder="06 ** ** ** **"
+                                           title="Format requis: 06 suivi de 8 chiffres (ex: 0612345678)></div>
                                 <div class="lmb-form-group"><label for="signup-city-regular">Ville</label><input type="text" name="city_regular" id="signup-city-regular" class="lmb-input" required></div>
                             </div>
                             <div id="lmb-signup-professional-fields" style="display: none;">
@@ -103,7 +104,8 @@ if (!class_exists('LMB_Auth_V2_Widget')) {
                                 <div class="lmb-form-group"><label for="signup-company-hq">Adresse du Siège Social</label><input type="text" name="company_hq" id="signup-company-hq" class="lmb-input" required></div>
                                 <div class="lmb-form-group"><label for="signup-company-city">Ville</label><input type="text" name="city_professional" id="signup-company-city" class="lmb-input" required></div>
                                 <div class="lmb-form-group"><label for="signup-company-rc">RC</label><input type="text" name="company_rc" id="signup-company-rc" class="lmb-input" required></div>
-                                <div class="lmb-form-group"><label for="signup-company-phone">Téléphone</label><input type="tel" name="phone_professional" id="signup-company-phone" class="lmb-input" required pattern="[0-9]{10}" maxlength="10"></div>
+                                <div class="lmb-form-group"><label for="signup-company-phone">Téléphone</label><input type="tel" name="phone_professional" id="signup-company-phone" class="lmb-input" required pattern="[0-9]{10}" maxlength="10" placeholder="06 ** ** ** **"
+                                           title="Format requis: 06 suivi de 8 chiffres (ex: 0612345678)"></div>
                             </div>
                             
                             <div class="lmb-form-group"><label for="signup-email">Email</label><input type="email" name="email" id="signup-email" class="lmb-input" required></div>

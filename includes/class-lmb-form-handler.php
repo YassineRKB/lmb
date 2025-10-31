@@ -1,12 +1,55 @@
 <?php
-// FILE: includes/class-lmb-form-handler.php (DEFINITIVE FIX: Universal Base64 Encoding)
+// FILE: includes/class-lmb-form-handler.php (Final Synchronization Fix)
 if (!defined('ABSPATH')) exit;
 
 class LMB_Form_Handler {
     public static function init() {
         add_action('elementor_pro/forms/actions/register', [__CLASS__, 'register_elementor_action']);
         add_action('admin_init', [__CLASS__, 'check_elementor_pro']);
+        
+        // --- HOOK: Trigger full_text synchronization on manual admin save ---
+        add_action('save_post_lmb_legal_ad', [__CLASS__, 'sync_full_text_on_manual_save'], 10, 3);
     }
+    
+    /**
+     * FIX BACKWARD COMPATIBILITY: Ensure full_text meta is synchronized with post_content
+     * when a legal ad is manually edited and saved in the WP Admin.
+     */
+    public static function sync_full_text_on_manual_save($post_id, $post, $update) {
+        // Mandatory security and context checks
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return $post_id;
+        if (!current_user_can('edit_post', $post_id)) return $post_id;
+        if ($post->post_type !== 'lmb_legal_ad') return $post_id;
+
+        // Only run on updates
+        if ($update) {
+            
+            // 1. Get the raw content that was just saved in the WP Editor.
+            $corrected_content = $post->post_content;
+            
+            // 2. CRITICAL STEP: Apply the standard 'the_content' filter. 
+            // This runs wpautop(), which converts line breaks (\n) into proper <p> and <br> tags.
+            // We use global $post for this filter to work correctly, even though we are inside the save_post hook.
+            global $post;
+            $original_post = $post;
+            $post = $post; // Temporarily set $post global for filter context
+            
+            $formatted_content = apply_filters('the_content', $corrected_content);
+            
+            $post = $original_post; // Restore global $post
+            
+            // 3. Sanitize the formatted content to allow necessary HTML
+            $sanitized_formatted_content = wp_kses_post($formatted_content);
+            
+            // 4. Set the critical 'full_text' meta field with the properly formatted HTML.
+            update_post_meta($post_id, 'full_text', $sanitized_formatted_content);
+            
+            self::log_activity('Ad #%d ("%s") manually edited and full_text synchronized.', $post_id, $post->post_title);
+        }
+
+        return $post_id;
+    }
+
 
     public static function check_elementor_pro() {
         if (!did_action('elementor_pro/init')) {
@@ -31,7 +74,6 @@ class LMB_Form_Handler {
 
     /**
      * A recursive function to Base64 encode all string values in the form data.
-     * This makes the data 100% safe for JSON encoding.
      */
     private static function deep_base64_encode($data) {
         if (is_string($data)) {
@@ -71,11 +113,9 @@ class LMB_Form_Handler {
         }
 
         // --- DEFINITIVE FIX: UNIVERSAL BASE64 ENCODING ---
-        // First, remove any slashes WordPress might have added.
         $form_data = stripslashes_deep($form_data);
-        // Now, encode EVERY string field to make it safe.
         $encoded_form_data = self::deep_base64_encode($form_data);
-        $encoded_form_data['is_globally_base64_encoded'] = true; // Flag for decoding later
+        $encoded_form_data['is_globally_base64_encoded'] = true;
         // --- END OF FIX ---
 
         $ad_type = isset($form_data['ad_type']) ? sanitize_text_field($form_data['ad_type']) : 'Untitled Ad';
@@ -165,6 +205,8 @@ class LMB_Form_Handler {
 
         $formatted_text = wp_kses_post(nl2br($template, false));
         if (!empty($formatted_text)) {
+            // CRITICAL: We update both post_content (for the admin editor to display)
+            // AND full_text (for the front-end/PDF logic).
             wp_update_post(['ID' => $post_id, 'post_content' => $formatted_text]);
             update_post_meta($post_id, 'full_text', $formatted_text);
         }
